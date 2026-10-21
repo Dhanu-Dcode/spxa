@@ -4,10 +4,13 @@ All rates and the horizon must use consistent time units. The CTMC path is
 simulated via exponential holding times; conditional Poisson arrivals are
 sampled independently within each holding interval.
 """
+from __future__ import annotations
+
 from dataclasses import dataclass
 from numbers import Integral
 
 import numpy as np
+from numpy.typing import ArrayLike
 
 
 @dataclass(frozen=True)
@@ -22,8 +25,15 @@ class MMPPResult:
         return int(self.arrival_times.size)
 
 
-def _validated_parameters(Q, rates, horizon, initial_state, initial_probabilities,
-                          max_arrivals, max_transitions):
+def _validated_parameters(
+    Q: ArrayLike,  # noqa: N803
+    rates: ArrayLike,
+    horizon: float,
+    initial_state: int,
+    initial_probabilities: ArrayLike | None,
+    max_arrivals: int,
+    max_transitions: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, float, np.ndarray | None]:
     try:
         q = np.asarray(Q, dtype=np.float64)
         lam = np.asarray(rates, dtype=np.float64)
@@ -48,16 +58,21 @@ def _validated_parameters(Q, rates, horizon, initial_state, initial_probabilitie
     if isinstance(horizon, (bool, np.bool_)) or not np.isscalar(horizon):
         raise ValueError('horizon must be a finite nonnegative scalar')
     try:
-        T = float(horizon)
+        t_end = float(horizon)
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError('horizon must be numeric') from exc
-    if not np.isfinite(T) or T < 0:
+    if not np.isfinite(t_end) or t_end < 0:
         raise ValueError('horizon must be finite and nonnegative')
     for label, value in [('max_arrivals', max_arrivals), ('max_transitions', max_transitions)]:
         if isinstance(value, (bool, np.bool_)) or not isinstance(value, Integral) or value < 1:
             raise ValueError(f'{label} must be a positive integer')
     if initial_probabilities is None:
-        if isinstance(initial_state, (bool, np.bool_)) or not isinstance(initial_state, Integral) or not 0 <= initial_state < n:
+        bad_state = (
+            isinstance(initial_state, (bool, np.bool_))
+            or not isinstance(initial_state, Integral)
+            or not 0 <= initial_state < n
+        )
+        if bad_state:
             raise ValueError('initial_state must be an integer in [0, N)')
         p0 = None
     else:
@@ -67,15 +82,30 @@ def _validated_parameters(Q, rates, horizon, initial_state, initial_probabilitie
             p0 = np.asarray(initial_probabilities, dtype=float)
         except (TypeError, ValueError, OverflowError) as exc:
             raise ValueError('initial_probabilities must be numeric') from exc
-        if p0.shape != (n,) or not np.isfinite(p0).all() or np.any(p0 < 0) or not np.isclose(p0.sum(), 1, atol=1e-12, rtol=1e-12):
+        bad_law = (
+            p0.shape != (n,)
+            or not np.isfinite(p0).all()
+            or np.any(p0 < 0)
+            or not np.isclose(p0.sum(), 1, atol=1e-12, rtol=1e-12)
+        )
+        if bad_law:
             raise ValueError('initial_probabilities must be nonnegative and sum to one')
         p0 = p0 / p0.sum()
-    return off, exit_rates, lam, T, p0
+    return off, exit_rates, lam, t_end, p0
 
 
-def simulate_mmpp(Q, rates, horizon, *, initial_state=0,
-                  initial_probabilities=None, seed=None, rng=None,
-                  max_arrivals=1_000_000, max_transitions=1_000_000):
+def simulate_mmpp(
+    Q: ArrayLike,  # noqa: N803
+    rates: ArrayLike,
+    horizon: float,
+    *,
+    initial_state: int = 0,
+    initial_probabilities: ArrayLike | None = None,
+    seed: int | None = None,
+    rng: np.random.Generator | None = None,
+    max_arrivals: int = 1_000_000,
+    max_transitions: int = 1_000_000,
+) -> MMPPResult:
     """Simulate an MMPP and return sorted arrival and CTMC transition times.
 
     A CTMC transition at the exact horizon is excluded. The initial state at
@@ -83,7 +113,7 @@ def simulate_mmpp(Q, rates, horizon, *, initial_state=0,
     for representable holding intervals and event timestamps. Limits prevent
     accidental excessive output allocation but do not cap total runtime.
     """
-    off, exits, lam, T, p0 = _validated_parameters(
+    off, exits, lam, t_end, p0 = _validated_parameters(
         Q, rates, horizon, initial_state, initial_probabilities,
         max_arrivals, max_transitions)
     if rng is not None and seed is not None:
@@ -97,18 +127,20 @@ def simulate_mmpp(Q, rates, horizon, *, initial_state=0,
     arrival_total = 0
     transition_times = [0.0]
     states = [state]
-    while t < T:
+    while t < t_end:
         exit_rate = float(exits[state])
         if exit_rate == 0.0:
-            end = T
+            end = t_end
         else:
             # Sample exponential holding times without dividing by tiny rates.
             holding = float(generator.exponential()) / exit_rate
             # Compare before addition to avoid overflow for huge holding times.
-            remaining = T - t
-            end = T if holding >= remaining else t + holding
+            remaining = t_end - t
+            end = t_end if holding >= remaining else t + holding
             if end <= t:
-                raise FloatingPointError('CTMC holding time is below floating-point time resolution')
+                raise FloatingPointError(
+                    'CTMC holding time is below floating-point time resolution'
+                )
         duration = end - t
         expected = float(lam[state]) * duration
         if not np.isfinite(expected):
@@ -124,7 +156,7 @@ def simulate_mmpp(Q, rates, horizon, *, initial_state=0,
             arrivals.append(t + generator.random(count) * duration)
             arrival_total += count
         t = end
-        if t >= T or exit_rate == 0.0:
+        if t >= t_end or exit_rate == 0.0:
             break
         if len(states) >= max_transitions:
             raise OverflowError('CTMC transitions exceed max_transitions')

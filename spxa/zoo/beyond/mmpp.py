@@ -8,6 +8,7 @@ modulated Poisson process (MMPP) cookbook, Performance Evaluation 18, 149-171.
 from __future__ import annotations
 
 import numpy as np
+from numpy.typing import ArrayLike
 
 from spxa.core.exactness import ExactnessLevel
 from spxa.core.exceptions import ExactnessError
@@ -17,7 +18,15 @@ from spxa.core.triplet import LevyTriplet
 from spxa.story.narrator import CompositionNode, NodeKind
 
 from ._mmpp_engine import MMPPResult, _validated_parameters, simulate_mmpp
-from ._mmpp_theory import count_moments
+from ._mmpp_theory import count_cumulants, count_moments, stationary_distribution
+
+
+def _is_positive_int(value: object) -> bool:
+    return (
+        isinstance(value, (int, np.integer))
+        and not isinstance(value, (bool, np.bool_))
+        and value >= 1
+    )
 
 
 class MarkovModulatedPoissonProcess(Process):
@@ -30,7 +39,14 @@ class MarkovModulatedPoissonProcess(Process):
     background-chain transition times.
     """
 
-    def __init__(self, Q, rates, *, initial_state=0, initial_probabilities=None):
+    def __init__(
+        self,
+        Q: ArrayLike,  # noqa: N803
+        rates: ArrayLike,
+        *,
+        initial_state: int = 0,
+        initial_probabilities: ArrayLike | None = None,
+    ) -> None:
         off, exits, lam, _, p0 = _validated_parameters(
             Q, rates, 0.0, initial_state, initial_probabilities, 1, 1
         )
@@ -94,21 +110,36 @@ class MarkovModulatedPoissonProcess(Process):
             initial_probabilities=self.initial_probabilities,
         )
 
+    def stationary_distribution(self) -> np.ndarray:
+        """Unique stationary law pi of the background chain (solves pi Q = 0)."""
+        return stationary_distribution(self.Q)
+
+    @property
+    def mean_intensity(self) -> float:
+        """Long-run arrival rate pi . rates under the stationary law."""
+        return float(self.stationary_distribution() @ self.rates)
+
     def _moment_propagation_cumulants(self, order: int) -> dict[int, float]:
-        """Cumulants of N(1); higher orders are not implemented."""
-        if not isinstance(order, int) or order < 1:
+        """Cumulants kappa_1..kappa_order of N(1), via block matrix exponential.
+
+        Accurate to roughly 1e-16 * (1 + max(rates))**(order - 1); requests that
+        would lose more than 9 digits raise ValueError (see ``count_cumulants``).
+        """
+        if isinstance(order, bool) or not isinstance(order, int) or order < 1:
             raise ValueError("order must be a positive integer")
-        mean, variance = self.count_moments(1.0)
-        out = {1: mean}
-        if order >= 2:
-            out[2] = variance
-        if order > 2:
-            raise NotImplementedError("MMPP cumulants above order two are not implemented")
-        return out
+        return count_cumulants(
+            self.Q, self.rates, 1.0, order,
+            initial_state=self.initial_state,
+            initial_probabilities=self.initial_probabilities,
+        )
 
     def simulate_events(
-        self, T: float = 1.0, *, rng: np.random.Generator | None = None,
-        max_arrivals: int = 1_000_000, max_transitions: int = 1_000_000,
+        self,
+        T: float = 1.0,  # noqa: N803
+        *,
+        rng: np.random.Generator | None = None,
+        max_arrivals: int = 1_000_000,
+        max_transitions: int = 1_000_000,
     ) -> MMPPResult:
         """Return event timestamps and background-state history."""
         return simulate_mmpp(
@@ -121,13 +152,16 @@ class MarkovModulatedPoissonProcess(Process):
         )
 
     def simulate(
-        self, n_steps: int, n_paths: int = 1, T: float = 1.0,
+        self,
+        n_steps: int,
+        n_paths: int = 1,
+        T: float = 1.0,  # noqa: N803
         rng: np.random.Generator | None = None,
     ) -> np.ndarray:
         """Simulate independent counting paths on an equally spaced time grid."""
-        if isinstance(n_steps, (bool, np.bool_)) or not isinstance(n_steps, (int, np.integer)) or n_steps < 1:
+        if not _is_positive_int(n_steps):
             raise ValueError("n_steps must be a positive integer")
-        if isinstance(n_paths, (bool, np.bool_)) or not isinstance(n_paths, (int, np.integer)) or n_paths < 1:
+        if not _is_positive_int(n_paths):
             raise ValueError("n_paths must be a positive integer")
         if isinstance(T, (bool, np.bool_)) or not np.isscalar(T) or not np.isfinite(T) or T < 0:
             raise ValueError("T must be finite and nonnegative")

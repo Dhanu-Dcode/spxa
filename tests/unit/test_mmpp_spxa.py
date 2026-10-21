@@ -48,3 +48,58 @@ def test_seeded_reproducibility():
 def test_invalid_generator_rejected():
     with pytest.raises(ValueError):
         MarkovModulatedPoissonProcess([[1, -1], [0, 0]], [1, 2])
+
+
+def test_higher_order_cumulants_match_high_precision_reference():
+    # Reference: 60-digit mpmath derivatives of log E[exp(theta N_1)] at theta = 0.
+    p = MarkovModulatedPoissonProcess(
+        [[-1, 1], [2, -2]], [4, 10], initial_probabilities=[2 / 3, 1 / 3]
+    )
+    ref = {
+        1: 6.0,
+        2: 9.64406589932065,
+        3: 21.3728566911684,
+        4: 47.4672936132737,
+        5: -20.005738768914,
+        6: -1449.73336947646,
+    }
+    got = p.cumulants(order=6)
+    for k, v in ref.items():
+        assert got[k] == pytest.approx(v, rel=1e-9)
+
+
+def test_constant_rate_all_cumulants_equal_poisson():
+    p = MarkovModulatedPoissonProcess([[-3, 3], [2, -2]], [5, 5])
+    got = p.cumulants(order=8)
+    assert all(got[k] == pytest.approx(5.0, rel=1e-8) for k in range(1, 9))
+
+
+def test_ill_conditioned_cumulants_raise():
+    p = MarkovModulatedPoissonProcess([[-1, 1], [2, -2]], [400, 1000])
+    with pytest.raises(ValueError, match="ill-conditioned"):
+        p.cumulants(order=6)
+    assert set(p.cumulants(order=2)) == {1, 2}
+
+
+def test_cumulants_invalid_order():
+    p = MarkovModulatedPoissonProcess([[-1, 1], [2, -2]], [4, 10])
+    for bad in (0, -1, True):
+        with pytest.raises(ValueError):
+            p.cumulants(order=bad)
+
+
+def test_stationary_distribution_and_mean_intensity():
+    p = MarkovModulatedPoissonProcess([[-1, 1], [2, -2]], [4, 10])
+    assert p.stationary_distribution() == pytest.approx([2 / 3, 1 / 3])
+    assert p.mean_intensity == pytest.approx(6.0)
+    stationary = MarkovModulatedPoissonProcess(
+        [[-1, 1], [2, -2]], [4, 10], initial_probabilities=[2 / 3, 1 / 3]
+    )
+    mean, _ = stationary.count_moments(5.0)
+    assert mean == pytest.approx(5.0 * p.mean_intensity)
+
+
+def test_reducible_chain_has_no_unique_stationary_law():
+    p = MarkovModulatedPoissonProcess([[0, 0], [0, 0]], [1, 2])
+    with pytest.raises(ValueError):
+        p.stationary_distribution()
