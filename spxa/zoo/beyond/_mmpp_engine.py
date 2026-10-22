@@ -158,7 +158,7 @@ def simulate_mmpp(
         t = end
         if t >= t_end or exit_rate == 0.0:
             break
-        if len(states) >= max_transitions:
+        if len(states) - 1 >= max_transitions:
             raise OverflowError('CTMC transitions exceed max_transitions')
         probabilities = off[state] / exit_rate
         probabilities = probabilities / probabilities.sum()

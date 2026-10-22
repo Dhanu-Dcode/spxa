@@ -29,6 +29,7 @@ the running library. All signatures are exact.
    - [NegativeBinomialProcess](#negativebinomialprocess)
 4. [Zoo — beyond Lévy](#zoo--beyond-lévy)
    - [FractionalBrownianMotion](#fractionalbrownianmotion)
+   - [MarkovModulatedPoissonProcess](#markovmodulatedpoissonprocess)
    - [HawkesProcess](#hawkesprocess)
    - [OULevy](#oulevy)
 5. [Zoo — multivariate](#zoo--multivariate)
@@ -89,6 +90,7 @@ spxa.NegativeBinomialProcess
 # Beyond-Lévy processes
 spxa.FractionalBrownianMotion
 spxa.HawkesProcess
+spxa.MarkovModulatedPoissonProcess
 spxa.OULevy
 
 # Multivariate
@@ -839,6 +841,43 @@ ou.autocovariance(h: float) -> float
 
 **Reference:** Barndorff-Nielsen & Shephard (2001).
 
+---
+
+### MarkovModulatedPoissonProcess
+```python
+from spxa.zoo.beyond import MarkovModulatedPoissonProcess
+MarkovModulatedPoissonProcess(Q: np.ndarray, rates: np.ndarray, initial_state: int = 0,)
+```
+Markov-modulated Poisson process with arrival intensities governed by a finite-state continuous-time Markov chain. The chain has generator matrix Q and state-dependent arrival rates given by `rates`.
+
+The instantaneous arrival intensity is:
+
+λ(t) = rates[J(t)]
+
+The conditional expected number of arrivals over [0, t] is:
+
+E[N(t) | J] = ∫₀ᵗ rates[J(s)] ds
+
+| Parameter | Constraint | Meaning |
+|---|---|---|
+| `Q` | Square generator matrix; off-diagonal entries non-negative and rows sum to zero | Transition rates of the underlying Markov chain |
+| `rates` | Non-negative array; one rate per state | Poisson arrival intensity in each state |
+| `initial_state` | Valid state index | Initial state of the Markov chain |
+
+**Extra properties (on the instance):**
+
+```python
+# Finite-horizon count moments
+# Higher-order count cumulants
+```
+
+**Simulation:** Event-driven simulation of Markov-chain transitions and Poisson arrivals.
+
+**Analysis:** Finite-horizon count moments and higher-order cumulants.
+
+**Properties:** Sample paths are non-decreasing. Increments are generally not independent, so the process is not a Lévy subordinator under SPXA's subordination semantics.
+
+**Reference:** Meier-Hellstern (1987), *A fitting algorithm for Markov-modulated Poisson processes*.
 ---
 
 ## Zoo — multivariate

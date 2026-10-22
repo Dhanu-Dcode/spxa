@@ -93,7 +93,7 @@ class MarkovModulatedPoissonProcess(Process):
             has_finite_mean=True,
             self_similarity_index=None,
             tail_index=None,
-            is_subordinator=True,
+            is_subordinator=False,
             hurst_index=None,
             notes=[
                 "Finite-state MMPP with nonnegative counting paths.",
