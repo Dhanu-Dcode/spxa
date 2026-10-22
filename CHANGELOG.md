@@ -2,6 +2,16 @@
 
 All notable changes to spxa are documented here. Follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- `zoo/beyond/mmpp.py` — `MarkovModulatedPoissonProcess`: N-state MMPP (CTMC-modulated Poisson
+  counts). `MOMENT_PROPAGATION`; no Levy triplet (dependent increments). Exact event-driven
+  simulation, finite-horizon mean/variance and cumulants of any order via block matrix
+  exponentials (with a conditioning guard), stationary distribution and mean intensity.
+  Reference: Fischer & Meier-Hellstern (1993), Performance Evaluation 18, 149-171.
+
 ## [1.0.0] — 2026-09-19
 
 Initial public release. Establishes the algebraic core, the 13-process Lévy zoo, the beyond-Lévy

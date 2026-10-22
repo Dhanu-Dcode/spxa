@@ -29,6 +29,7 @@ the running library. All signatures are exact.
    - [NegativeBinomialProcess](#negativebinomialprocess)
 4. [Zoo — beyond Lévy](#zoo--beyond-lévy)
    - [FractionalBrownianMotion](#fractionalbrownianmotion)
+   - [MarkovModulatedPoissonProcess](#markovmodulatedpoissonprocess)
    - [HawkesProcess](#hawkesprocess)
    - [OULevy](#oulevy)
 5. [Zoo — multivariate](#zoo--multivariate)
@@ -89,6 +90,7 @@ spxa.NegativeBinomialProcess
 # Beyond-Lévy processes
 spxa.FractionalBrownianMotion
 spxa.HawkesProcess
+spxa.MarkovModulatedPoissonProcess
 spxa.OULevy
 
 # Multivariate
@@ -838,6 +840,74 @@ ou.autocovariance(h: float) -> float
 **Simulation:** Exact Euler discretisation.
 
 **Reference:** Barndorff-Nielsen & Shephard (2001).
+
+---
+
+### MarkovModulatedPoissonProcess
+
+```python
+from spxa.zoo.beyond import MarkovModulatedPoissonProcess
+
+MarkovModulatedPoissonProcess(
+    Q: ArrayLike,
+    rates: ArrayLike,
+    *,
+    initial_state: int = 0,
+    initial_probabilities: ArrayLike | None = None,
+)
+```
+
+An N-state Markov-modulated Poisson counting process (MMPP). The background continuous-time Markov chain has generator matrix `Q`, and the Poisson arrival intensity depends on its current state: `rates[J(t)]`.
+
+The counting paths are non-decreasing, but increments are generally dependent. Therefore, a general MMPP is not a Lévy process and does not have a global Lévy triplet.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `Q` | Generator matrix of the background Markov chain. |
+| `rates` | Non-negative arrival intensity for each background state. |
+| `initial_state` | Initial background state; defaults to `0`. |
+| `initial_probabilities` | Optional probability vector specifying the initial distribution over background states. |
+
+The `*` in the constructor signature means that `initial_state` and `initial_probabilities` must be passed as keyword arguments.
+
+**Methods and properties**
+
+```python
+mmpp.count_moments(t: float) -> tuple[float, float]
+mmpp.stationary_distribution() -> np.ndarray
+mmpp.mean_intensity  # property; returns float
+
+mmpp.simulate_events(
+    T: float = 1.0,
+    *,
+    rng: np.random.Generator | None = None,
+    max_arrivals: int = 1_000_000,
+    max_transitions: int = 1_000_000,
+) -> MMPPResult
+
+mmpp.simulate(
+    n_steps: int,
+    n_paths: int = 1,
+    T: float = 1.0,
+    rng: np.random.Generator | None = None,
+) -> np.ndarray
+```
+
+- `count_moments(t)` returns the expected event count and variance at time `t`.
+- `stationary_distribution()` returns the stationary distribution of the background Markov chain.
+- `mean_intensity` returns the long-run arrival rate under the stationary distribution.
+- `simulate_events(T, ...)` returns arrival timestamps and background-state transition history. The `max_arrivals` and `max_transitions` arguments limit simulation work.
+- `simulate(n_steps, n_paths, T, rng)` returns counting paths sampled on an evenly spaced time grid, with shape `(n_paths, n_steps + 1)`.
+
+**Process properties**
+
+The MMPP has `has_stationary_increments=False`, `has_independent_increments=False`, and `is_subordinator=False`.
+
+Although its counting paths are non-decreasing, a general MMPP is not a Lévy subordinator because its increments are generally dependent. It is therefore not eligible to act as a subordination clock through the `@` operator.
+
+**Reference:** Fischer and Meier-Hellstern (1993), “The Markov-modulated Poisson process (MMPP) cookbook,” *Performance Evaluation*, 18, 149–171.
 
 ---
 

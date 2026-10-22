@@ -41,7 +41,8 @@ class ProcessProperties:
         None if the tail decays faster than any power (e.g. finite variance with
         exponential tails).
     is_subordinator :
-        True if X is non-decreasing a.s. (used for the @ operator).
+        True if X is a Lévy subordinator: a Lévy process with almost surely
+        non-decreasing paths. Used to determine eligibility for the @ operator.
     hurst_index :
         Relevant only for fBM and related processes. None for Lévy processes.
     notes :
