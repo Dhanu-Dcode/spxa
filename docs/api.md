@@ -844,40 +844,71 @@ ou.autocovariance(h: float) -> float
 ---
 
 ### MarkovModulatedPoissonProcess
+
 ```python
 from spxa.zoo.beyond import MarkovModulatedPoissonProcess
-MarkovModulatedPoissonProcess(Q: np.ndarray, rates: np.ndarray, initial_state: int = 0,)
+
+MarkovModulatedPoissonProcess(
+    Q: ArrayLike,
+    rates: ArrayLike,
+    *,
+    initial_state: int = 0,
+    initial_probabilities: ArrayLike | None = None,
+)
 ```
-Markov-modulated Poisson process with arrival intensities governed by a finite-state continuous-time Markov chain. The chain has generator matrix Q and state-dependent arrival rates given by `rates`.
 
-The instantaneous arrival intensity is:
+An N-state Markov-modulated Poisson counting process (MMPP). The background continuous-time Markov chain has generator matrix `Q`, and the Poisson arrival intensity depends on its current state: `rates[J(t)]`.
 
-λ(t) = rates[J(t)]
+The counting paths are non-decreasing, but increments are generally dependent. Therefore, a general MMPP is not a Lévy process and does not have a global Lévy triplet.
 
-The conditional expected number of arrivals over [0, t] is:
+**Parameters**
 
-E[N(t) | J] = ∫₀ᵗ rates[J(s)] ds
+| Parameter | Meaning |
+|---|---|
+| `Q` | Generator matrix of the background Markov chain. |
+| `rates` | Non-negative arrival intensity for each background state. |
+| `initial_state` | Initial background state; defaults to `0`. |
+| `initial_probabilities` | Optional probability vector specifying the initial distribution over background states. |
 
-| Parameter | Constraint | Meaning |
-|---|---|---|
-| `Q` | Square generator matrix; off-diagonal entries non-negative and rows sum to zero | Transition rates of the underlying Markov chain |
-| `rates` | Non-negative array; one rate per state | Poisson arrival intensity in each state |
-| `initial_state` | Valid state index | Initial state of the Markov chain |
+The `*` in the constructor signature means that `initial_state` and `initial_probabilities` must be passed as keyword arguments.
 
-**Extra properties (on the instance):**
+**Methods and properties**
 
 ```python
-# Finite-horizon count moments
-# Higher-order count cumulants
+mmpp.count_moments(t: float) -> tuple[float, float]
+mmpp.stationary_distribution() -> np.ndarray
+mmpp.mean_intensity  # property; returns float
+
+mmpp.simulate_events(
+    T: float = 1.0,
+    *,
+    rng: np.random.Generator | None = None,
+    max_arrivals: int = 1_000_000,
+    max_transitions: int = 1_000_000,
+) -> MMPPResult
+
+mmpp.simulate(
+    n_steps: int,
+    n_paths: int = 1,
+    T: float = 1.0,
+    rng: np.random.Generator | None = None,
+) -> np.ndarray
 ```
 
-**Simulation:** Event-driven simulation of Markov-chain transitions and Poisson arrivals.
+- `count_moments(t)` returns the expected event count and variance at time `t`.
+- `stationary_distribution()` returns the stationary distribution of the background Markov chain.
+- `mean_intensity` returns the long-run arrival rate under the stationary distribution.
+- `simulate_events(T, ...)` returns arrival timestamps and background-state transition history. The `max_arrivals` and `max_transitions` arguments limit simulation work.
+- `simulate(n_steps, n_paths, T, rng)` returns counting paths sampled on an evenly spaced time grid, with shape `(n_paths, n_steps + 1)`.
 
-**Analysis:** Finite-horizon count moments and higher-order cumulants.
+**Process properties**
 
-**Properties:** Sample paths are non-decreasing. Increments are generally not independent, so the process is not a Lévy subordinator under SPXA's subordination semantics.
+The MMPP has `has_stationary_increments=False`, `has_independent_increments=False`, and `is_subordinator=False`.
 
-**Reference:** Meier-Hellstern (1987), *A fitting algorithm for Markov-modulated Poisson processes*.
+Although its counting paths are non-decreasing, a general MMPP is not a Lévy subordinator because its increments are generally dependent. It is therefore not eligible to act as a subordination clock through the `@` operator.
+
+**Reference:** Fischer and Meier-Hellstern (1993), “The Markov-modulated Poisson process (MMPP) cookbook,” *Performance Evaluation*, 18, 149–171.
+
 ---
 
 ## Zoo — multivariate
