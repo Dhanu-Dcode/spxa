@@ -1817,6 +1817,157 @@ def sample_schobel_zhu(
     return paths_s
 
 
+def sample_besq(
+    dim: float = 2.0,
+    x0: float = 1.0,
+    dt: Optional[float] = None,
+    n_steps: int = 100,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+) -> np.ndarray:
+    r"""
+    Simulate exact sample paths of the Squared Bessel process :math:`\mathrm{BESQ}^\delta(x_0)`.
+
+    .. math::
+
+        dX_t = \delta dt + 2 \sqrt{X_t} dW_t, \quad X_0 = x_0 \ge 0
+
+    Transitions follow exact scaled non-central chi-squared increments with zero
+    time discretization error:
+
+    .. math::
+
+        \frac{X_{t+\Delta t}}{\Delta t} \sim \chi^2\left(\delta, \frac{X_t}{\Delta t}\right)
+
+    Parameters
+    ----------
+    dim : float
+        Dimension parameter :math:`\delta \ge 0`.
+    x0 : float
+        Initial value :math:`X_0 \ge 0`.
+    dt : float, optional
+        Time step size.
+    n_steps : int
+        Number of time steps.
+    n_paths : int
+        Number of paths.
+    T : float, optional
+        Time horizon.
+    rng : np.random.Generator, optional
+        NumPy random number generator.
+
+    Returns
+    -------
+    np.ndarray
+        Sample paths of shape ``(n_paths, n_steps + 1)``.
+    """
+    if dim < 0.0:
+        raise ValueError("Dimension 'dim' must be non-negative")
+    if x0 < 0.0:
+        raise ValueError("Initial value 'x0' must be non-negative")
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+    if n_paths < 1:
+        raise ValueError("n_paths must be >= 1")
+
+    if dt is None:
+        if T is not None:
+            if T <= 0:
+                raise ValueError("T must be strictly positive")
+            dt = T / n_steps if n_steps > 0 else 1.0
+        else:
+            dt = 1.0 / n_steps if n_steps > 0 else 1.0
+    else:
+        if dt <= 0:
+            raise ValueError("dt must be strictly positive")
+
+    paths = np.empty((n_paths, n_steps + 1), dtype=float)
+    paths[:, 0] = float(x0)
+
+    if n_steps == 0:
+        return paths
+
+    rng = rng or np.random.default_rng()
+
+    if dim > 0.0:
+        for k in range(n_steps):
+            curr_x = np.maximum(paths[:, k], 0.0)
+            nc = curr_x / dt
+            paths[:, k + 1] = rng.noncentral_chisquare(df=dim, nonc=nc) * dt
+    else:
+        # dim == 0 (absorbing boundary at 0)
+        for k in range(n_steps):
+            curr_x = paths[:, k]
+            pos = curr_x > 0.0
+            next_x = np.zeros(n_paths, dtype=float)
+            if np.any(pos):
+                nc = curr_x[pos] / dt
+                # df=0 non-central chi-square is compound Poisson: N ~ Pois(nc/2), chisq(2N)
+                poiss = rng.poisson(lam=0.5 * nc)
+                pos_poiss = poiss > 0
+                res = np.zeros_like(nc)
+                if np.any(pos_poiss):
+                    res[pos_poiss] = rng.chisquare(df=2 * poiss[pos_poiss]) * dt
+                next_x[pos] = res
+            paths[:, k + 1] = next_x
+
+    return paths
+
+
+def sample_bessel(
+    dim: float = 2.0,
+    r0: float = 1.0,
+    dt: Optional[float] = None,
+    n_steps: int = 100,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+) -> np.ndarray:
+    r"""
+    Simulate exact sample paths of the Bessel process :math:`\mathrm{BES}^\delta(r_0)`.
+
+    .. math::
+
+        R_t = \sqrt{X_t}, \quad X_t \sim \mathrm{BESQ}^\delta(r_0^2)
+
+    Parameters
+    ----------
+    dim : float
+        Dimension parameter :math:`\delta \ge 0`.
+    r0 : float
+        Initial value :math:`R_0 \ge 0`.
+    dt : float, optional
+        Time step size.
+    n_steps : int
+        Number of time steps.
+    n_paths : int
+        Number of paths.
+    T : float, optional
+        Time horizon.
+    rng : np.random.Generator, optional
+        NumPy random number generator.
+
+    Returns
+    -------
+    np.ndarray
+        Sample paths of shape ``(n_paths, n_steps + 1)``.
+    """
+    if r0 < 0.0:
+        raise ValueError("Initial value 'r0' must be non-negative")
+    besq_paths = sample_besq(
+        dim=dim,
+        x0=r0 ** 2,
+        dt=dt,
+        n_steps=n_steps,
+        n_paths=n_paths,
+        T=T,
+        rng=rng,
+    )
+    return np.sqrt(np.maximum(besq_paths, 0.0))
+
+
+
 
 
 
