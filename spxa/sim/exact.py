@@ -1967,6 +1967,117 @@ def sample_bessel(
     return np.sqrt(np.maximum(besq_paths, 0.0))
 
 
+def sample_jcir(
+    kappa: float = 1.0,
+    theta: float = 0.05,
+    sigma: float = 0.15,
+    lambda_j: float = 0.5,
+    mu_j: float = 0.02,
+    r0: float = 0.04,
+    dt: Optional[float] = None,
+    n_steps: int = 100,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+) -> np.ndarray:
+    r"""
+    Simulate sample paths of the Jump-Extended CIR (JCIR) process.
+
+    .. math::
+
+        dr_t = \kappa (\theta - r_t) dt + \sigma \sqrt{r_t} dW_t + dJ_t, \quad r_0 \ge 0
+
+    Transitions follow exact scaled non-central chi-squared increments for the CIR
+    diffusion component, compounded with Poisson exponential jump arrivals.
+
+    Parameters
+    ----------
+    kappa : float
+        Mean-reversion speed :math:`\kappa > 0`.
+    theta : float
+        Diffusion long-term mean :math:`\theta > 0`.
+    sigma : float
+        Volatility-of-rate :math:`\sigma > 0`.
+    lambda_j : float
+        Jump arrival intensity :math:`\lambda_J \ge 0`.
+    mu_j : float
+        Mean jump size :math:`\mu_J > 0`.
+    r0 : float
+        Initial short rate :math:`r_0 \ge 0`.
+    dt : float, optional
+        Time step size.
+    n_steps : int
+        Number of time steps.
+    n_paths : int
+        Number of paths.
+    T : float, optional
+        Time horizon.
+    rng : np.random.Generator, optional
+        NumPy random number generator.
+
+    Returns
+    -------
+    np.ndarray
+        Sample paths of shape ``(n_paths, n_steps + 1)``.
+    """
+    if kappa <= 0:
+        raise ValueError("kappa must be strictly positive")
+    if theta <= 0:
+        raise ValueError("theta must be strictly positive")
+    if sigma <= 0:
+        raise ValueError("sigma must be strictly positive")
+    if lambda_j < 0:
+        raise ValueError("lambda_j must be non-negative")
+    if mu_j <= 0:
+        raise ValueError("mu_j must be strictly positive")
+    if r0 < 0:
+        raise ValueError("r0 must be non-negative")
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+    if n_paths < 1:
+        raise ValueError("n_paths must be >= 1")
+
+    if dt is None:
+        if T is not None:
+            if T <= 0:
+                raise ValueError("T must be strictly positive")
+            dt = T / n_steps if n_steps > 0 else 1.0
+        else:
+            dt = 1.0 / n_steps if n_steps > 0 else 1.0
+    else:
+        if dt <= 0:
+            raise ValueError("dt must be strictly positive")
+
+    paths = np.empty((n_paths, n_steps + 1), dtype=float)
+    paths[:, 0] = float(r0)
+
+    if n_steps == 0:
+        return paths
+
+    rng = rng or np.random.default_rng()
+
+    exp_kdt = math.exp(-kappa * dt)
+    c = 2.0 * kappa / (sigma ** 2 * (1.0 - exp_kdt))
+    df = 4.0 * kappa * theta / (sigma ** 2)
+
+    for k in range(n_steps):
+        curr_r = np.maximum(paths[:, k], 0.0)
+        nc = 2.0 * c * curr_r * exp_kdt
+        cir_next = rng.noncentral_chisquare(df=df, nonc=nc) / (2.0 * c)
+
+        if lambda_j > 0.0:
+            num_jumps = rng.poisson(lam=lambda_j * dt, size=n_paths)
+            has_jumps = num_jumps > 0
+            if np.any(has_jumps):
+                jump_shocks = rng.gamma(shape=num_jumps[has_jumps], scale=mu_j)
+                cir_next[has_jumps] += jump_shocks
+
+        paths[:, k + 1] = cir_next
+
+    return paths
+
+
+
 
 
 

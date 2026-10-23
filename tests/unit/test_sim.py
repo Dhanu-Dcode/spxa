@@ -36,6 +36,7 @@ from spxa.sim.exact import (
     sample_schobel_zhu,
     sample_besq,
     sample_bessel,
+    sample_jcir,
     sample_nig,
     sample_ou,
     sample_vg,
@@ -906,6 +907,50 @@ class TestExactSamplers:
             sample_besq(n_steps=-1)
         with pytest.raises(ValueError, match="n_paths"):
             sample_besq(n_paths=0)
+
+    def test_sample_jcir_shape_and_initial_condition(self) -> None:
+        """sample_jcir produces correct shape and non-negative paths."""
+        rng = np.random.default_rng(92)
+        p = sample_jcir(
+            kappa=1.0,
+            theta=0.05,
+            sigma=0.1,
+            lambda_j=0.5,
+            mu_j=0.02,
+            r0=0.03,
+            dt=0.05,
+            n_steps=20,
+            n_paths=5,
+            rng=rng,
+        )
+        assert p.shape == (5, 21)
+        assert np.all(p[:, 0] == 0.03)
+        assert np.all(p >= 0.0)
+
+    def test_sample_jcir_zero_steps(self) -> None:
+        """sample_jcir with n_steps=0 returns shape (n_paths, 1)."""
+        p = sample_jcir(r0=0.04, dt=0.1, n_steps=0, n_paths=4)
+        assert p.shape == (4, 1)
+        assert np.all(p == 0.04)
+
+    def test_sample_jcir_invalid_parameters_raise(self) -> None:
+        """sample_jcir raises ValueError on invalid inputs."""
+        with pytest.raises(ValueError, match="kappa"):
+            sample_jcir(kappa=-1.0)
+        with pytest.raises(ValueError, match="theta"):
+            sample_jcir(theta=-0.05)
+        with pytest.raises(ValueError, match="sigma"):
+            sample_jcir(sigma=-0.1)
+        with pytest.raises(ValueError, match="lambda_j"):
+            sample_jcir(lambda_j=-0.5)
+        with pytest.raises(ValueError, match="mu_j"):
+            sample_jcir(mu_j=-0.01)
+        with pytest.raises(ValueError, match="r0"):
+            sample_jcir(r0=-0.01)
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_jcir(n_steps=-1)
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_jcir(n_paths=0)
 
 
 
