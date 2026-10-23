@@ -1,4 +1,4 @@
-"""
+r"""
 Lévy–Khintchine triplet.
 
 Every Lévy process X on ℝ is uniquely associated with a characteristic triplet

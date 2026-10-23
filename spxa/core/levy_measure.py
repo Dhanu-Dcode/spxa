@@ -1,4 +1,4 @@
-"""
+r"""
 Lévy measure representation.
 
 The Lévy measure ν is a measure on ℝ \ {0} satisfying ∫ (1 ∧ x²) ν(dx) < ∞.
@@ -49,7 +49,7 @@ class LevyMeasure(abc.ABC):
 
     @abc.abstractmethod
     def total_mass(self) -> float:
-        """
+        r"""
         Return ν(ℝ \ {0}).
 
         Finite total mass corresponds to finite activity (compound Poisson).
@@ -99,7 +99,7 @@ class LevyMeasure(abc.ABC):
         return val_neg + val_pos
 
     def is_finite_activity(self) -> bool:
-        """Return True iff ν(ℝ \ {0}) < ∞ (compound Poisson case)."""
+        r"""Return True iff ν(ℝ \ {0}) < ∞ (compound Poisson case)."""
         return np.isfinite(self.total_mass())
 
     def __add__(self, other: LevyMeasure) -> CompoundLevyMeasure:
@@ -142,7 +142,7 @@ class CompoundLevyMeasure(LevyMeasure):
 
 @dataclass
 class DensityLevyMeasure(LevyMeasure):
-    """
+    r"""
     Lévy measure specified by a density function k(x) on ℝ \ {0}.
 
     Used for named processes whose Lévy density is known in closed form
