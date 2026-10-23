@@ -6,6 +6,17 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/cir.py` — `CIRProcess` (`CoxIngersollRoss`): Cox–Ingersoll–Ross square-root
+  diffusion process $dr_t = \kappa(\theta - r_t)dt + \sigma\sqrt{r_t}dW_t$ with `MOMENT_PROPAGATION`
+  exactness level. Features Feller condition evaluation ($2\kappa\theta \ge \sigma^2$), exact non-central
+  chi-squared transition density and exact simulation via `sample_cir`, exact conditional moments and
+  cumulants of all orders, stationary Gamma distribution properties, exponential autocovariance,
+  exact Laplace transform and characteristic function, zero-coupon bond pricing $P(\tau) = A(\tau)e^{-B(\tau)r_0}$
+  via the Riccati system, yield curves, and asymptotic long-term yield.
+  References: Cox, Ingersoll & Ross (1985); Feller (1951).
+- `sim/exact.py` — Vectorized `sample_cir` supporting exact non-central chi-squared transition
+  sampling (`method="exact"`), full-truncation Euler–Maruyama (`method="truncated_euler"`), and
+  reflected Euler–Maruyama (`method="reflected_euler"`).
 - `zoo/levy/compound_poisson.py` — `CompoundPoisson`: general compound Poisson process
   with homogeneous Poisson arrival counter and parameterised jump distributions
   (`NormalJump`, `ExponentialJump`, `DoubleExponentialJump`, `UniformJump`, `DiscreteJump`).

@@ -29,6 +29,7 @@ the running library. All signatures are exact.
    - [TemperedStable](#temperedstable)
    - [NegativeBinomialProcess](#negativebinomialprocess)
 4. [Zoo — beyond Lévy](#zoo--beyond-lévy)
+   - [CIRProcess](#cirprocess)
    - [FractionalBrownianMotion](#fractionalbrownianmotion)
    - [MarkovModulatedPoissonProcess](#markovmodulatedpoissonprocess)
    - [HawkesProcess](#hawkesprocess)
@@ -90,6 +91,8 @@ spxa.TemperedStable
 spxa.NegativeBinomialProcess
 
 # Beyond-Lévy processes
+spxa.CIRProcess
+spxa.CoxIngersollRoss
 spxa.FractionalBrownianMotion
 spxa.HawkesProcess
 spxa.MarkovModulatedPoissonProcess
@@ -798,6 +801,92 @@ nb.char_func_exact(u, t=1.0)
 
 Processes in `spxa.zoo.beyond` have `ExactnessLevel.MOMENT_PROPAGATION`.
 Calling `.triplet` always raises `ExactnessError` with a mathematical explanation.
+
+### CIRProcess
+
+```python
+from spxa.zoo.beyond import CIRProcess, CoxIngersollRoss
+
+CIRProcess(kappa: float, theta: float, sigma: float, r0: float | None = None)
+```
+
+Cox–Ingersoll–Ross (CIR) square-root diffusion process:
+$$dr_t = \kappa(\theta - r_t) dt + \sigma \sqrt{r_t} dW_t, \quad r_0 \ge 0$$
+
+Aliases: `CIRProcess`, `CoxIngersollRoss`.
+
+| Parameter | Constraint | Meaning | Default |
+|---|---|---|---|
+| `kappa` | > 0 | Speed of mean reversion $\kappa$ | required |
+| `theta` | > 0 | Long-term mean level $\theta$ | required |
+| `sigma` | > 0 | Volatility parameter $\sigma$ | required |
+| `r0` | $\ge 0$ | Initial spot value $r_0$ | `theta` |
+
+**Exactness level:** `MOMENT_PROPAGATION` (state-dependent diffusion $\sigma\sqrt{r_t}$; no Lévy–Khintchine triplet).
+
+**Structural Properties:**
+- `feller_ratio`: float ($2\kappa\theta / \sigma^2$)
+- `feller_condition`: bool ($2\kappa\theta \ge \sigma^2$; strictly inaccessible zero boundary when `True`)
+- `degrees_of_freedom`: float ($d = 4\kappa\theta / \sigma^2$)
+- `stationary_shape`: float ($\alpha = 2\kappa\theta / \sigma^2$)
+- `stationary_scale`: float ($\sigma^2 / (2\kappa)$)
+- `stationary_rate`: float ($2\kappa / \sigma^2$)
+- `stationary_mean`: float ($\theta$)
+- `stationary_variance`: float ($\theta\sigma^2 / (2\kappa)$)
+- `stationary_skewness`: float ($2 / \sqrt{\alpha}$)
+- `stationary_kurtosis`: float ($6 / \alpha$, excess kurtosis)
+- `asymptotic_yield`: float ($2\kappa\theta / (\kappa + \sqrt{\kappa^2 + 2\sigma^2})$)
+
+**Analytical Methods:**
+```python
+# Conditional expectation and variance at horizon t
+cir.conditional_mean(t: float, r0: float | None = None) -> float
+cir.conditional_variance(t: float, r0: float | None = None) -> float
+cir.conditional_std(t: float, r0: float | None = None) -> float
+
+# Exact conditional cumulants derived from non-central chi-squared law
+cir.conditional_cumulant(n: int, t: float, r0: float | None = None) -> float
+cir.conditional_cumulants(t: float, order: int = 4, r0: float | None = None) -> dict[int, float]
+
+# Stationary cumulants (order n >= 1)
+cir.stationary_cumulant(n: int) -> float
+cir.cumulants(order: int) -> dict[int, float]
+
+# Autocovariance and autocorrelation at lag h >= 0
+cir.autocovariance(h: float) -> float    # Var(r_∞) * exp(-κh)
+cir.autocorrelation(h: float) -> float   # exp(-κh)
+
+# Laplace transform & Characteristic function
+cir.laplace_transform(u: float, t: float, r0: float | None = None) -> float
+cir.char_func(u: float | complex, t: float = 1.0, r0: float | None = None) -> complex
+
+# Exact transition and stationary probability densities
+cir.transition_density(y: float | np.ndarray, t: float, r0: float | None = None, s: float = 0.0) -> float | np.ndarray
+cir.stationary_density(y: float | np.ndarray) -> float | np.ndarray
+
+# Zero-coupon discount bond pricing & term structure yield curve
+cir.bond_price(tau: float | np.ndarray, r0: float | None = None) -> float | np.ndarray
+cir.bond_yield(tau: float | np.ndarray, r0: float | None = None) -> float | np.ndarray
+```
+
+**Simulation:**
+```python
+cir.simulate(
+    n_steps: int,
+    n_paths: int = 1,
+    T: float = 1.0,
+    rng: np.random.Generator | None = None,
+    method: str = "exact",
+) -> np.ndarray
+```
+Supports three methods:
+1. `"exact"` (default): exact non-central chi-squared increments via `rng.noncentral_chisquare` (zero discretization bias).
+2. `"truncated_euler"`: Higham–Mao full truncation Euler–Maruyama scheme.
+3. `"reflected_euler"`: Reflected Euler–Maruyama scheme.
+
+**Reference:** Cox, Ingersoll & Ross (1985); Feller (1951).
+
+---
 
 ### FractionalBrownianMotion
 
