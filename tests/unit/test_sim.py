@@ -31,6 +31,7 @@ from spxa.sim.exact import (
     sample_bates,
     sample_hull_white,
     sample_sabr,
+    sample_gh,
     sample_nig,
     sample_ou,
     sample_vg,
@@ -737,6 +738,50 @@ class TestExactSamplers:
             sample_sabr(alpha=0.2, beta=0.5, nu=0.4, rho=0.0, n_paths=0)
         with pytest.raises(ValueError, match="simulation method"):
             sample_sabr(alpha=0.2, beta=0.5, nu=0.4, rho=0.0, method="unknown")
+
+    def test_sample_gh_shape_and_initial_condition(self) -> None:
+        """sample_gh produces correct shape and starts at 0."""
+        rng = np.random.default_rng(60)
+        p = sample_gh(
+            lambda_param=1.0, alpha=2.0, beta=0.5, delta=1.0, mu=0.1,
+            dt=0.05, n_steps=20, n_paths=5, rng=rng,
+        )
+        assert p.shape == (5, 21)
+        assert np.all(p[:, 0] == 0.0)
+
+    def test_sample_gh_nig_subfamily(self) -> None:
+        """sample_gh with lambda=-0.5 runs fast exact Inverse Gaussian subordination."""
+        rng = np.random.default_rng(61)
+        p = sample_gh(
+            lambda_param=-0.5, alpha=2.0, beta=-0.3, delta=1.2, mu=0.0,
+            dt=0.02, n_steps=15, n_paths=6, rng=rng,
+        )
+        assert p.shape == (6, 16)
+        assert np.all(p[:, 0] == 0.0)
+
+    def test_sample_gh_zero_steps(self) -> None:
+        """sample_gh with n_steps=0 returns shape (n_paths, 1)."""
+        p = sample_gh(
+            lambda_param=1.0, alpha=2.0, beta=0.0, delta=1.0,
+            dt=0.1, n_steps=0, n_paths=3,
+        )
+        assert p.shape == (3, 1)
+        assert np.all(p == 0.0)
+
+    def test_sample_gh_invalid_parameters_raise(self) -> None:
+        """sample_gh raises ValueError on invalid inputs."""
+        with pytest.raises(ValueError, match="alpha"):
+            sample_gh(alpha=-1.0)
+        with pytest.raises(ValueError, match="delta"):
+            sample_gh(delta=-0.5)
+        with pytest.raises(ValueError, match="beta"):
+            sample_gh(alpha=1.0, beta=1.5)
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_gh(n_steps=-1)
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_gh(n_paths=0)
+        with pytest.raises(ValueError, match="dt"):
+            sample_gh(dt=-0.1)
 
 
 

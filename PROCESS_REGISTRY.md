@@ -19,6 +19,7 @@ Every process implemented in spxa. The exactness level, available cumulants, sim
 | `GammaProcess` | EXACT | all orders | exact (shape-rate parametrisation) | Moran 1968 |
 | `VarianceGamma` | EXACT | all orders | BM subordinated by Gamma | Madan, Carr, Chang 1998 |
 | `NIG` | EXACT | all orders | BM subordinated by InvGaussian | Barndorff-Nielsen 1997 |
+| `GeneralizedHyperbolicProcess` (`GH`, `GHProcess`, `GeneralizedHyperbolic`) | EXACT | all orders (GIG moments & closed forms) | BM subordinated by GIG (exact NIG / Gil-Pelaez inversion) | Barndorff-Nielsen 1977; Eberlein & Prause 2002 |
 | `CGMY` | EXACT | all finite (α < 2) | series representation (Rosiński 2001) | Carr, Geman, Madan, Yor 2002 |
 | `AlphaStable` | EXACT | order < α only | Chambers–Mallows–Stuck | Samorodnitsky & Taqqu 1994 |
 | `InverseGaussianProcess` | EXACT | all orders | exact (Wald distribution) | Tweedie 1957 |
