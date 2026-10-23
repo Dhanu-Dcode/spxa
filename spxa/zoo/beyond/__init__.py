@@ -1,6 +1,12 @@
 """Beyond-Lévy process zoo — moment propagation, no exact triplets."""
 
 from spxa.zoo.beyond.bates import Bates96, BatesModel, BatesProcess, SVJ
+from spxa.zoo.beyond.black_karasinski import (
+    BKModel,
+    BKProcess,
+    BlackKarasinski,
+    BlackKarasinskiProcess,
+)
 from spxa.zoo.beyond.cev import CEV, CEVProcess, ConstantElasticityOfVariance
 from spxa.zoo.beyond.cir import CIRProcess, CoxIngersollRoss
 from spxa.zoo.beyond.fbm import FractionalBrownianMotion
@@ -23,6 +29,10 @@ __all__ = [
     "BatesModel",
     "BatesProcess",
     "SVJ",
+    "BKModel",
+    "BKProcess",
+    "BlackKarasinski",
+    "BlackKarasinskiProcess",
     "CEV",
     "CEVProcess",
     "ConstantElasticityOfVariance",
