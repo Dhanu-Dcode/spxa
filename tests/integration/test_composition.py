@@ -146,6 +146,7 @@ class TestTopLevelImports:
                      "FractionalBrownianMotion", "HawkesProcess", "OULevy",
                      "CIRProcess", "CoxIngersollRoss", "OrnsteinUhlenbeck", "Vasicek",
                      "Heston", "HestonProcess",
+                     "CEV", "CEVProcess", "ConstantElasticityOfVariance",
                      "MertonJumpDiffusion", "MertonProcess", "Merton76"]:
             assert hasattr(spxa, name), f"spxa.{name} not found"
 
