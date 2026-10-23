@@ -9,11 +9,9 @@ import numpy as np
 from spxa.zoo.levy import (
     BrownianMotion,
     CompoundPoisson,
-    DiscreteJump,
     DoubleExponentialJump,
     ExponentialJump,
     NormalJump,
-    UniformJump,
 )
 
 print("=" * 65)
@@ -38,16 +36,14 @@ print(f"   Exact mean     : {cp_exp.cumulant_exact(1):.4f}")
 print(f"   Exact variance : {cp_exp.cumulant_exact(2):.4f}")
 
 # 3. Double-Exponential (Kou) and Uniform jumps
-cp_kou = CompoundPoisson(
-    rate=2.5, jump_dist=DoubleExponentialJump(p=0.4, eta1=5.0, eta2=3.0)
-)
+cp_kou = CompoundPoisson(rate=2.5, jump_dist=DoubleExponentialJump(p=0.4, eta1=5.0, eta2=3.0))
 print(f"\n3. Double Exponential Jumps: {cp_kou}")
 print(f"   Cumulants κ_1..3: {cp_kou.cumulants(3)}")
 
 # 4. Algebraic Composition: Jump-Diffusion Z = BM + CompoundPoisson
 bm = BrownianMotion(mu=0.05, sigma=0.2)
 z = bm + cp_norm
-print(f"\n4. Algebraic Composition (Merton-style Jump-Diffusion):")
+print("\n4. Algebraic Composition (Merton-style Jump-Diffusion):")
 print(f"   Process        : {z}")
 print(f"   Z exactness    : {z.exactness.name}")
 print(f"   Z triplet b    : {z.triplet.b:.4f}")

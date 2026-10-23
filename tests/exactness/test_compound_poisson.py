@@ -176,6 +176,7 @@ def test_cp_cumulants_exponential_jump() -> None:
     kappas = cp.cumulants(order=5)
 
     import math
+
     for n in range(1, 6):
         expected_kn = rate * math.factorial(n) / (beta**n)
         assert kappas[n] == pytest.approx(expected_kn, rel=1e-10)
@@ -297,3 +298,63 @@ def test_cp_subordinator_paths_non_decreasing() -> None:
     paths = cp.simulate(n_steps=20, n_paths=200, T=1.0, rng=rng)
     diffs = np.diff(paths, axis=1)
     assert np.all(diffs >= 0.0)
+
+
+@pytest.mark.exactness
+def test_cp_jump_distributions_methods_and_tails() -> None:
+    """Test jump distribution densities, tails, moments, and representations."""
+    # NormalJump
+    nj = NormalJump(mean=0.5, std=1.0)
+    assert repr(nj).startswith("NormalJump")
+    assert nj.density(0.5) > 0.0
+    assert 0.0 < nj.tail(1.0) < 1.0
+
+    # ExponentialJump
+    ej = ExponentialJump(rate=2.0)
+    assert repr(ej).startswith("ExponentialJump")
+    assert ej.density(np.array([-1.0, 1.0]))[0] == 0.0
+    assert ej.density(np.array([-1.0, 1.0]))[1] > 0.0
+    assert ej.tail(-0.5) == 1.0
+    assert ej.tail(1.0) == pytest.approx(np.exp(-2.0))
+
+    # DoubleExponentialJump
+    dej = DoubleExponentialJump(p=0.4, eta1=2.0, eta2=1.5)
+    assert repr(dej).startswith("DoubleExponentialJump")
+    assert dej.density(1.0) > 0.0
+    assert dej.density(-1.0) > 0.0
+    assert dej.tail(0.5) > 0.0
+    assert dej.tail(-0.5) > 0.0
+
+    # UniformJump
+    uj = UniformJump(low=-1.0, high=2.0)
+    assert repr(uj).startswith("UniformJump")
+    assert uj.density(0.0) == pytest.approx(1.0 / 3.0)
+    assert uj.density(5.0) == 0.0
+    assert uj.tail(3.0) == 0.0
+    assert uj.tail(-2.0) == 1.0
+
+    # DiscreteJump
+    dj = DiscreteJump(values=[-1.0, 2.0], probs=[0.3, 0.7])
+    assert repr(dj).startswith("DiscreteJump")
+    with pytest.raises(NotImplementedError):
+        dj.density(0.0)
+    assert dj.tail(0.0) == pytest.approx(0.7)
+
+
+@pytest.mark.exactness
+def test_cp_invalid_parameters_raise() -> None:
+    """Test error handling for invalid process and jump distribution inputs."""
+    with pytest.raises(ValueError, match="positive"):
+        CompoundPoisson(rate=-1.0)
+    with pytest.raises(ValueError, match="std must be positive"):
+        NormalJump(mean=0.0, std=-0.5)
+    with pytest.raises(ValueError, match="rate must be positive"):
+        ExponentialJump(rate=0.0)
+    with pytest.raises(ValueError, match="low must be < high"):
+        UniformJump(low=2.0, high=1.0)
+    with pytest.raises(ValueError, match="p must be in"):
+        DoubleExponentialJump(p=1.5)
+    with pytest.raises(ValueError, match="values cannot be empty"):
+        DiscreteJump(values=[])
+    with pytest.raises(ValueError, match="Unknown jump distribution name"):
+        CompoundPoisson(rate=1.0, jump_dist="unsupported_name")
