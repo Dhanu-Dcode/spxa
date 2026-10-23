@@ -926,3 +926,115 @@ def sample_cev(
 
     return paths
 
+
+def sample_kou(
+    drift: float,
+    sigma: float,
+    rate: float,
+    p: float,
+    eta1: float,
+    eta2: float,
+    dt: Optional[float] = None,
+    n_steps: int = 100,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+) -> np.ndarray:
+    r"""
+    Simulate exact sample paths of the Kou (2002) jump-diffusion process.
+
+    .. math::
+
+        X_t = \mu t + \sigma W_t + \sum_{i=1}^{N_t} Y_i
+
+    where :math:`Y_i` has an asymmetric double exponential density:
+    with probability :math:`p`, :math:`Y \sim \mathrm{Exp}(\eta_1)` (upward jump);
+    with probability :math:`1 - p`, :math:`-Y \sim \mathrm{Exp}(\eta_2)` (downward jump).
+
+    Exact in law: zero time discretization error.
+
+    Parameters
+    ----------
+    drift : float
+        Continuous drift parameter :math:`\mu`.
+    sigma : float
+        Continuous diffusion volatility :math:`\sigma > 0`.
+    rate : float
+        Jump arrival intensity :math:`\lambda > 0`.
+    p : float
+        Probability of upward jump :math:`p \in [0, 1]`.
+    eta1 : float
+        Upward jump decay rate :math:`\eta_1 > 1`.
+    eta2 : float
+        Downward jump decay rate :math:`\eta_2 > 0`.
+    dt : float, optional
+        Time step size :math:`\Delta t > 0`.
+    n_steps : int, default 100
+        Number of time steps.
+    n_paths : int, default 1
+        Number of independent sample paths.
+    T : float, optional
+        Terminal time horizon :math:`T > 0`.
+    rng : np.random.Generator, optional
+        Random number generator.
+
+    Returns
+    -------
+    np.ndarray
+        Path array of shape ``(n_paths, n_steps + 1)`` with ``paths[:, 0] == 0.0``.
+    """
+    if sigma <= 0:
+        raise ValueError("sigma must be strictly positive")
+    if rate <= 0:
+        raise ValueError("rate must be strictly positive")
+    if not (0.0 <= p <= 1.0):
+        raise ValueError(f"p must be in [0, 1], got {p}")
+    if eta1 <= 1.0:
+        raise ValueError(f"eta1 must be > 1.0, got {eta1}")
+    if eta2 <= 0.0:
+        raise ValueError(f"eta2 must be > 0.0, got {eta2}")
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+    if n_paths < 1:
+        raise ValueError("n_paths must be >= 1")
+
+    if dt is None:
+        if T is not None:
+            if T <= 0:
+                raise ValueError("T must be strictly positive")
+            dt = T / n_steps if n_steps > 0 else 1.0
+        else:
+            dt = 1.0 / n_steps if n_steps > 0 else 1.0
+    else:
+        if dt <= 0:
+            raise ValueError("dt must be strictly positive")
+
+    rng = rng or np.random.default_rng()
+    paths = np.zeros((n_paths, n_steps + 1), dtype=float)
+
+    if n_steps == 0:
+        return paths
+
+    k_jumps = rng.poisson(lam=rate * dt, size=(n_paths, n_steps))
+    total_jumps = int(np.sum(k_jumps))
+
+    jump_increments = np.zeros((n_paths, n_steps), dtype=float)
+    if total_jumps > 0:
+        is_up = rng.uniform(0.0, 1.0, size=total_jumps) < p
+        jump_vals = np.where(
+            is_up,
+            rng.exponential(1.0 / eta1, size=total_jumps),
+            -rng.exponential(1.0 / eta2, size=total_jumps),
+        )
+        rows, cols = np.where(k_jumps > 0)
+        counts = k_jumps[rows, cols]
+        repeated_rows = np.repeat(rows, counts)
+        repeated_cols = np.repeat(cols, counts)
+        np.add.at(jump_increments, (repeated_rows, repeated_cols), jump_vals)
+
+    z = rng.standard_normal((n_paths, n_steps))
+    continuous_inc = drift * dt + sigma * math.sqrt(dt) * z
+    paths[:, 1:] = np.cumsum(continuous_inc + jump_increments, axis=1)
+    return paths
+
+

@@ -29,6 +29,7 @@ the running library. All signatures are exact.
    - [TemperedStable](#temperedstable)
    - [NegativeBinomialProcess](#negativebinomialprocess)
    - [MertonJumpDiffusion](#mertonjumpdiffusion)
+   - [KouJumpDiffusion](#koujumpdiffusion)
 4. [Zoo — beyond Lévy](#zoo--beyond-lévy)
    - [CEVProcess](#cevprocess)
    - [CIRProcess](#cirprocess)
@@ -91,6 +92,10 @@ spxa.MeixnerProcess
 spxa.PoissonProcess
 spxa.CompoundPoisson
 spxa.InverseGaussianProcess
+spxa.Kou02
+spxa.Kou72
+spxa.KouJumpDiffusion
+spxa.KouProcess
 spxa.Merton76
 spxa.MertonJumpDiffusion
 spxa.MertonProcess
@@ -870,6 +875,50 @@ paths = merton.simulate(n_steps=100, n_paths=1000, T=1.0)
 **References:**
 - Merton, R. C. (1976). *Option pricing when underlying stock returns are discontinuous*. Journal of Financial Economics, 3(1–2), 125–144.
 - Cont, R. & Tankov, P. (2004). *Financial Modelling with Jump Processes*. Chapman & Hall/CRC. Section 3.5.
+
+---
+
+### KouJumpDiffusion
+
+```python
+from spxa import KouJumpDiffusion, KouProcess, Kou72, Kou02
+
+kou = KouJumpDiffusion(
+    drift=0.05,
+    sigma=0.15,
+    rate=1.5,
+    p=0.4,
+    eta1=10.0,
+    eta2=5.0,
+)
+```
+
+The Kou (2002) model combines continuous Brownian diffusion with compound Poisson jump shocks whose sizes follow an asymmetric double exponential distribution:
+$$X_t = \mu t + \sigma W_t + \sum_{i=1}^{N_t} Y_i$$
+with jump density $f_Y(y) = p \eta_1 e^{-\eta_1 y}\mathbb{I}_{y \ge 0} + (1-p) \eta_2 e^{\eta_2 y}\mathbb{I}_{y < 0}$.
+
+**Exact Lévy Triplet:**
+- `triplet.b` — analytical truncated drift $b = \mu + \lambda \left[ \frac{p}{\eta_1}(1 - e^{-\eta_1}(1+\eta_1)) - \frac{1-p}{\eta_2}(1 - e^{-\eta_2}(1+\eta_2)) \right]$
+- `triplet.sigma_sq` — diffusion volatility $\sigma^2$
+- `triplet.nu` — finite activity double-exponential jump measure with total mass $\lambda$
+
+**Distributional Analytics:**
+- `char_exp(u)` — characteristic exponent $\psi(u) = i \mu u - \frac{1}{2} \sigma^2 u^2 + \lambda \left( \frac{p \eta_1}{\eta_1 - i u} + \frac{(1-p)\eta_2}{\eta_2 + i u} - 1 \right)$
+- `characteristic_function(u, t=1.0)` — $e^{t \psi(u)}$
+- `cumulants(order=5, t=1.0)` — analytical cumulants $\kappa_1, \dots, \kappa_5$
+- `expected_relative_jump` — $\kappa = \frac{p \eta_1}{\eta_1 - 1} + \frac{(1-p)\eta_2}{\eta_2 + 1} - 1$
+
+**Option Pricing & Volatility Smile:**
+- `call_price(strikes, T=1.0, S0=100.0, r=0.05, q=0.0)` — European call prices via Gil–Pelaez Fourier inversion
+- `put_price(strikes, T=1.0, S0=100.0, r=0.05, q=0.0)` — European put prices via exact Put-Call parity
+- `implied_vol_smile(strikes, T=1.0, S0=100.0, r=0.05, q=0.0)` — Black–Scholes implied volatility inversion
+
+**Simulation:**
+- `simulate(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None)` — exact simulation with zero discretization error
+
+**References:**
+- Kou, S. G. (2002). *A jump-diffusion model for option pricing*. Management Science, 48(8), 1086–1101.
+- Kou, S. G. & Wang, H. (2004). *Option pricing under a double exponential jump diffusion model*. Management Science, 50(9), 1178–1192.
 
 ---
 

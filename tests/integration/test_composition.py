@@ -147,6 +147,7 @@ class TestTopLevelImports:
                      "CIRProcess", "CoxIngersollRoss", "OrnsteinUhlenbeck", "Vasicek",
                      "Heston", "HestonProcess",
                      "CEV", "CEVProcess", "ConstantElasticityOfVariance",
+                     "KouJumpDiffusion", "KouProcess", "Kou72", "Kou02",
                      "MertonJumpDiffusion", "MertonProcess", "Merton76"]:
             assert hasattr(spxa, name), f"spxa.{name} not found"
 
