@@ -2,6 +2,15 @@
 
 from spxa.zoo.levy.brownian import BrownianMotion
 from spxa.zoo.levy.cgmy import CGMY
+from spxa.zoo.levy.compound_poisson import (
+    CompoundPoisson,
+    DiscreteJump,
+    DoubleExponentialJump,
+    ExponentialJump,
+    JumpDistribution,
+    NormalJump,
+    UniformJump,
+)
 from spxa.zoo.levy.gamma import GammaProcess
 from spxa.zoo.levy.inverse_gaussian import InverseGaussianProcess
 from spxa.zoo.levy.meixner import MeixnerProcess
@@ -16,12 +25,19 @@ __all__ = [
     "AlphaStable",
     "BrownianMotion",
     "CGMY",
+    "CompoundPoisson",
+    "DiscreteJump",
+    "DoubleExponentialJump",
+    "ExponentialJump",
     "GammaProcess",
     "InverseGaussianProcess",
+    "JumpDistribution",
     "MeixnerProcess",
     "NegativeBinomialProcess",
     "NIG",
+    "NormalJump",
     "PoissonProcess",
     "TemperedStable",
+    "UniformJump",
     "VarianceGamma",
 ]
