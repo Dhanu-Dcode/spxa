@@ -38,6 +38,7 @@ from spxa.sim.exact import (
     sample_bessel,
     sample_jcir,
     sample_schwartz_two_factor,
+    sample_bns,
     sample_nig,
     sample_ou,
     sample_vg,
@@ -999,6 +1000,56 @@ class TestExactSamplers:
             sample_schwartz_two_factor(n_steps=-1)
         with pytest.raises(ValueError, match="n_paths"):
             sample_schwartz_two_factor(n_paths=0)
+
+    def test_sample_bns_shape_and_initial_condition(self) -> None:
+        """sample_bns produces correct shapes and non-negative variances."""
+        rng = np.random.default_rng(94)
+        s, v = sample_bns(
+            lambda_param=1.5,
+            alpha=2.0,
+            beta_bdlp=25.0,
+            rho=-0.5,
+            beta=-0.5,
+            sigma0_sq=0.04,
+            s0=100.0,
+            rate=0.04,
+            dt=0.05,
+            n_steps=20,
+            n_paths=5,
+            rng=rng,
+            return_variance=True,
+        )
+        assert s.shape == (5, 21)
+        assert v.shape == (5, 21)
+        assert np.all(s[:, 0] == 100.0)
+        assert np.all(v[:, 0] == 0.04)
+        assert np.all(s > 0.0)
+        assert np.all(v >= 0.0)
+
+    def test_sample_bns_zero_steps(self) -> None:
+        """sample_bns with n_steps=0 returns shape (n_paths, 1)."""
+        s = sample_bns(s0=100.0, sigma0_sq=0.04, n_steps=0, n_paths=4)
+        assert s.shape == (4, 1)
+        assert np.all(s == 100.0)
+
+    def test_sample_bns_invalid_parameters_raise(self) -> None:
+        """sample_bns raises ValueError on invalid inputs."""
+        with pytest.raises(ValueError, match="lambda_param"):
+            sample_bns(lambda_param=-1.0)
+        with pytest.raises(ValueError, match="alpha"):
+            sample_bns(alpha=-2.0)
+        with pytest.raises(ValueError, match="beta_bdlp"):
+            sample_bns(beta_bdlp=-10.0)
+        with pytest.raises(ValueError, match="rho"):
+            sample_bns(rho=0.5)
+        with pytest.raises(ValueError, match="sigma0_sq"):
+            sample_bns(sigma0_sq=-0.04)
+        with pytest.raises(ValueError, match="s0"):
+            sample_bns(s0=-10.0)
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_bns(n_steps=-1)
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_bns(n_paths=0)
 
 
 
