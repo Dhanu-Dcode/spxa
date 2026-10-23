@@ -36,6 +36,7 @@ the running library. All signatures are exact.
    - [CEVProcess](#cevprocess)
    - [CIRProcess](#cirprocess)
    - [HullWhiteProcess](#hullwhiteprocess)
+   - [BlackKarasinskiProcess](#blackkarasinskiprocess)
    - [SABRProcess](#sabrprocess)
    - [FractionalBrownianMotion](#fractionalbrownianmotion)
    - [MarkovModulatedPoissonProcess](#markovmodulatedpoissonprocess)
@@ -114,6 +115,10 @@ spxa.NegativeBinomialProcess
 spxa.Bates96
 spxa.BatesModel
 spxa.BatesProcess
+spxa.BKModel
+spxa.BKProcess
+spxa.BlackKarasinski
+spxa.BlackKarasinskiProcess
 spxa.SVJ
 spxa.CEV
 spxa.CEVProcess
@@ -1251,6 +1256,53 @@ where $a > 0$ is the mean-reversion speed, $b \in \mathbb{R}$ is the long-term r
 - Hull, J., & White, A. (1993). *One-factor interest-rate models and the valuation of interest-rate derivative securities*. Journal of Financial and Quantitative Analysis, 28(2), 235–254.
 - Jamshidian, F. (1989). *An exact bond option formula*. The Journal of Finance, 44(1), 205–209.
 - Vasicek, O. (1977). *An equilibrium characterization of the term structure*. Journal of Financial Economics, 5(2), 177–188.
+
+---
+
+### BlackKarasinskiProcess
+
+```python
+from spxa import BlackKarasinskiProcess, BlackKarasinski, BKProcess, BKModel
+
+bk = BlackKarasinskiProcess(
+    a=0.15,
+    sigma=0.20,
+    b=-3.35,
+    r0=0.03,
+)
+```
+
+The Black-Karasinski (1991) short-rate model represents interest rates with a lognormal diffusion:
+$$d(\ln r_t) = a(b - \ln r_t) dt + \sigma dW_t, \quad r_t = \exp(x_t) > 0$$
+where $a > 0$ is the mean-reversion speed, $b = \ln(\bar{r})$ is the long-term log-rate reversion level, and $\sigma > 0$ is the log-rate volatility. Because $r_t = \exp(x_t)$, interest rates are strictly positive across all horizons.
+
+**Parameters & Structural Properties:**
+- `a` (or `kappa`) — mean-reversion speed $a > 0$
+- `sigma` — log-rate volatility $\sigma > 0$
+- `b` — long-term target of $\ln r_t$
+- `r0` — initial spot rate $r_0 > 0$
+- `x0` — initial log-rate $\ln(r_0)$
+
+**Distributional Analytics & Moments:**
+- `log_rate_mean(t=1.0)` — expected log-rate $\mathbb{E}[\ln r_t \mid x_0] = b + (x_0 - b) e^{-at}$
+- `log_rate_variance(t=1.0)` — variance of log-rate $\mathrm{Var}(\ln r_t \mid x_0) = \frac{\sigma^2}{2a}(1 - e^{-2at})$
+- `conditional_mean(t=1.0)` — expected short rate $\mathbb{E}[r_t \mid r_0] = \exp\left(\mu_x(t) + \frac{1}{2} \sigma_x^2(t)\right)$
+- `conditional_variance(t=1.0)` — variance of short rate $\mathrm{Var}(r_t \mid r_0) = \exp(2\mu_x(t) + \sigma_x^2(t))(\exp(\sigma_x^2(t)) - 1)$
+- `stationary_median` — asymptotic median short rate $e^b$
+- `stationary_mean` — asymptotic stationary mean $\exp\left(b + \frac{\sigma^2}{4a}\right)$
+- `stationary_variance` — asymptotic stationary variance
+
+**Term Structure & Bond Pricing:**
+- `bond_price(T, n_paths=15000)` — zero-coupon bond price $P(0, T) = \mathbb{E}\left[\exp\left(-\int_0^T r_s ds\right)\right]$ via Monte Carlo
+- `yield_to_maturity(T, n_paths=15000)` — spot yield $y(0, T) = -\frac{\ln P(0, T)}{T}$
+
+**Simulation:**
+- `simulate(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None)` — exact OU simulation for log-rate followed by exponentiation
+- `simulate_joint(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None)` — returns `(r_paths, x_paths)`
+
+**References:**
+- Black, F., & Karasinski, P. (1991). *Bond and option pricing when short rates are lognormal*. Financial Analysts Journal, 47(4), 52–59.
+- Brigo, D., & Mercurio, F. (2006). *Interest Rate Models — Theory and Practice*. Springer Finance.
 
 ---
 

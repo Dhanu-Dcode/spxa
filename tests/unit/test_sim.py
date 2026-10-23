@@ -32,6 +32,7 @@ from spxa.sim.exact import (
     sample_hull_white,
     sample_sabr,
     sample_gh,
+    sample_black_karasinski,
     sample_nig,
     sample_ou,
     sample_vg,
@@ -782,6 +783,49 @@ class TestExactSamplers:
             sample_gh(n_paths=0)
         with pytest.raises(ValueError, match="dt"):
             sample_gh(dt=-0.1)
+
+    def test_sample_bk_shape_and_initial_condition(self) -> None:
+        """sample_black_karasinski produces correct shape and positive rates."""
+        rng = np.random.default_rng(70)
+        p = sample_black_karasinski(
+            a=0.15, sigma=0.20, b=-3.5, r0=0.03,
+            dt=0.05, n_steps=20, n_paths=5, rng=rng,
+        )
+        assert p.shape == (5, 21)
+        assert np.all(p[:, 0] == 0.03)
+        assert np.all(p > 0.0)
+
+        r_paths, x_paths = sample_black_karasinski(
+            a=0.15, sigma=0.20, b=-3.5, r0=0.03,
+            dt=0.05, n_steps=20, n_paths=5, rng=rng, return_log_rate=True,
+        )
+        assert r_paths.shape == (5, 21)
+        assert x_paths.shape == (5, 21)
+        assert np.all(r_paths[:, 0] == 0.03)
+        assert np.all(x_paths[:, 0] == pytest.approx(np.log(0.03)))
+        np.testing.assert_allclose(np.exp(x_paths), r_paths, rtol=1e-12)
+
+    def test_sample_bk_zero_steps(self) -> None:
+        """sample_black_karasinski with n_steps=0 returns shape (n_paths, 1)."""
+        p = sample_black_karasinski(
+            a=0.15, sigma=0.20, r0=0.03,
+            dt=0.1, n_steps=0, n_paths=3,
+        )
+        assert p.shape == (3, 1)
+        assert np.all(p == 0.03)
+
+    def test_sample_bk_invalid_parameters_raise(self) -> None:
+        """sample_black_karasinski raises ValueError on invalid inputs."""
+        with pytest.raises(ValueError, match="Mean-reversion speed 'a'"):
+            sample_black_karasinski(a=-0.1, sigma=0.20)
+        with pytest.raises(ValueError, match="Volatility 'sigma'"):
+            sample_black_karasinski(a=0.1, sigma=-0.20)
+        with pytest.raises(ValueError, match="Initial short rate 'r0'"):
+            sample_black_karasinski(a=0.1, sigma=0.20, r0=-0.01)
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_black_karasinski(a=0.1, sigma=0.20, n_steps=-1)
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_black_karasinski(a=0.1, sigma=0.20, n_paths=0)
 
 
 
