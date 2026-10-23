@@ -6,6 +6,15 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/levy/compound_poisson.py` — `CompoundPoisson`: general compound Poisson process
+  with homogeneous Poisson arrival counter and parameterised jump distributions
+  (`NormalJump`, `ExponentialJump`, `DoubleExponentialJump`, `UniformJump`, `DiscreteJump`).
+  `EXACT` exactness level with closed-form Lévy triplet `(b=λ·E[Y·𝟙_{|Y|≤1}], σ²=0, ν=λ·F_Y)`,
+  exact characteristic function `φ(u;t) = exp(λt(φ_Y(u)-1))`, exact cumulants of all orders
+  `κ_n = λ·t·E[Yⁿ]`, and vectorized exact Poisson thinning simulation.
+  References: Kingman (1993); Cont & Tankov (2004) Sec. 3.4; Sato (1999) Ex. 8.4.
+- `sim/exact.py` — Vectorized `sample_compound_poisson` using `np.repeat` and `np.bincount`
+  with fallback for non-vectorized custom samplers.
 - `zoo/beyond/mmpp.py` — `MarkovModulatedPoissonProcess`: N-state MMPP (CTMC-modulated Poisson
   counts). `MOMENT_PROPAGATION`; no Levy triplet (dependent increments). Exact event-driven
   simulation, finite-horizon mean/variance and cumulants of any order via block matrix
