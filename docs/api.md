@@ -33,6 +33,7 @@ the running library. All signatures are exact.
    - [FractionalBrownianMotion](#fractionalbrownianmotion)
    - [MarkovModulatedPoissonProcess](#markovmodulatedpoissonprocess)
    - [HawkesProcess](#hawkesprocess)
+   - [HestonProcess](#hestonprocess)
    - [OrnsteinUhlenbeck](#ornsteinuhlenbeck)
    - [OULevy](#oulevy)
 5. [Zoo — multivariate](#zoo--multivariate)
@@ -96,6 +97,8 @@ spxa.CIRProcess
 spxa.CoxIngersollRoss
 spxa.FractionalBrownianMotion
 spxa.HawkesProcess
+spxa.Heston
+spxa.HestonProcess
 spxa.MarkovModulatedPoissonProcess
 spxa.OrnsteinUhlenbeck
 spxa.OrnsteinUhlenbeckProcess
@@ -955,6 +958,83 @@ hawkes.fano_factor           # float: (1+α/β)/(1−α/β)² — always ≥ 1
 **Simulation:** Ogata's thinning algorithm.
 
 **Reference:** Hawkes (1971); Hawkes & Oakes (1974); Ogata (1981).
+
+---
+
+### HestonProcess
+
+```python
+from spxa import Heston, HestonProcess
+
+heston = Heston(v0=0.04, kappa=2.0, theta=0.04, sigma_v=0.3, rho=-0.7, mu=0.05, s0=100.0)
+```
+
+Two-dimensional affine stochastic volatility model (Heston 1993) coupling asset log-return $X_t = \ln(S_t / S_0)$ with a Cox–Ingersoll–Ross (CIR) variance diffusion:
+
+$$dX_t = \left(\mu - \frac{1}{2} V_t\right) dt + \sqrt{V_t} \, dW_t^S, \quad X_0 = 0$$
+$$dV_t = \kappa (\theta - V_t) dt + \sigma_v \sqrt{V_t} \, dW_t^V, \quad V_0 = v_0$$
+$$d\langle W^S, W^V \rangle_t = \rho \, dt$$
+
+| Parameter | Constraint | Meaning |
+|---|---|---|
+| `v0` | > 0 | Initial instantaneous variance $V_0$ (e.g. $0.04 \implies 20\%$ initial volatility) |
+| `kappa` | > 0 | Speed of mean reversion for variance $\kappa$ |
+| `theta` | > 0 | Long-term mean variance level $\theta$ |
+| `sigma_v` | > 0 | Volatility of variance (vol-of-vol) $\sigma_v$ (alias: `sigma`, `xi`) |
+| `rho` | $[-1, 1]$ | Spot-vol correlation $\rho$ (controls skewness / leverage effect) |
+| `mu` | real, default 0.0 | Continuous drift rate $\mu$ of log-return (often $r - q$) |
+| `s0` | > 0, default 1.0 | Initial spot asset price $S_0$ |
+
+**Exactness:** `MOMENT_PROPAGATION` (affine characteristic function is known analytically; no Lévy triplet exists due to state-dependent stochastic variance).
+
+**Feller Condition & Variance Analytics:**
+```python
+heston.feller_ratio                # 2κθ / σ_v²
+heston.is_feller_satisfied         # True if 2κθ > σ_v² (variance strictly positive a.s.)
+heston.variance_mean(t)            # E[V_t | V_0] = θ + (v0 - θ) e^{-κ t}
+heston.variance_var(t)             # Var(V_t | V_0)
+heston.stationary_variance_mean    # θ
+heston.stationary_variance_var     # θ σ_v² / (2κ)
+heston.expected_integrated_variance(t) # E[∫_0^t V_s ds] = θ t + (v0 - θ)(1 - e^{-κ t})/κ
+```
+
+**Continuous Characteristic Function & Cumulants:**
+```python
+# Evaluates E[exp(i u X_t)] via Albrecher et al. (2007) formulation (avoids branch-cut discontinuities)
+heston.char_func(u, t=1.0)
+heston.asset_char_func(u, t=1.0)   # E[exp(i u ln S_t)]
+
+heston.conditional_mean(t=1.0)     # E[X_t] = μ t - ½ E[∫_0^t V_s ds]
+heston.conditional_variance(t=1.0) # Var(X_t)
+heston.conditional_cumulants(t=1.0, order=4) # κ_1, κ_2, κ_3, κ_4 (leverage skew & fat tails)
+```
+
+**Option Pricing & Implied Volatility Surface:**
+```python
+# European call & put pricing via Gil-Pelaez Fourier inversion
+heston.call_price(K, T=1.0, r=0.05, q=0.0)
+heston.put_price(K, T=1.0, r=0.05, q=0.0)
+
+# Black-Scholes implied volatility inversion
+heston.implied_volatility(K=100.0, T=1.0, r=0.05)
+heston.implied_vol_smile(strikes=[80, 90, 100, 110, 120], T=1.0)
+```
+
+**Simulation:**
+```python
+# Full Truncation scheme (Lord et al. 2010) preserving variance non-negativity
+paths_x = heston.simulate(n_steps=100, n_paths=1000, T=1.0)
+
+# Joint asset price and variance simulation
+s_paths, v_paths = heston.simulate_joint(n_steps=100, n_paths=1000, T=1.0)
+```
+
+**References:**
+- Heston, S. L. (1993). *A closed-form solution for options with stochastic volatility with applications to bond and currency options*. The Review of Financial Studies, 6(2), 327–343.
+- Albrecher, H., Mayer, P., Schoutens, W., & Tistaert, J. (2007). *The little Heston trap*. Wilmott Magazine, 83–92.
+- Lord, R., Koekkoek, R., & van Dijk, D. (2010). *A comparison of biased simulation schemes for stochastic volatility models*. Quantitative Finance, 10(2), 177–194.
+
+---
 
 ### OrnsteinUhlenbeck
 

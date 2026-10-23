@@ -3,6 +3,7 @@
 from spxa.zoo.beyond.cir import CIRProcess, CoxIngersollRoss
 from spxa.zoo.beyond.fbm import FractionalBrownianMotion
 from spxa.zoo.beyond.hawkes import HawkesProcess
+from spxa.zoo.beyond.heston import Heston, HestonProcess
 from spxa.zoo.beyond.ornstein_uhlenbeck import (
     OrnsteinUhlenbeck,
     OrnsteinUhlenbeckProcess,
@@ -18,6 +19,8 @@ __all__ = [
     "CoxIngersollRoss",
     "FractionalBrownianMotion",
     "HawkesProcess",
+    "Heston",
+    "HestonProcess",
     "OULevy",
     "OrnsteinUhlenbeck",
     "OrnsteinUhlenbeckProcess",

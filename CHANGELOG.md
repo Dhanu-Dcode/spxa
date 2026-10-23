@@ -6,6 +6,19 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/heston.py` — `HestonProcess` (`Heston`):
+  Continuous-time affine stochastic volatility diffusion model
+  $dX_t = (\mu - \frac{1}{2}V_t)dt + \sqrt{V_t} dW_t^S$,
+  $dV_t = \kappa(\theta - V_t)dt + \sigma_v \sqrt{V_t} dW_t^V$ with
+  $d\langle W^S, W^V \rangle_t = \rho dt$ under `MOMENT_PROPAGATION` exactness.
+  Features exact characteristic functions via Albrecher et al. (2007) continuous formulation,
+  CIR instantaneous and integrated variance moments, Feller condition verification,
+  analytical cumulants, European Call and Put option pricing via Gil-Pelaez Fourier inversion,
+  Black-Scholes implied volatility smile/skew inversion via root-finding, and Full Truncation
+  simulation (Lord et al. 2010).
+  References: Heston (1993); Albrecher et al. (2007); Lord et al. (2010).
+- `sim/exact.py` — Vectorized `sample_heston` simulation routine supporting
+  Lord et al. (2010) Full Truncation scheme and truncated Euler scheme.
 - `zoo/beyond/ornstein_uhlenbeck.py` — `OrnsteinUhlenbeckProcess` (`OrnsteinUhlenbeck`, `Vasicek`):
   Continuous-time Gaussian mean-reverting diffusion $dX_t = \theta(\mu - X_t)dt + \sigma dW_t$
   with `MOMENT_PROPAGATION` exactness level. Features exact Gaussian transition density, exact

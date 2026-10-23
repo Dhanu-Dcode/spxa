@@ -564,3 +564,150 @@ def sample_ou(
         )
 
     return paths
+
+
+def sample_heston(
+    v0: float,
+    kappa: float,
+    theta: float,
+    sigma_v: float,
+    rho: float,
+    mu: float = 0.0,
+    s0: float = 1.0,
+    dt: Optional[float] = None,
+    n_steps: int = 100,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+    method: str = "full_truncation",
+    return_variance: bool = False,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    r"""
+    Simulate sample paths of the Heston stochastic volatility model.
+
+    .. math::
+
+        dX_t = \left(\mu - \frac{1}{2} V_t\right) dt + \sqrt{V_t} \, dW_t^S, \quad X_0 = 0 \\
+        dV_t = \kappa (\theta - V_t) dt + \sigma_v \sqrt{V_t} \, dW_t^V, \quad V_0 = v_0
+
+    with :math:`\mathbb{E}[dW_t^S dW_t^V] = \rho \, dt`.
+
+    Parameters
+    ----------
+    v0 : float
+        Initial variance :math:`V_0 > 0`.
+    kappa : float
+        Mean-reversion rate :math:`\kappa > 0`.
+    theta : float
+        Long-term variance :math:`\theta > 0`.
+    sigma_v : float
+        Volatility of variance :math:`\sigma_v > 0`.
+    rho : float
+        Correlation :math:`\rho \in [-1, 1]`.
+    mu : float, default 0.0
+        Log-return continuous drift :math:`\mu`.
+    s0 : float, default 1.0
+        Initial asset spot price :math:`S_0 > 0`.
+    dt : float, optional
+        Time step size :math:`\Delta t > 0`.
+    n_steps : int, default 100
+        Number of time steps.
+    n_paths : int, default 1
+        Number of sample paths.
+    T : float, optional
+        Terminal horizon :math:`T > 0`.
+    rng : np.random.Generator, optional
+        Random number generator.
+    method : {"full_truncation", "euler"}, default "full_truncation"
+        Discretisation algorithm:
+        - "full_truncation": Lord et al. (2010) Full Truncation scheme.
+        - "euler": Truncated Euler–Maruyama scheme.
+    return_variance : bool, default False
+        If True, returns tuple ``(paths_x, paths_v)``.
+        If False, returns ``paths_x``.
+
+    Returns
+    -------
+    np.ndarray or tuple[np.ndarray, np.ndarray]
+        Path array of shape ``(n_paths, n_steps + 1)``.
+    """
+    if v0 <= 0:
+        raise ValueError("v0 must be strictly positive")
+    if kappa <= 0 or theta <= 0 or sigma_v <= 0:
+        raise ValueError("kappa, theta, and sigma_v must be strictly positive")
+    if not (-1.0 <= rho <= 1.0):
+        raise ValueError("rho must be in [-1, 1]")
+    if s0 <= 0:
+        raise ValueError("s0 must be strictly positive")
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+    if n_paths < 1:
+        raise ValueError("n_paths must be >= 1")
+
+    if dt is None:
+        if T is not None:
+            if T <= 0:
+                raise ValueError("T must be strictly positive")
+            dt = T / n_steps if n_steps > 0 else 1.0
+        else:
+            dt = 1.0 / n_steps if n_steps > 0 else 1.0
+    else:
+        if dt <= 0:
+            raise ValueError("dt must be strictly positive")
+
+    rng = rng or np.random.default_rng()
+    paths_x = np.zeros((n_paths, n_steps + 1), dtype=float)
+    paths_v = np.empty((n_paths, n_steps + 1), dtype=float)
+    paths_v[:, 0] = float(v0)
+
+    if n_steps == 0:
+        if return_variance:
+            return paths_x, paths_v
+        return paths_x
+
+    sqrt_dt = math.sqrt(dt)
+    sqrt_1_minus_rho2 = math.sqrt(max(0.0, 1.0 - rho ** 2))
+
+    curr_x = np.zeros(n_paths, dtype=float)
+    curr_v = np.full(n_paths, float(v0), dtype=float)
+
+    if method == "full_truncation":
+        for k in range(n_steps):
+            z1 = rng.standard_normal(size=n_paths)
+            z_indep = rng.standard_normal(size=n_paths)
+            z2 = rho * z1 + sqrt_1_minus_rho2 * z_indep
+
+            v_pos = np.maximum(curr_v, 0.0)
+            sqrt_v_pos = np.sqrt(v_pos)
+
+            v_next = curr_v + kappa * (theta - v_pos) * dt + sigma_v * sqrt_v_pos * sqrt_dt * z1
+            curr_x = curr_x + (mu - 0.5 * v_pos) * dt + sqrt_v_pos * sqrt_dt * z2
+            curr_v = np.maximum(v_next, 0.0)
+
+            paths_x[:, k + 1] = curr_x
+            paths_v[:, k + 1] = curr_v
+
+    elif method == "euler":
+        for k in range(n_steps):
+            z1 = rng.standard_normal(size=n_paths)
+            z_indep = rng.standard_normal(size=n_paths)
+            z2 = rho * z1 + sqrt_1_minus_rho2 * z_indep
+
+            v_pos = np.maximum(curr_v, 0.0)
+            sqrt_v_pos = np.sqrt(v_pos)
+
+            curr_v = np.maximum(0.0, curr_v + kappa * (theta - v_pos) * dt + sigma_v * sqrt_v_pos * sqrt_dt * z1)
+            curr_x = curr_x + (mu - 0.5 * v_pos) * dt + sqrt_v_pos * sqrt_dt * z2
+
+            paths_x[:, k + 1] = curr_x
+            paths_v[:, k + 1] = curr_v
+
+    else:
+        raise ValueError(
+            f"Unknown simulation method '{method}'. "
+            "Supported methods: 'full_truncation', 'euler'."
+        )
+
+    if return_variance:
+        return paths_x, paths_v
+    return paths_x

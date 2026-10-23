@@ -24,6 +24,7 @@ from spxa.sim.exact import (
     sample_cir,
     sample_compound_poisson,
     sample_gamma,
+    sample_heston,
     sample_nig,
     sample_ou,
     sample_vg,
@@ -343,6 +344,74 @@ class TestExactSamplers:
             sample_ou(theta=1.0, mu=0.05, sigma=0.1, x0=0.0, dt=0.1, n_steps=10, n_paths=0)
         with pytest.raises(ValueError, match="Unknown simulation method"):
             sample_ou(theta=1.0, mu=0.05, sigma=0.1, x0=0.0, dt=0.1, n_steps=10, method="bad")
+
+    def test_sample_heston_shape_and_initial_condition(self) -> None:
+        """sample_heston produces correct shape and initial values."""
+        rng = np.random.default_rng(42)
+        px = sample_heston(
+            v0=0.04, kappa=2.0, theta=0.04, sigma_v=0.3, rho=-0.7,
+            dt=0.05, n_steps=20, n_paths=5, rng=rng,
+        )
+        assert px.shape == (5, 21)
+        assert np.all(px[:, 0] == 0.0)
+
+        # return_variance=True returns tuple (px, pv)
+        px2, pv2 = sample_heston(
+            v0=0.04, kappa=2.0, theta=0.04, sigma_v=0.3, rho=-0.7,
+            dt=0.05, n_steps=20, n_paths=5, rng=rng, return_variance=True,
+        )
+        assert px2.shape == (5, 21)
+        assert pv2.shape == (5, 21)
+        assert np.all(px2[:, 0] == 0.0)
+        assert np.all(pv2[:, 0] == 0.04)
+        assert np.all(pv2 >= 0.0)
+
+    def test_sample_heston_methods(self) -> None:
+        """Both full_truncation and euler methods run successfully."""
+        rng = np.random.default_rng(43)
+        for meth in ["full_truncation", "euler"]:
+            p = sample_heston(
+                v0=0.04, kappa=1.5, theta=0.04, sigma_v=0.25, rho=-0.5,
+                dt=0.02, n_steps=15, n_paths=4, rng=rng, method=meth,
+            )
+            assert p.shape == (4, 16)
+            assert np.all(p[:, 0] == 0.0)
+
+    def test_sample_heston_zero_steps(self) -> None:
+        """sample_heston with n_steps=0 returns shape (n_paths, 1)."""
+        px = sample_heston(
+            v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=-0.5,
+            dt=0.1, n_steps=0, n_paths=3,
+        )
+        assert px.shape == (3, 1)
+        assert np.all(px == 0.0)
+
+        px2, pv2 = sample_heston(
+            v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=-0.5,
+            dt=0.1, n_steps=0, n_paths=3, return_variance=True,
+        )
+        assert px2.shape == (3, 1)
+        assert pv2.shape == (3, 1)
+        assert np.all(pv2 == 0.04)
+
+    def test_sample_heston_invalid_parameters_raise(self) -> None:
+        """sample_heston raises ValueError on invalid inputs."""
+        with pytest.raises(ValueError, match="v0"):
+            sample_heston(v0=0.0, kappa=1.0, theta=0.04, sigma_v=0.2, rho=0.0, n_steps=10)
+        with pytest.raises(ValueError, match="kappa"):
+            sample_heston(v0=0.04, kappa=-1.0, theta=0.04, sigma_v=0.2, rho=0.0, n_steps=10)
+        with pytest.raises(ValueError, match="rho"):
+            sample_heston(v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=1.5, n_steps=10)
+        with pytest.raises(ValueError, match="s0"):
+            sample_heston(v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=0.0, s0=0.0, n_steps=10)
+        with pytest.raises(ValueError, match="dt"):
+            sample_heston(v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=0.0, dt=-0.1, n_steps=10)
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_heston(v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=0.0, n_steps=-1)
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_heston(v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=0.0, n_steps=10, n_paths=0)
+        with pytest.raises(ValueError, match="Unknown simulation method"):
+            sample_heston(v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=0.0, n_steps=10, method="unknown")
 
 
 class TestBridge:
