@@ -31,6 +31,7 @@ the running library. All signatures are exact.
    - [MertonJumpDiffusion](#mertonjumpdiffusion)
    - [KouJumpDiffusion](#koujumpdiffusion)
 4. [Zoo — beyond Lévy](#zoo--beyond-lévy)
+   - [BatesProcess](#batesprocess)
    - [CEVProcess](#cevprocess)
    - [CIRProcess](#cirprocess)
    - [FractionalBrownianMotion](#fractionalbrownianmotion)
@@ -103,6 +104,10 @@ spxa.TemperedStable
 spxa.NegativeBinomialProcess
 
 # Beyond-Lévy processes
+spxa.Bates96
+spxa.BatesModel
+spxa.BatesProcess
+spxa.SVJ
 spxa.CEV
 spxa.CEVProcess
 spxa.ConstantElasticityOfVariance
@@ -926,6 +931,63 @@ with jump density $f_Y(y) = p \eta_1 e^{-\eta_1 y}\mathbb{I}_{y \ge 0} + (1-p) \
 
 Processes in `spxa.zoo.beyond` have `ExactnessLevel.MOMENT_PROPAGATION`.
 Calling `.triplet` always raises `ExactnessError` with a mathematical explanation.
+
+### BatesProcess
+
+```python
+from spxa import BatesProcess, BatesModel, Bates96, SVJ
+
+bates = BatesProcess(
+    v0=0.04,
+    kappa=2.0,
+    theta=0.04,
+    sigma_v=0.30,
+    rho=-0.60,
+    rate=1.2,
+    jump_mean=-0.06,
+    jump_std=0.12,
+    mu=0.05,
+    s0=100.0,
+)
+```
+
+The Bates (1996) model augments the Heston (1993) stochastic volatility model with log-normal Merton (1976) price jumps:
+$$dS_t = (\mu - q - \lambda \bar{k}) S_t dt + \sqrt{V_t} S_t dW_t^S + S_{t-} (e^Y - 1) dN_t$$
+$$dV_t = \kappa (\theta - V_t) dt + \sigma_v \sqrt{V_t} dW_t^V$$
+with correlation $\mathbb{E}[dW_t^S dW_t^V] = \rho dt$, Poisson jump intensity $\lambda$, jump size $Y \sim \mathcal{N}(\mu_J, \sigma_J^2)$, and martingale drift compensator $-\lambda \bar{k}$ where $\bar{k} = \mathbb{E}[e^Y - 1] = \exp(\mu_J + \frac{1}{2}\sigma_J^2) - 1$.
+
+**Structural Properties & Variance Analytics:**
+- `feller_ratio` — Feller ratio $\frac{2\kappa\theta}{\sigma_v^2}$
+- `is_feller_satisfied` — `True` when $2\kappa\theta > \sigma_v^2$
+- `expected_relative_jump` — $\bar{k} = \exp(\mu_J + \frac{1}{2}\sigma_J^2) - 1$
+- `drift_compensator` — $-\lambda \bar{k}$
+- `variance_mean(t)` — analytical conditional expectation $\mathbb{E}[V_t \mid V_0]$
+- `variance_var(t)` — analytical conditional variance $\mathrm{Var}(V_t \mid V_0)$
+- `expected_integrated_variance(t)` — $\mathbb{E}\left[\int_0^t V_s ds\right] = \theta t + (v_0 - \theta)\frac{1 - e^{-\kappa t}}{\kappa}$
+
+**Characteristic Function & Cumulants:**
+- `char_func(u, t=1.0)` — continuous Albrecher et al. (2007) characteristic function factored with compound Poisson jumps
+- `asset_char_func(u, t=1.0)` — characteristic function of $\ln S_t$
+- `conditional_mean(t=1.0)` — expected log-return
+- `conditional_variance(t=1.0)` — variance of log-return
+- `conditional_cumulants(t=1.0, order=4)` — cumulants $\kappa_1, \dots, \kappa_4$
+
+**Option Pricing & Volatility Smile:**
+- `call_price(strikes, T=1.0, r=None, q=0.0)` — European call pricing via Gil–Pelaez Fourier inversion
+- `put_price(strikes, T=1.0, r=None, q=0.0)` — European put pricing via exact Put-Call parity
+- `implied_volatility(K, T=1.0, r=None, q=0.0)` — Black–Scholes implied volatility inversion
+- `implied_vol_smile(strikes, T=1.0, r=None, q=0.0)` — implied volatility smile curve
+
+**Simulation:**
+- `simulate(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None, method="full_truncation")` — simulated paths of log-price $X_t$
+- `simulate_joint(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None, method="full_truncation")` — coupled paths of $(X_t, V_t)$
+
+**References:**
+- Bates, D. S. (1996). *Jumps and stochastic volatility: Exchange rate processes implicit in Deutsche Mark options*. Review of Financial Studies, 9(1), 69–107.
+- Heston, S. L. (1993). *A closed-form solution for options with stochastic volatility*. Review of Financial Studies, 6(2), 327–343.
+- Albrecher, H., Mayer, P., Schoutens, W., & Tistaert, J. (2007). *The little Heston trap*. Wilmott Magazine, 83–92.
+
+---
 
 ### CEVProcess
 

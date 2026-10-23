@@ -6,6 +6,19 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/bates.py` — `BatesProcess` (`BatesModel`, `Bates96`, `SVJ`):
+  Bates (1996) stochastic volatility with jumps model coupling the Heston (1993) CIR variance diffusion
+  with Merton (1976) log-normal price jumps:
+  $dS_t = (\mu - q - \lambda \bar{k}) S_t dt + \sqrt{V_t} S_t dW_t^S + S_{t-} (e^Y - 1) dN_t$,
+  $dV_t = \kappa (\theta - V_t) dt + \sigma_v \sqrt{V_t} dW_t^V$ with $\mathbb{E}[dW^S dW^V] = \rho dt$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features continuous Albrecher et al. (2007) characteristic function factored with compound Poisson jumps,
+  drift compensator $-\lambda \bar{k}$, high-precision cumulants $\kappa_1, \dots, \kappa_4$,
+  European Call and Put pricing via Gil–Pelaez Fourier inversion, exact Put-Call parity,
+  Black–Scholes implied volatility smile inversion, and vectorized path simulation via Lord et al. (2010)
+  full-truncation CIR scheme and Poisson jump shocks.
+  References: Bates (1996); Heston (1993); Albrecher et al. (2007); Lord et al. (2010).
+- `sim/exact.py` — Vectorized `sample_bates` path simulator supporting both log-return $X_t$ and instantaneous variance $V_t$.
 - `zoo/levy/kou.py` — `KouJumpDiffusion` (`KouProcess`, `Kou72`, `Kou02`):
   Kou (2002) double exponential jump-diffusion process combining continuous Brownian motion with
   asymmetric double exponential jump shocks: $X_t = \mu t + \sigma W_t + \sum_{i=1}^{N_t} Y_i$,

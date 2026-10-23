@@ -32,6 +32,7 @@ Every process implemented in spxa. The exactness level, available cumulants, sim
 
 | Class | Exactness | Notes | Reference |
 |---|---|---|---|
+| `BatesProcess` (`BatesModel`, `Bates96`, `SVJ`) | MOMENT | stochastic volatility with jumps $dS_t = (\mu - \lambda\bar{k})S_t dt + \sqrt{V_t}S_t dW_t^S + S_{t-}(e^Y - 1)dN_t$; coupled CIR variance diffusion $dV_t = \kappa(\theta - V_t)dt + \sigma_v \sqrt{V_t}dW_t^V$; Albrecher et al. (2007) continuous characteristic function factoring Heston and Merton jump components; Gil-Pelaez option pricer; Lord full-truncation simulation | Bates 1996; Heston 1993; Albrecher et al. 2007; Lord et al. 2010 |
 | `CEVProcess` (`CEV`, `ConstantElasticityOfVariance`) | MOMENT | local volatility diffusion $dS_t = \mu S_t dt + \sigma S_t^\gamma dW_t$; constant variance elasticity $2(\gamma - 1)$; exact non-central $\chi^2$ European option pricing (Schroder 1989); analytical absorption / default probability at 0; Milstein / Euler simulation with absorbing boundary | Cox 1975; Schroder 1989; Emanuel & MacBeth 1982 |
 | `CIRProcess` (`CoxIngersollRoss`) | MOMENT | square-root diffusion; exact non-central χ² transitions & simulation; exact conditional & stationary moments; Riccati bond pricing | Cox, Ingersoll & Ross 1985; Feller 1951 |
 | `FractionalBrownianMotion` | MOMENT | not a semimartingale; Hurst algebra for self-similarity | Mandelbrot & Van Ness 1968 |
