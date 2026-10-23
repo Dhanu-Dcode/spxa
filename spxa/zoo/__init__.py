@@ -1,23 +1,28 @@
 """Process zoo — all implemented stochastic processes."""
 
+from spxa.zoo.beyond import (
+    FractionalBrownianMotion,
+    HawkesProcess,
+    MarkovModulatedPoissonProcess,
+    OULevy,
+)
 from spxa.zoo.levy import (
+    CGMY,
+    NIG,
     AlphaStable,
     BrownianMotion,
-    CGMY,
     GammaProcess,
     InverseGaussianProcess,
     MeixnerProcess,
     NegativeBinomialProcess,
-    NIG,
     PoissonProcess,
     TemperedStable,
     VarianceGamma,
 )
-from spxa.zoo.beyond import FractionalBrownianMotion, HawkesProcess, OULevy
 from spxa.zoo.multivariate import (
+    CorrelatedLevy,
     MultivariateBrownianMotion,
     MultivariateLevyTriplet,
-    CorrelatedLevy,
     correlated_brownian_motion,
     independent_levy_vector,
 )
@@ -32,6 +37,7 @@ __all__ = [
     "HawkesProcess",
     "InverseGaussianProcess",
     "MeixnerProcess",
+    "MarkovModulatedPoissonProcess",
     "MultivariateBrownianMotion",
     "MultivariateLevyTriplet",
     "NegativeBinomialProcess",
