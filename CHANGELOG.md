@@ -6,6 +6,18 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/jcir.py` — `JCIRProcess` (`JCIR`, `JumpCIRProcess`, `JCIRModel`):
+  Jump-Extended Cox-Ingersoll-Ross short-rate model of Duffie & Garleanu (2001) and Maghsoodi (1996):
+  $dr_t = \kappa (\theta - r_t) dt + \sigma \sqrt{r_t} dW_t + dJ_t, \quad r_0 \ge 0$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features non-negative interest rates with compound Poisson exponential jump shocks ($Y_i \sim \mathrm{Exp}(\mu_J)$),
+  exact stationary mean $\theta_\infty = \theta + (\lambda_J \mu_J)/\kappa$ and stationary variance, exact conditional
+  moments at any horizon, closed-form exponential-affine zero-coupon bond pricing $P(t, T) = \exp(A(\tau) - B(\tau) r_t)$
+  with exact analytical Riccati integration, term structure yields, analytical instantaneous forward rates, exact
+  conditional characteristic function, and exact simulation combining non-central $\chi^2$ CIR transitions with compound
+  Poisson jump increments.
+  References: Duffie & Garleanu (2001); Maghsoodi (1996); Brigo & Mercurio (2006).
+- `sim/exact.py` — Vectorized `sample_jcir` exact non-central chi-squared + compound Poisson jump simulator.
 - `zoo/beyond/bessel.py` — `SquaredBesselProcess` (`BESQ`, `SquaredBessel`) and `BesselProcess` (`BES`, `Bessel`):
   Canonical squared Bessel and Bessel diffusion processes of Feller (1951), Pitman & Yor (1982), and Revuz & Yor (1999):
   $dX_t = \delta dt + 2\sqrt{X_t} dW_t, \quad R_t = \sqrt{X_t}, \quad dR_t = \frac{\delta - 1}{2 R_t} dt + dW_t$
