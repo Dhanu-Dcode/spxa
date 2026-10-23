@@ -43,6 +43,8 @@ the running library. All signatures are exact.
    - [HawkesProcess](#hawkesprocess)
    - [HestonProcess](#hestonprocess)
    - [SchobelZhuProcess](#schobelzhuprocess)
+   - [SquaredBesselProcess](#squaredbesselprocess)
+   - [BesselProcess](#besselprocess)
    - [OrnsteinUhlenbeck](#ornsteinuhlenbeck)
    - [OULevy](#oulevy)
 5. [Zoo — multivariate](#zoo--multivariate)
@@ -137,6 +139,12 @@ spxa.SZModel
 spxa.SchobelZhu
 spxa.SchobelZhuModel
 spxa.SchobelZhuProcess
+spxa.BES
+spxa.BESQ
+spxa.Bessel
+spxa.BesselProcess
+spxa.SquaredBessel
+spxa.SquaredBesselProcess
 spxa.FractionalBrownianMotion
 spxa.HawkesProcess
 spxa.Heston
@@ -1558,6 +1566,67 @@ Because volatility is mean-reverting and Gaussian, instantaneous variance $v_t =
 **References:**
 - Schöbel, R., & Zhu, J. (1999). *An analytic model for option pricing with lognormal and non-lognormal volatility processes*. Review of Derivatives Research, 3(1), 5–31.
 - Lord, R., & Kahl, C. (2007). *Complex logarithm and implementation of the Heston and Schöbel-Zhu models*. Journal of Computational Finance.
+
+---
+
+### SquaredBesselProcess
+
+```python
+from spxa import SquaredBesselProcess, BESQ, SquaredBessel
+
+besq = SquaredBesselProcess(dim=3.0, x0=1.0)
+```
+
+The Squared Bessel process of dimension $\delta \ge 0$, denoted $\mathrm{BESQ}^\delta(x_0)$, is defined by:
+$$dX_t = \delta dt + 2 \sqrt{X_t} dW_t, \quad X_0 = x_0 \ge 0$$
+
+It is a fundamental building block of continuous-state branching processes, the Cox-Ingersoll-Ross (CIR) interest rate model, Heston variance dynamics, and the constant elasticity of variance (CEV) model.
+
+**Parameters & Structural Properties:**
+- `dim` (or `delta`) — dimension parameter $\delta \ge 0$ (default 2.0)
+- `x0` — initial state $X_0 \ge 0$ (default 1.0)
+- `index` (or `nu`) — index $\nu = \frac{\delta}{2} - 1$
+- `boundary_classification` — Feller boundary classification at $0$: `"entrance"` ($\delta \ge 2$), `"instantaneously_reflecting"` ($0 < \delta < 2$), `"absorbing"` ($\delta = 0$)
+
+**Distributional Analytics & Moments:**
+- `conditional_mean(t=1.0)` — exact conditional mean $\mathbb{E}[X_t \mid X_0] = x_0 + \delta t$
+- `conditional_variance(t=1.0)` — exact conditional variance $\mathrm{Var}(X_t \mid X_0) = 4 x_0 t + 2 \delta t^2$
+- `conditional_cumulants(t=1.0, order=4)` — exact closed-form cumulants $\kappa_1, \kappa_2, \kappa_3, \kappa_4$ to order $n$
+- `laplace_transform(lmbda, t=1.0)` — exact Laplace transform $\mathbb{E}[e^{-\lambda X_t}] = (1 + 2\lambda t)^{-\delta/2} \exp\left(-\frac{\lambda x_0}{1 + 2\lambda t}\right)$
+- `char_func(u, t=1.0)` — exact characteristic function $\phi(u; t) = (1 - 2 i u t)^{-\delta/2} \exp\left(\frac{i u x_0}{1 - 2 i u t}\right)$
+- `transition_density(y, t=1.0)` — exact transition density via non-central $\chi^2$
+- `transition_cdf(y, t=1.0)` — exact cumulative distribution function
+
+**Simulation:**
+- `simulate(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None)` — exact path simulation with zero time-discretization error via scaled non-central chi-squared increments $\frac{X_{t+\Delta t}}{\Delta t} \sim \chi^2(\delta, \frac{X_t}{\Delta t})$
+
+---
+
+### BesselProcess
+
+```python
+from spxa import BesselProcess, BES, Bessel
+
+bes = BesselProcess(dim=3.0, r0=1.0)
+```
+
+The Bessel process of dimension $\delta \ge 0$, denoted $\mathrm{BES}^\delta(r_0)$, is the square root of a Squared Bessel process:
+$$R_t = \sqrt{X_t}, \quad X_t \sim \mathrm{BESQ}^\delta(r_0^2)$$
+$$dR_t = \frac{\delta - 1}{2 R_t} dt + dW_t, \quad R_0 = r_0 \ge 0$$
+
+**Parameters & Analytics:**
+- `dim` (or `delta`) — dimension parameter $\delta \ge 0$
+- `r0` — initial value $R_0 \ge 0$
+- `conditional_mean(t=1.0)` — exact conditional mean via confluent hypergeometric function ${}_1F_1\left(-\frac{1}{2}, \frac{\delta}{2}; -\frac{r_0^2}{2t}\right)$
+- `conditional_second_moment(t=1.0)` — exact second moment $\mathbb{E}[R_t^2] = r_0^2 + \delta t$
+- `conditional_variance(t=1.0)` — exact conditional variance $\mathbb{E}[R_t^2] - (\mathbb{E}[R_t])^2$
+- `simulate(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None)` — exact non-central chi simulation $R_t = \sqrt{X_t}$
+
+**References:**
+- Feller, W. (1951). *Two singular diffusion problems*. Annals of Mathematics, 54(1), 173–182.
+- Pitman, J., & Yor, M. (1982). *A decomposition of Bessel bridges*. Zeitschrift für Wahrscheinlichkeitstheorie und verwandte Gebiete, 59(4), 425–457.
+- Revuz, D., & Yor, M. (1999). *Continuous Martingales and Brownian Motion*. Springer, Chapter XI.
+
 
 ---
 

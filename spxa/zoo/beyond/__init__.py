@@ -1,6 +1,14 @@
 """Beyond-Lévy process zoo — moment propagation, no exact triplets."""
 
 from spxa.zoo.beyond.bates import Bates96, BatesModel, BatesProcess, SVJ
+from spxa.zoo.beyond.bessel import (
+    BES,
+    BESQ,
+    Bessel,
+    BesselProcess,
+    SquaredBessel,
+    SquaredBesselProcess,
+)
 from spxa.zoo.beyond.black_karasinski import (
     BKModel,
     BKProcess,
@@ -35,6 +43,12 @@ __all__ = [
     "BatesModel",
     "BatesProcess",
     "SVJ",
+    "BES",
+    "BESQ",
+    "Bessel",
+    "BesselProcess",
+    "SquaredBessel",
+    "SquaredBesselProcess",
     "BKModel",
     "BKProcess",
     "BlackKarasinski",

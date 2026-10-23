@@ -34,6 +34,8 @@ from spxa.sim.exact import (
     sample_gh,
     sample_black_karasinski,
     sample_schobel_zhu,
+    sample_besq,
+    sample_bessel,
     sample_nig,
     sample_ou,
     sample_vg,
@@ -871,6 +873,39 @@ class TestExactSamplers:
             sample_schobel_zhu(n_steps=-1)
         with pytest.raises(ValueError, match="n_paths"):
             sample_schobel_zhu(n_paths=0)
+
+    def test_sample_besq_shape_and_initial_condition(self) -> None:
+        """sample_besq produces correct shape and non-negative values."""
+        rng = np.random.default_rng(90)
+        p = sample_besq(dim=2.5, x0=1.5, dt=0.05, n_steps=20, n_paths=5, rng=rng)
+        assert p.shape == (5, 21)
+        assert np.all(p[:, 0] == 1.5)
+        assert np.all(p >= 0.0)
+
+    def test_sample_bessel_shape_and_initial_condition(self) -> None:
+        """sample_bessel produces correct shape and non-negative values."""
+        rng = np.random.default_rng(91)
+        p = sample_bessel(dim=3.0, r0=2.0, dt=0.05, n_steps=20, n_paths=5, rng=rng)
+        assert p.shape == (5, 21)
+        assert np.all(p[:, 0] == 2.0)
+        assert np.all(p >= 0.0)
+
+    def test_sample_besq_zero_steps(self) -> None:
+        """sample_besq with n_steps=0 returns shape (n_paths, 1)."""
+        p = sample_besq(dim=2.0, x0=1.0, dt=0.1, n_steps=0, n_paths=3)
+        assert p.shape == (3, 1)
+        assert np.all(p == 1.0)
+
+    def test_sample_besq_invalid_parameters_raise(self) -> None:
+        """sample_besq raises ValueError on invalid inputs."""
+        with pytest.raises(ValueError, match="Dimension 'dim'"):
+            sample_besq(dim=-1.0)
+        with pytest.raises(ValueError, match="Initial value 'x0'"):
+            sample_besq(x0=-1.0)
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_besq(n_steps=-1)
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_besq(n_paths=0)
 
 
 
