@@ -12,6 +12,12 @@ from spxa.zoo.levy.compound_poisson import (
     UniformJump,
 )
 from spxa.zoo.levy.gamma import GammaProcess
+from spxa.zoo.levy.gh import (
+    GH,
+    GHProcess,
+    GeneralizedHyperbolic,
+    GeneralizedHyperbolicProcess,
+)
 from spxa.zoo.levy.inverse_gaussian import InverseGaussianProcess
 from spxa.zoo.levy.kou import Kou02, Kou72, KouJumpDiffusion, KouProcess
 from spxa.zoo.levy.meixner import MeixnerProcess
@@ -32,6 +38,10 @@ __all__ = [
     "DoubleExponentialJump",
     "ExponentialJump",
     "GammaProcess",
+    "GH",
+    "GHProcess",
+    "GeneralizedHyperbolic",
+    "GeneralizedHyperbolicProcess",
     "InverseGaussianProcess",
     "JumpDistribution",
     "Kou02",
