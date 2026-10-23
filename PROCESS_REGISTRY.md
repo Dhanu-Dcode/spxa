@@ -33,6 +33,7 @@ Every process implemented in spxa. The exactness level, available cumulants, sim
 | `CIRProcess` (`CoxIngersollRoss`) | MOMENT | square-root diffusion; exact non-central χ² transitions & simulation; exact conditional & stationary moments; Riccati bond pricing | Cox, Ingersoll & Ross 1985; Feller 1951 |
 | `FractionalBrownianMotion` | MOMENT | not a semimartingale; Hurst algebra for self-similarity | Mandelbrot & Van Ness 1968 |
 | `HawkesProcess` | MOMENT | self-exciting; mean intensity and variance propagated | Hawkes 1971 |
+| `HestonProcess` (`Heston`) | MOMENT | affine stochastic volatility diffusion; Albrecher et al. continuous characteristic function; CIR variance moments; European option pricing via Gil-Pelaez; Black-Scholes implied volatility smile | Heston 1993; Albrecher et al. 2007 |
 | `OULevy` | MOMENT | OU driven by Lévy subordinator; stationary dist. exact | Barndorff-Nielsen & Shephard 2001 |
 | `OrnsteinUhlenbeck` (`Vasicek`) | MOMENT | Gaussian mean-reverting diffusion; exact Gaussian transitions & simulation; exact conditional moments & stationary law; Lorentzian spectral density; Vasicek bond pricing | Uhlenbeck & Ornstein 1930; Vasicek 1977 |
 | `MarkovModulatedPoissonProcess` | MOMENT | Markov-modulated arrival intensity; finite-horizon count moments and cumulants; event-driven CTMC and Poisson simulation | Fischer & Meier-Hellstern 1993 |
