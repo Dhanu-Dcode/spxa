@@ -37,6 +37,7 @@ from spxa.sim.exact import (
     sample_besq,
     sample_bessel,
     sample_jcir,
+    sample_schwartz_two_factor,
     sample_nig,
     sample_ou,
     sample_vg,
@@ -951,6 +952,53 @@ class TestExactSamplers:
             sample_jcir(n_steps=-1)
         with pytest.raises(ValueError, match="n_paths"):
             sample_jcir(n_paths=0)
+
+    def test_sample_schwartz_two_factor_shape_and_initial_condition(self) -> None:
+        """sample_schwartz_two_factor produces correct shapes and initial conditions."""
+        rng = np.random.default_rng(93)
+        s, d = sample_schwartz_two_factor(
+            s0=25.0,
+            delta0=0.04,
+            kappa=1.0,
+            alpha_hat=0.06,
+            sigma1=0.25,
+            sigma2=0.15,
+            rho=0.5,
+            rate=0.03,
+            dt=0.05,
+            n_steps=20,
+            n_paths=5,
+            rng=rng,
+            return_yield=True,
+        )
+        assert s.shape == (5, 21)
+        assert d.shape == (5, 21)
+        assert np.all(s[:, 0] == 25.0)
+        assert np.all(d[:, 0] == 0.04)
+        assert np.all(s > 0.0)
+
+    def test_sample_schwartz_two_factor_zero_steps(self) -> None:
+        """sample_schwartz_two_factor with n_steps=0 returns shape (n_paths, 1)."""
+        s = sample_schwartz_two_factor(s0=20.0, delta0=0.05, n_steps=0, n_paths=4)
+        assert s.shape == (4, 1)
+        assert np.all(s == 20.0)
+
+    def test_sample_schwartz_two_factor_invalid_parameters_raise(self) -> None:
+        """sample_schwartz_two_factor raises ValueError on invalid inputs."""
+        with pytest.raises(ValueError, match="s0"):
+            sample_schwartz_two_factor(s0=-1.0)
+        with pytest.raises(ValueError, match="kappa"):
+            sample_schwartz_two_factor(kappa=-1.0)
+        with pytest.raises(ValueError, match="sigma1"):
+            sample_schwartz_two_factor(sigma1=-0.2)
+        with pytest.raises(ValueError, match="sigma2"):
+            sample_schwartz_two_factor(sigma2=-0.2)
+        with pytest.raises(ValueError, match="rho"):
+            sample_schwartz_two_factor(rho=1.5)
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_schwartz_two_factor(n_steps=-1)
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_schwartz_two_factor(n_paths=0)
 
 
 

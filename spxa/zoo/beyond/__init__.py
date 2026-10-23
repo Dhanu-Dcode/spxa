@@ -41,6 +41,12 @@ from spxa.zoo.beyond.schobel_zhu import (
     SchobelZhuModel,
     SchobelZhuProcess,
 )
+from spxa.zoo.beyond.schwartz_two_factor import (
+    Schwartz2F,
+    Schwartz97,
+    SchwartzTwoFactor,
+    SchwartzTwoFactorModel,
+)
 
 from .mmpp import MarkovModulatedPoissonProcess
 
@@ -86,6 +92,10 @@ __all__ = [
     "SchobelZhu",
     "SchobelZhuModel",
     "SchobelZhuProcess",
+    "Schwartz2F",
+    "Schwartz97",
+    "SchwartzTwoFactor",
+    "SchwartzTwoFactorModel",
     "Vasicek",
     "VasicekProcess",
     "MarkovModulatedPoissonProcess",
