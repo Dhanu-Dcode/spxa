@@ -27,6 +27,7 @@ from spxa.sim.exact import (
     sample_heston,
     sample_merton,
     sample_cev,
+    sample_kou,
     sample_nig,
     sample_ou,
     sample_vg,
@@ -510,6 +511,45 @@ class TestExactSamplers:
             sample_cev(mu=0.0, sigma=0.2, gamma=0.5, s0=100.0, n_steps=10, n_paths=0)
         with pytest.raises(ValueError, match="method"):
             sample_cev(mu=0.0, sigma=0.2, gamma=0.5, s0=100.0, n_steps=10, method="unknown")
+
+    def test_sample_kou_shape_and_initial_condition(self) -> None:
+        """sample_kou produces correct shape and initial values."""
+        rng = np.random.default_rng(42)
+        p = sample_kou(
+            drift=0.05, sigma=0.2, rate=1.5, p=0.4, eta1=10.0, eta2=5.0,
+            dt=0.05, n_steps=20, n_paths=5, rng=rng,
+        )
+        assert p.shape == (5, 21)
+        assert np.all(p[:, 0] == 0.0)
+
+    def test_sample_kou_zero_steps(self) -> None:
+        """sample_kou with n_steps=0 returns shape (n_paths, 1)."""
+        p = sample_kou(
+            drift=0.05, sigma=0.2, rate=1.5, p=0.4, eta1=10.0, eta2=5.0,
+            dt=0.1, n_steps=0, n_paths=3,
+        )
+        assert p.shape == (3, 1)
+        assert np.all(p == 0.0)
+
+    def test_sample_kou_invalid_parameters_raise(self) -> None:
+        """sample_kou raises ValueError on invalid parameters."""
+        with pytest.raises(ValueError, match="sigma"):
+            sample_kou(drift=0.0, sigma=0.0, rate=1.0, p=0.4, eta1=10.0, eta2=5.0, n_steps=10)
+        with pytest.raises(ValueError, match="rate"):
+            sample_kou(drift=0.0, sigma=0.2, rate=-1.0, p=0.4, eta1=10.0, eta2=5.0, n_steps=10)
+        with pytest.raises(ValueError, match="p"):
+            sample_kou(drift=0.0, sigma=0.2, rate=1.0, p=1.5, eta1=10.0, eta2=5.0, n_steps=10)
+        with pytest.raises(ValueError, match="eta1"):
+            sample_kou(drift=0.0, sigma=0.2, rate=1.0, p=0.4, eta1=0.8, eta2=5.0, n_steps=10)
+        with pytest.raises(ValueError, match="eta2"):
+            sample_kou(drift=0.0, sigma=0.2, rate=1.0, p=0.4, eta1=10.0, eta2=-1.0, n_steps=10)
+        with pytest.raises(ValueError, match="dt"):
+            sample_kou(drift=0.0, sigma=0.2, rate=1.0, p=0.4, eta1=10.0, eta2=5.0, dt=-0.1, n_steps=10)
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_kou(drift=0.0, sigma=0.2, rate=1.0, p=0.4, eta1=10.0, eta2=5.0, n_steps=-1)
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_kou(drift=0.0, sigma=0.2, rate=1.0, p=0.4, eta1=10.0, eta2=5.0, n_steps=10, n_paths=0)
+
 
 
 
