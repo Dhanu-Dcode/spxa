@@ -27,6 +27,12 @@ from spxa.zoo.beyond.jcir import (
     JCIRProcess,
     JumpCIRProcess,
 )
+from spxa.zoo.beyond.jacobi import (
+    Jacobi,
+    JacobiDiffusion,
+    JacobiProcess,
+    WrightFisherDiffusion,
+)
 from spxa.zoo.beyond.cev import CEV, CEVProcess, ConstantElasticityOfVariance
 from spxa.zoo.beyond.cir import CIRProcess, CoxIngersollRoss
 from spxa.zoo.beyond.fbm import FractionalBrownianMotion
@@ -79,6 +85,10 @@ __all__ = [
     "JCIRModel",
     "JCIRProcess",
     "JumpCIRProcess",
+    "Jacobi",
+    "JacobiDiffusion",
+    "JacobiProcess",
+    "WrightFisherDiffusion",
     "CEV",
     "CEVProcess",
     "ConstantElasticityOfVariance",
