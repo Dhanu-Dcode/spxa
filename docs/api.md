@@ -33,6 +33,7 @@ the running library. All signatures are exact.
    - [FractionalBrownianMotion](#fractionalbrownianmotion)
    - [MarkovModulatedPoissonProcess](#markovmodulatedpoissonprocess)
    - [HawkesProcess](#hawkesprocess)
+   - [OrnsteinUhlenbeck](#ornsteinuhlenbeck)
    - [OULevy](#oulevy)
 5. [Zoo — multivariate](#zoo--multivariate)
    - [MultivariateLevyTriplet](#multivariatelevytriplet)
@@ -96,6 +97,10 @@ spxa.CoxIngersollRoss
 spxa.FractionalBrownianMotion
 spxa.HawkesProcess
 spxa.MarkovModulatedPoissonProcess
+spxa.OrnsteinUhlenbeck
+spxa.OrnsteinUhlenbeckProcess
+spxa.Vasicek
+spxa.VasicekProcess
 spxa.OULevy
 
 # Multivariate
@@ -950,6 +955,83 @@ hawkes.fano_factor           # float: (1+α/β)/(1−α/β)² — always ≥ 1
 **Simulation:** Ogata's thinning algorithm.
 
 **Reference:** Hawkes (1971); Hawkes & Oakes (1974); Ogata (1981).
+
+### OrnsteinUhlenbeck
+
+```python
+from spxa import OrnsteinUhlenbeck, Vasicek
+from spxa.zoo.beyond import OrnsteinUhlenbeckProcess, VasicekProcess
+
+# All four names refer to the same process class
+ou = OrnsteinUhlenbeck(theta=1.5, mu=0.05, sigma=0.03, x0=0.02)
+```
+
+Continuous-time Gaussian mean-reverting diffusion (Uhlenbeck & Ornstein 1930; Vasicek 1977) governed by the stochastic differential equation:
+
+$$dX_t = \theta(\mu - X_t) dt + \sigma dW_t, \quad X_0 = x_0$$
+
+| Parameter | Constraint | Meaning |
+|---|---|---|
+| `theta` | > 0 | Mean-reversion speed ($\theta > 0$) |
+| `mu` | real | Long-term mean / central tendency ($\mu \in \mathbb{R}$) |
+| `sigma` | > 0 | Volatility / diffusion coefficient ($\sigma > 0$) |
+| `x0` | real, default 0.0 | Initial state value ($X_0 = x_0$) |
+
+**Exactness:** `MOMENT_PROPAGATION` (conditional law is Gaussian; no Lévy triplet as increments are serially correlated).
+
+**Timescales & Stationarity:**
+```python
+ou.relaxation_time         # float: τ = 1/θ
+ou.half_life               # float: t_{1/2} = ln(2)/θ
+ou.stationary_mean         # float: μ
+ou.stationary_variance     # float: σ² / (2θ)
+ou.stationary_std          # float: σ / sqrt(2θ)
+ou.stationary_skewness     # float: 0.0
+ou.stationary_kurtosis     # float: 0.0 (excess)
+ou.stationary_cumulants(4) # dict[int, float]
+ou.stationary_density(x)   # Gaussian probability density
+ou.stationary_cdf(x)       # Gaussian cumulative distribution function
+```
+
+**Conditional Distribution & Moments:**
+```python
+ou.conditional_mean(t)     # E[X_t | X_0] = μ + (x_0 - μ) e^{-θ t}
+ou.conditional_variance(t) # Var(X_t | X_0) = (σ² / (2θ)) (1 - e^{-2θ t})
+ou.conditional_std(t)      # sqrt(Var(X_t | X_0))
+ou.conditional_cumulants(t, order=4)  # exact Gaussian cumulants
+ou.transition_density(x, t)# N(mean(t), var(t)) PDF
+ou.transition_cdf(x, t)    # N(mean(t), var(t)) CDF
+ou.char_func(u, t)         # E[exp(i u X_t)] exact characteristic function
+ou.laplace_transform(s, t) # E[exp(-s X_t)] exact Laplace transform
+```
+
+**Temporal Correlation & Power Spectrum:**
+```python
+ou.autocovariance(h)       # (σ² / (2θ)) e^{-θ h}
+ou.autocorrelation(h)      # e^{-θ h}
+ou.covariance(s, t)        # (σ² / (2θ)) (e^{-θ|t-s|} - e^{-θ(t+s)})
+ou.spectral_density(omega) # σ² / (π (θ² + ω²)) Lorentzian PSD
+```
+
+**Vasicek Term Structure & Bond Pricing:**
+```python
+ou.bond_price(tau)         # P(0, τ) = A(τ) exp(-B(τ) r_0)
+ou.bond_yield(tau)         # y(0, τ) = -ln(P(0, τ)) / τ
+ou.asymptotic_yield        # lim_{τ→∞} y(0, τ) = μ - σ² / (2θ²)
+```
+
+**Simulation:**
+```python
+# Exact Gaussian increments without time discretization bias (default)
+paths = ou.simulate(n_steps=100, n_paths=1000, T=1.0, method="exact")
+
+# Euler–Maruyama scheme
+paths_euler = ou.simulate(n_steps=100, n_paths=1000, T=1.0, method="euler")
+```
+
+**References:**
+- Uhlenbeck, G. E., & Ornstein, L. S. (1930). *On the theory of the Brownian motion*. Physical Review, 36(5), 823.
+- Vasicek, O. (1977). *An equilibrium characterisation of the term structure*. Journal of Financial Economics, 5(2), 177–188.
 
 ---
 

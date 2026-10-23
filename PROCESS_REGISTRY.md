@@ -34,6 +34,7 @@ Every process implemented in spxa. The exactness level, available cumulants, sim
 | `FractionalBrownianMotion` | MOMENT | not a semimartingale; Hurst algebra for self-similarity | Mandelbrot & Van Ness 1968 |
 | `HawkesProcess` | MOMENT | self-exciting; mean intensity and variance propagated | Hawkes 1971 |
 | `OULevy` | MOMENT | OU driven by Lévy subordinator; stationary dist. exact | Barndorff-Nielsen & Shephard 2001 |
+| `OrnsteinUhlenbeck` (`Vasicek`) | MOMENT | Gaussian mean-reverting diffusion; exact Gaussian transitions & simulation; exact conditional moments & stationary law; Lorentzian spectral density; Vasicek bond pricing | Uhlenbeck & Ornstein 1930; Vasicek 1977 |
 | `MarkovModulatedPoissonProcess` | MOMENT | Markov-modulated arrival intensity; finite-horizon count moments and cumulants; event-driven CTMC and Poisson simulation | Fischer & Meier-Hellstern 1993 |
 ---
 

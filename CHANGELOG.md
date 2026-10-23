@@ -6,6 +6,17 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/ornstein_uhlenbeck.py` — `OrnsteinUhlenbeckProcess` (`OrnsteinUhlenbeck`, `Vasicek`):
+  Continuous-time Gaussian mean-reverting diffusion $dX_t = \theta(\mu - X_t)dt + \sigma dW_t$
+  with `MOMENT_PROPAGATION` exactness level. Features exact Gaussian transition density, exact
+  conditional moments and cumulants, stationary distribution $N(\mu, \sigma^2/(2\theta))$,
+  relaxation time $\tau = 1/\theta$, half-life $t_{1/2} = \ln(2)/\theta$, exponential autocovariance
+  and autocorrelation, two-time covariance, Lorentzian power spectral density $S(\omega) = \sigma^2/(\pi(\theta^2+\omega^2))$,
+  exact Laplace transform and characteristic function, Vasicek zero-coupon bond pricing $P(\tau) = A(\tau)e^{-B(\tau)r_0}$,
+  yield curves, and asymptotic long-term yield.
+  References: Uhlenbeck & Ornstein (1930); Vasicek (1977).
+- `sim/exact.py` — Vectorized `sample_ou` supporting exact Gaussian increments without
+  discretization bias (`method="exact"`) and Euler–Maruyama discretisation (`method="euler"`).
 - `zoo/beyond/cir.py` — `CIRProcess` (`CoxIngersollRoss`): Cox–Ingersoll–Ross square-root
   diffusion process $dr_t = \kappa(\theta - r_t)dt + \sigma\sqrt{r_t}dW_t$ with `MOMENT_PROPAGATION`
   exactness level. Features Feller condition evaluation ($2\kappa\theta \ge \sigma^2$), exact non-central
