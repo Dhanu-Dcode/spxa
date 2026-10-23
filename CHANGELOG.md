@@ -6,6 +6,16 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/sabr.py` — `SABRProcess` (`SABRModel`, `SABR`):
+  SABR (Stochastic Alpha, Beta, Rho) stochastic volatility model of Hagan et al. (2002):
+  $dF_t = \alpha_t F_t^\beta dW_t^F, \quad d\alpha_t = \nu \alpha_t dW_t^\alpha$ with
+  $\mathbb{E}[dW_t^F dW_t^\alpha] = \rho dt$ under `MOMENT_PROPAGATION` exactness level.
+  Features Hagan et al. (2002) asymptotic Black-76 implied volatility closed form with Obłój (2008)
+  corrections, at-the-money (ATM) volatility formula, Black-76 European Call and Put pricing
+  satisfying Put-Call parity, exact forward and log-normal volatility moments, smile backbone
+  classification, and coupled vectorized simulation via log-Euler and Euler schemes.
+  References: Hagan, Kumar, Lesniewski, & Woodward (2002); Obłój (2008).
+- `sim/exact.py` — Vectorized `sample_sabr` simulator supporting coupled forward price and stochastic volatility paths.
 - `zoo/beyond/hull_white.py` — `HullWhiteProcess` (`HullWhite`, `HW1F`, `ExtendedVasicek`):
   Hull-White (1990) one-factor Gaussian short-rate model (extended Vasicek):
   $dr_t = a(b - r_t) dt + \sigma dW_t$ with mean-reversion speed $a > 0$, volatility $\sigma > 0$,

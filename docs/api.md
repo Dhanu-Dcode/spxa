@@ -35,6 +35,7 @@ the running library. All signatures are exact.
    - [CEVProcess](#cevprocess)
    - [CIRProcess](#cirprocess)
    - [HullWhiteProcess](#hullwhiteprocess)
+   - [SABRProcess](#sabrprocess)
    - [FractionalBrownianMotion](#fractionalbrownianmotion)
    - [MarkovModulatedPoissonProcess](#markovmodulatedpoissonprocess)
    - [HawkesProcess](#hawkesprocess)
@@ -118,6 +119,9 @@ spxa.ExtendedVasicek
 spxa.HW1F
 spxa.HullWhite
 spxa.HullWhiteProcess
+spxa.SABR
+spxa.SABRModel
+spxa.SABRProcess
 spxa.FractionalBrownianMotion
 spxa.HawkesProcess
 spxa.Heston
@@ -1188,6 +1192,59 @@ where $a > 0$ is the mean-reversion speed, $b \in \mathbb{R}$ is the long-term r
 - Hull, J., & White, A. (1993). *One-factor interest-rate models and the valuation of interest-rate derivative securities*. Journal of Financial and Quantitative Analysis, 28(2), 235–254.
 - Jamshidian, F. (1989). *An exact bond option formula*. The Journal of Finance, 44(1), 205–209.
 - Vasicek, O. (1977). *An equilibrium characterization of the term structure*. Journal of Financial Economics, 5(2), 177–188.
+
+---
+
+### SABRProcess
+
+```python
+from spxa import SABRProcess, SABRModel, SABR
+
+sabr = SABRProcess(
+    alpha=0.25,
+    beta=0.50,
+    nu=0.40,
+    rho=-0.30,
+    f0=100.0,
+)
+```
+
+The SABR (Stochastic Alpha, Beta, Rho) stochastic volatility model (Hagan et al. 2002) is a benchmark for modeling interest rate and equity smile/skew dynamics under the forward measure:
+$$dF_t = \alpha_t F_t^\beta dW_t^F, \quad F_0 = f_0 > 0$$
+$$d\alpha_t = \nu \alpha_t dW_t^\alpha, \quad \alpha_0 = \alpha > 0$$
+$$\mathbb{E}[dW_t^F dW_t^\alpha] = \rho dt$$
+
+**Parameters & Structural Properties:**
+- `alpha` — initial volatility scale $\alpha > 0$
+- `beta` — CEV elasticity exponent $\beta \in [0, 1]$
+- `nu` (or `vol_of_vol`) — volatility of volatility $\nu \ge 0$
+- `rho` — forward-volatility correlation $\rho \in [-1, 1]$
+- `f0` — initial forward level $F_0 > 0$
+- `backbone` — smile backbone regime (`"normal"`, `"lognormal"`, or `"cev"`)
+
+**Hagan et al. (2002) Asymptotic Implied Volatility:**
+- `implied_volatility(K, T=1.0)` — Black-76 implied volatility $\sigma_B(K, T)$ via the Hagan et al. closed form with Obłój corrections
+- `atm_volatility(T=1.0)` — At-the-money (ATM) Black implied volatility $\sigma_B(f_0, T)$
+- `implied_vol_smile(strikes, T=1.0)` — array of implied volatilities across strikes
+
+**Option Pricing:**
+- `call_price(K, T=1.0, r=0.0)` — Black-76 European call option price $C(K, T)$
+- `put_price(K, T=1.0, r=0.0)` — Black-76 European put option price $P(K, T)$ via exact Put-Call parity
+
+**Forward & Volatility Moments:**
+- `expected_forward(t=1.0)` — $\mathbb{E}[F_t] = f_0$ (martingale property)
+- `volatility_mean(t=1.0)` — expected volatility $\mathbb{E}[\alpha_t] = \alpha$
+- `volatility_variance(t=1.0)` — variance of volatility $\mathrm{Var}(\alpha_t) = \alpha^2 (e^{\nu^2 t} - 1)$
+- `log_volatility_mean(t=1.0)` — expected log-volatility $\mathbb{E}[\ln \alpha_t] = \ln \alpha - \frac{1}{2}\nu^2 t$
+- `log_volatility_variance(t=1.0)` — variance of log-volatility $\mathrm{Var}(\ln \alpha_t) = \nu^2 t$
+
+**Simulation:**
+- `simulate(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None, method="log_euler")` — coupled simulation returning forward price paths
+- `simulate_joint(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None, method="log_euler")` — returns tuple `(f_paths, alpha_paths)`
+
+**References:**
+- Hagan, P. S., Kumar, D., Lesniewski, A. S., & Woodward, D. E. (2002). *Managing smile risk*. Wilmott Magazine, September, 84–108.
+- Obłój, J. (2008). *Fine tune your smile: Correction to Hagan et al.*. Wilmott Magazine, May, 82–86.
 
 ---
 
