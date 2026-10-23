@@ -14,6 +14,7 @@ from spxa.zoo.beyond.ornstein_uhlenbeck import (
     VasicekProcess,
 )
 from spxa.zoo.beyond.ou_levy import OULevy
+from spxa.zoo.beyond.sabr import SABR, SABRModel, SABRProcess
 
 from .mmpp import MarkovModulatedPoissonProcess
 
@@ -38,6 +39,9 @@ __all__ = [
     "OULevy",
     "OrnsteinUhlenbeck",
     "OrnsteinUhlenbeckProcess",
+    "SABR",
+    "SABRModel",
+    "SABRProcess",
     "Vasicek",
     "VasicekProcess",
     "MarkovModulatedPoissonProcess",
