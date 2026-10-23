@@ -18,6 +18,7 @@ from spxa.sim.exact import (
     sample_cir,
     sample_ou,
     sample_heston,
+    sample_merton,
     increments_to_paths,
 )
 from spxa.sim.bridge import (
@@ -44,6 +45,7 @@ __all__ = [
     "sample_cir",
     "sample_ou",
     "sample_heston",
+    "sample_merton",
     "increments_to_paths",
     "brownian_bridge",
     "gamma_bridge",

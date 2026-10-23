@@ -28,6 +28,7 @@ the running library. All signatures are exact.
    - [InverseGaussianProcess](#inversegaussianprocess)
    - [TemperedStable](#temperedstable)
    - [NegativeBinomialProcess](#negativebinomialprocess)
+   - [MertonJumpDiffusion](#mertonjumpdiffusion)
 4. [Zoo — beyond Lévy](#zoo--beyond-lévy)
    - [CIRProcess](#cirprocess)
    - [FractionalBrownianMotion](#fractionalbrownianmotion)
@@ -89,6 +90,9 @@ spxa.MeixnerProcess
 spxa.PoissonProcess
 spxa.CompoundPoisson
 spxa.InverseGaussianProcess
+spxa.Merton76
+spxa.MertonJumpDiffusion
+spxa.MertonProcess
 spxa.TemperedStable
 spxa.NegativeBinomialProcess
 
@@ -802,6 +806,66 @@ nb.char_func_exact(u, t=1.0)
 **Simulation:** `numpy.negative_binomial(n=r·Δt, p=1−p)` — exact.
 
 **Reference:** Quenouille (1949); Johnson, Kemp & Kotz (2005), Chapter 5.
+
+---
+
+### MertonJumpDiffusion
+
+```python
+from spxa import MertonJumpDiffusion, MertonProcess, Merton76
+
+merton = MertonJumpDiffusion(drift=0.05, sigma=0.15, rate=1.5, jump_mean=-0.08, jump_std=0.12)
+```
+
+Merton (1976) jump-diffusion process combining continuous Brownian motion with compound Poisson normal jump shocks:
+
+$$X_t = \mu t + \sigma W_t + \sum_{i=1}^{N_t} Y_i, \quad Y_i \sim \mathcal{N}(\mu_J, \sigma_J^2)$$
+
+where $W_t$ is standard Brownian motion, $N_t \sim \mathrm{Poisson}(\lambda t)$, and $Y_i$ are independent Gaussian jump sizes.
+
+| Parameter | Constraint | Meaning |
+|---|---|---|
+| `drift` | real, default 0.0 | Continuous drift parameter $\mu$ (alias: `mu`) |
+| `sigma` | > 0, default 0.2 | Continuous diffusion volatility $\sigma$ (alias: `vol`) |
+| `rate` | > 0, default 1.0 | Jump arrival intensity $\lambda$ (alias: `lam`, `jump_rate`) |
+| `jump_mean` | real, default -0.05 | Mean jump size $\mu_J$ (alias: `mu_j`, `mean_jump`) |
+| `jump_std` | > 0, default 0.15 | Jump size standard deviation $\sigma_J$ (alias: `sigma_j`, `std_jump`) |
+
+**Exactness:** `EXACT` (full Lévy–Khintchine triplet and analytical characteristic exponent).
+
+**Lévy Triplet:**
+- $\sigma^2 = \sigma^2$
+- $\nu(dx) = \lambda \frac{1}{\sqrt{2\pi}\sigma_J} \exp\left(-\frac{(x - \mu_J)^2}{2\sigma_J^2}\right) dx$ (finite activity, total mass $\lambda$)
+- $b = \mu + \lambda \int_{-1}^1 x \, \mathcal{N}(x; \mu_J, \sigma_J^2) dx$ (exact closed-form error function integral)
+
+**Distributional Analytics:**
+```python
+merton.char_exponent(u)            # ψ(u) = iμu - ½σ²u² + λ(exp(iu μ_J - ½σ_J²u²) - 1)
+merton.char_func(u, t=1.0)         # exp(t ψ(u))
+merton.cumulants(order=5)          # κ_1, ..., κ_5 in exact closed form
+merton.expected_relative_jump      # k̄ = exp(μ_J + ½σ_J²) - 1
+```
+
+**Merton (1976) Analytical Option Pricing:**
+```python
+# Evaluates Merton's analytical series via Poisson mixture of Black–Scholes formulas
+merton.call_price(K=100.0, T=1.0, S0=100.0, r=0.05, q=0.0)
+merton.put_price(K=100.0, T=1.0, S0=100.0, r=0.05, q=0.0)
+
+# Implied volatility inversion
+merton.implied_volatility(K=100.0, T=1.0, S0=100.0, r=0.05)
+merton.implied_vol_smile(strikes=[80, 90, 100, 110, 120], T=1.0, S0=100.0)
+```
+
+**Simulation:**
+```python
+# Exact simulation with zero discretization error for any step size Δt
+paths = merton.simulate(n_steps=100, n_paths=1000, T=1.0)
+```
+
+**References:**
+- Merton, R. C. (1976). *Option pricing when underlying stock returns are discontinuous*. Journal of Financial Economics, 3(1–2), 125–144.
+- Cont, R. & Tankov, P. (2004). *Financial Modelling with Jump Processes*. Chapman & Hall/CRC. Section 3.5.
 
 ---
 

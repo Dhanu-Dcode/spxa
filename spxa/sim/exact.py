@@ -711,3 +711,92 @@ def sample_heston(
     if return_variance:
         return paths_x, paths_v
     return paths_x
+
+
+def sample_merton(
+    drift: float,
+    sigma: float,
+    rate: float,
+    jump_mean: float,
+    jump_std: float,
+    dt: Optional[float] = None,
+    n_steps: int = 100,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+) -> np.ndarray:
+    r"""
+    Simulate exact sample paths of the Merton (1976) jump-diffusion process.
+
+    .. math::
+
+        X_t = \mu t + \sigma W_t + \sum_{i=1}^{N_t} Y_i, \quad Y_i \sim \mathcal{N}(\mu_J, \sigma_J^2)
+
+    Exact simulation with zero time discretization error for any step size :math:`\Delta t`.
+
+    Parameters
+    ----------
+    drift : float
+        Continuous drift :math:`\mu`.
+    sigma : float
+        Diffusion volatility :math:`\sigma > 0`.
+    rate : float
+        Jump arrival rate :math:`\lambda > 0`.
+    jump_mean : float
+        Mean jump size :math:`\mu_J`.
+    jump_std : float
+        Jump size standard deviation :math:`\sigma_J > 0`.
+    dt : float, optional
+        Time step size :math:`\Delta t > 0`.
+    n_steps : int, default 100
+        Number of time steps.
+    n_paths : int, default 1
+        Number of independent sample paths.
+    T : float, optional
+        Terminal time horizon :math:`T > 0`.
+    rng : np.random.Generator, optional
+        Random number generator.
+
+    Returns
+    -------
+    np.ndarray
+        Path array of shape ``(n_paths, n_steps + 1)`` with ``paths[:, 0] == 0.0``.
+    """
+    if sigma <= 0:
+        raise ValueError("sigma must be strictly positive")
+    if rate <= 0:
+        raise ValueError("rate must be strictly positive")
+    if jump_std <= 0:
+        raise ValueError("jump_std must be strictly positive")
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+    if n_paths < 1:
+        raise ValueError("n_paths must be >= 1")
+
+    if dt is None:
+        if T is not None:
+            if T <= 0:
+                raise ValueError("T must be strictly positive")
+            dt = T / n_steps if n_steps > 0 else 1.0
+        else:
+            dt = 1.0 / n_steps if n_steps > 0 else 1.0
+    else:
+        if dt <= 0:
+            raise ValueError("dt must be strictly positive")
+
+    rng = rng or np.random.default_rng()
+    paths = np.zeros((n_paths, n_steps + 1), dtype=float)
+
+    if n_steps == 0:
+        return paths
+
+    k_jumps = rng.poisson(lam=rate * dt, size=(n_paths, n_steps))
+    z0 = rng.standard_normal(size=(n_paths, n_steps))
+    z1 = rng.standard_normal(size=(n_paths, n_steps))
+
+    sqrt_dt = math.sqrt(dt)
+    jump_part = k_jumps * jump_mean + np.sqrt(k_jumps) * jump_std * z1
+    increments = drift * dt + sigma * sqrt_dt * z0 + jump_part
+
+    paths[:, 1:] = np.cumsum(increments, axis=1)
+    return paths
