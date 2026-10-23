@@ -40,7 +40,8 @@ from __future__ import annotations
 
 import abc
 import math
-from typing import Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -73,9 +74,7 @@ class JumpDistribution(abc.ABC):
         r"""Raw moment of jump size: E[Y^n] for n \ge 1."""
 
     @abc.abstractmethod
-    def sample(
-        self, rng: np.random.Generator, size: int | tuple[int, ...]
-    ) -> np.ndarray:
+    def sample(self, rng: np.random.Generator, size: int | tuple[int, ...]) -> np.ndarray:
         """Draw independent random jump sizes."""
 
     @abc.abstractmethod
@@ -110,7 +109,7 @@ class JumpDistribution(abc.ABC):
         return True
 
     @property
-    def tail_index(self) -> Optional[float]:
+    def tail_index(self) -> float | None:
         """Heavy-tail index alpha if P(Y > x) ~ x^{-alpha}, else None."""
         return None
 
@@ -144,12 +143,7 @@ class NormalJump(JumpDistribution):
         res = 0.0
         for k in range(0, n + 1, 2):
             double_fact = 1 if k == 0 else math.prod(range(1, k, 2))
-            res += (
-                math.comb(n, k)
-                * (self.mean ** (n - k))
-                * (self.std**k)
-                * double_fact
-            )
+            res += math.comb(n, k) * (self.mean ** (n - k)) * (self.std**k) * double_fact
         return float(res)
 
     def truncation_mean(self, cutoff: float = 1.0) -> float:
@@ -170,9 +164,7 @@ class NormalJump(JumpDistribution):
         # P(Y > x) = 1 - Phi((x - mu) / sigma) = Phi((mu - x) / sigma)
         return float(special.ndtr((self.mean - x) / self.std))
 
-    def sample(
-        self, rng: np.random.Generator, size: int | tuple[int, ...]
-    ) -> np.ndarray:
+    def sample(self, rng: np.random.Generator, size: int | tuple[int, ...]) -> np.ndarray:
         return rng.normal(loc=self.mean, scale=self.std, size=size)
 
     @property
@@ -212,9 +204,7 @@ class ExponentialJump(JumpDistribution):
         if c <= 0:
             return 0.0
         # \int_0^c x \beta e^{-\beta x} dx = (1/\beta)[1 - (1 + \beta c) e^{-\beta c}]
-        return float(
-            (1.0 / self.rate) * (1.0 - (1.0 + self.rate * c) * np.exp(-self.rate * c))
-        )
+        return float((1.0 / self.rate) * (1.0 - (1.0 + self.rate * c) * np.exp(-self.rate * c)))
 
     def density(self, x: ArrayLike) -> np.ndarray:
         x_arr = np.asarray(x, dtype=float)
@@ -228,9 +218,7 @@ class ExponentialJump(JumpDistribution):
             return 1.0
         return float(np.exp(-self.rate * x))
 
-    def sample(
-        self, rng: np.random.Generator, size: int | tuple[int, ...]
-    ) -> np.ndarray:
+    def sample(self, rng: np.random.Generator, size: int | tuple[int, ...]) -> np.ndarray:
         return rng.exponential(scale=1.0 / self.rate, size=size)
 
     @property
@@ -257,9 +245,7 @@ class DoubleExponentialJump(JumpDistribution):
         Negative jump decay rate \eta_2 > 0. Default 1.0.
     """
 
-    def __init__(
-        self, p: float = 0.5, eta1: float = 1.0, eta2: float = 1.0
-    ) -> None:
+    def __init__(self, p: float = 0.5, eta1: float = 1.0, eta2: float = 1.0) -> None:
         if not (0.0 <= p <= 1.0):
             raise ValueError(f"p must be in [0, 1], got {p}")
         if eta1 <= 0:
@@ -288,13 +274,9 @@ class DoubleExponentialJump(JumpDistribution):
         c = float(cutoff)
         if c <= 0:
             return 0.0
-        pos_part = (
-            (self.p / self.eta1)
-            * (1.0 - (1.0 + self.eta1 * c) * np.exp(-self.eta1 * c))
-        )
-        neg_part = (
-            ((1.0 - self.p) / self.eta2)
-            * (1.0 - (1.0 + self.eta2 * c) * np.exp(-self.eta2 * c))
+        pos_part = (self.p / self.eta1) * (1.0 - (1.0 + self.eta1 * c) * np.exp(-self.eta1 * c))
+        neg_part = ((1.0 - self.p) / self.eta2) * (
+            1.0 - (1.0 + self.eta2 * c) * np.exp(-self.eta2 * c)
         )
         return float(pos_part - neg_part)
 
@@ -314,9 +296,7 @@ class DoubleExponentialJump(JumpDistribution):
             return float(1.0 - (1.0 - self.p) * np.exp(self.eta2 * x))
         return float(self.p)
 
-    def sample(
-        self, rng: np.random.Generator, size: int | tuple[int, ...]
-    ) -> np.ndarray:
+    def sample(self, rng: np.random.Generator, size: int | tuple[int, ...]) -> np.ndarray:
         n = int(np.prod(size)) if isinstance(size, tuple) else int(size)
         is_up = rng.random(n) < self.p
         up = rng.exponential(1.0 / self.eta1, size=n)
@@ -357,9 +337,9 @@ class UniformJump(JumpDistribution):
         res[zero_mask] = 1.0 + 0j
         nz = ~zero_mask
         diff = self.high - self.low
-        res[nz] = (
-            np.exp(1j * u_arr[nz] * self.high) - np.exp(1j * u_arr[nz] * self.low)
-        ) / (1j * u_arr[nz] * diff)
+        res[nz] = (np.exp(1j * u_arr[nz] * self.high) - np.exp(1j * u_arr[nz] * self.low)) / (
+            1j * u_arr[nz] * diff
+        )
         return res
 
     def moment(self, n: int) -> float:
@@ -370,12 +350,12 @@ class UniformJump(JumpDistribution):
 
     def truncation_mean(self, cutoff: float = 1.0) -> float:
         c = float(cutoff)
-        l = max(self.low, -c)
-        r = min(self.high, c)
-        if l >= r:
+        left_bound = max(self.low, -c)
+        right_bound = min(self.high, c)
+        if left_bound >= right_bound:
             return 0.0
         diff = self.high - self.low
-        return float((r**2 - l**2) / (2.0 * diff))
+        return float((right_bound**2 - left_bound**2) / (2.0 * diff))
 
     def density(self, x: ArrayLike) -> np.ndarray:
         x_arr = np.asarray(x, dtype=float)
@@ -391,9 +371,7 @@ class UniformJump(JumpDistribution):
             return 0.0
         return float((self.high - x) / (self.high - self.low))
 
-    def sample(
-        self, rng: np.random.Generator, size: int | tuple[int, ...]
-    ) -> np.ndarray:
+    def sample(self, rng: np.random.Generator, size: int | tuple[int, ...]) -> np.ndarray:
         return rng.uniform(low=self.low, high=self.high, size=size)
 
     @property
@@ -416,9 +394,7 @@ class DiscreteJump(JumpDistribution):
         Optional probability mass vector. If None, assigns uniform probability 1/k.
     """
 
-    def __init__(
-        self, values: Sequence[float], probs: Optional[Sequence[float]] = None
-    ) -> None:
+    def __init__(self, values: Sequence[float], probs: Sequence[float] | None = None) -> None:
         val_arr = np.asarray(values, dtype=float)
         if val_arr.size == 0:
             raise ValueError("values cannot be empty")
@@ -465,9 +441,7 @@ class DiscreteJump(JumpDistribution):
         mask = self.values > x
         return float(np.sum(self.probs[mask]))
 
-    def sample(
-        self, rng: np.random.Generator, size: int | tuple[int, ...]
-    ) -> np.ndarray:
+    def sample(self, rng: np.random.Generator, size: int | tuple[int, ...]) -> np.ndarray:
         return rng.choice(self.values, p=self.probs, size=size)
 
     @property
@@ -556,8 +530,8 @@ class CompoundPoisson(Process):
     def __init__(
         self,
         rate: float,
-        jump_dist: Optional[Union[JumpDistribution, str, float, int]] = None,
-        **kwargs,
+        jump_dist: JumpDistribution | str | float | int | None = None,
+        **kwargs: Any,
     ) -> None:
         if rate <= 0:
             raise ValueError(f"rate must be positive, got {rate}")
@@ -575,7 +549,11 @@ class CompoundPoisson(Process):
             if name in ("normal", "gaussian"):
                 self.jump_dist = NormalJump(**kwargs)
             elif name == "exponential":
-                jump_r = kwargs.pop("jump_rate", None) or kwargs.pop("beta", None) or kwargs.pop("rate", 1.0)
+                jump_r = (
+                    kwargs.pop("jump_rate", None)
+                    or kwargs.pop("beta", None)
+                    or kwargs.pop("rate", 1.0)
+                )
                 self.jump_dist = ExponentialJump(rate=jump_r, **kwargs)
             elif name in ("double_exponential", "kou"):
                 self.jump_dist = DoubleExponentialJump(**kwargs)
@@ -628,9 +606,7 @@ class CompoundPoisson(Process):
             is_subordinator=self.jump_dist.is_positive,
         )
 
-    def char_func_exact(
-        self, u: float | np.ndarray, t: float = 1.0
-    ) -> np.ndarray:
+    def char_func_exact(self, u: float | np.ndarray, t: float = 1.0) -> np.ndarray:
         r"""
         Closed-form characteristic function:
           φ(u; t) = exp(λt · (φ_Y(u) - 1))
@@ -657,8 +633,8 @@ class CompoundPoisson(Process):
         self,
         n_steps: int,
         n_paths: int = 1,
-        T: float = 1.0,
-        rng: Optional[np.random.Generator] = None,
+        T: float = 1.0,  # noqa: N803
+        rng: np.random.Generator | None = None,
     ) -> np.ndarray:
         """
         Exact simulation via Poisson increment sampling and jump compounding.
