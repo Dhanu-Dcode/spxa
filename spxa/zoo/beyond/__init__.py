@@ -9,6 +9,12 @@ from spxa.zoo.beyond.bessel import (
     SquaredBessel,
     SquaredBesselProcess,
 )
+from spxa.zoo.beyond.bns import (
+    BNS,
+    BNSModel,
+    BNSProcess,
+    BarndorffNielsenShephard,
+)
 from spxa.zoo.beyond.black_karasinski import (
     BKModel,
     BKProcess,
@@ -59,6 +65,10 @@ __all__ = [
     "BESQ",
     "Bessel",
     "BesselProcess",
+    "BNS",
+    "BNSModel",
+    "BNSProcess",
+    "BarndorffNielsenShephard",
     "SquaredBessel",
     "SquaredBesselProcess",
     "BKModel",
