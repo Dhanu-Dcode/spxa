@@ -1464,6 +1464,134 @@ def sample_sabr(
     return paths_f
 
 
+def sample_gh(
+    lambda_param: float = 1.0,
+    alpha: float = 1.5,
+    beta: float = 0.0,
+    delta: float = 1.0,
+    mu: float = 0.0,
+    dt: Optional[float] = None,
+    n_steps: int = 100,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+) -> np.ndarray:
+    r"""
+    Simulate sample paths of the Generalized Hyperbolic (GH) Lévy process.
+
+    Parameters
+    ----------
+    lambda_param : float
+        Shape parameter :math:`\lambda \in \mathbb{R}`.
+    alpha : float
+        Tail parameter :math:`\alpha > 0`.
+    beta : float
+        Asymmetry parameter :math:`\beta \in (-\alpha, \alpha)`.
+    delta : float
+        Scale parameter :math:`\delta > 0`.
+    mu : float
+        Drift parameter :math:`\mu \in \mathbb{R}`.
+    dt : float, optional
+        Time step size.
+    n_steps : int
+        Number of time steps.
+    n_paths : int
+        Number of paths.
+    T : float, optional
+        Terminal time horizon.
+    rng : np.random.Generator, optional
+        NumPy random number generator.
+
+    Returns
+    -------
+    np.ndarray
+        Simulated paths of shape ``(n_paths, n_steps + 1)`` with :math:`X_0 = 0`.
+    """
+    if alpha <= 0.0:
+        raise ValueError("Parameter alpha must be strictly positive")
+    if delta <= 0.0:
+        raise ValueError("Parameter delta must be strictly positive")
+    if abs(beta) >= alpha:
+        raise ValueError("|beta| must be strictly less than alpha")
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+    if n_paths < 1:
+        raise ValueError("n_paths must be >= 1")
+
+    if dt is None:
+        if T is not None:
+            if T <= 0:
+                raise ValueError("T must be strictly positive")
+            dt = T / n_steps if n_steps > 0 else 1.0
+        else:
+            dt = 1.0 / n_steps if n_steps > 0 else 1.0
+    else:
+        if dt <= 0:
+            raise ValueError("dt must be strictly positive")
+
+    paths = np.zeros((n_paths, n_steps + 1), dtype=float)
+    if n_steps == 0:
+        return paths
+
+    rng = rng or np.random.default_rng()
+    gamma = math.sqrt(alpha ** 2 - beta ** 2)
+
+    # Fast exact NIG subordination when lambda = -0.5
+    if math.isclose(lambda_param, -0.5, abs_tol=1e-7):
+        ig_mean = delta * dt / gamma
+        ig_shape = (delta * dt) ** 2
+        ig_samples = rng.wald(mean=ig_mean, scale=ig_shape, size=(n_paths, n_steps))
+        normals = rng.standard_normal(size=(n_paths, n_steps))
+        increments = mu * dt + beta * ig_samples + np.sqrt(ig_samples) * normals
+        paths[:, 1:] = np.cumsum(increments, axis=1)
+        return paths
+
+    # General GH via Gil-Pelaez CDF inversion
+    from scipy.special import kv as bessel_kv  # type: ignore[import-untyped]
+
+    dg = delta * gamma
+    k0 = float(bessel_kv(lambda_param, dg))
+    if k0 <= 0.0 or not math.isfinite(k0):
+        k0 = 1e-300
+
+    scale = delta / gamma
+    m1_z = scale * float(bessel_kv(lambda_param + 1.0, dg)) / k0
+    m2_z = (scale ** 2) * float(bessel_kv(lambda_param + 2.0, dg)) / k0
+    var_z = m2_z - m1_z ** 2
+
+    k1 = mu + beta * m1_z
+    k2 = m1_z + (beta ** 2) * var_z
+
+    std_dt = max(math.sqrt(dt * k2), 1e-6)
+    mean_dt = dt * k1
+
+    x_grid = np.linspace(mean_dt - 8.0 * std_dt, mean_dt + 8.0 * std_dt, 600)
+    u_grid = np.linspace(1e-4, min(80.0 / std_dt, 500.0), 300)
+
+    zeta = np.sqrt(alpha ** 2 - (beta + 1j * u_grid) ** 2)
+    k_zeta = bessel_kv(lambda_param, delta * zeta)
+    psi = (
+        1j * mu * u_grid
+        + lambda_param * np.log(gamma / zeta)
+        + np.log(k_zeta / k0)
+    )
+    cf_vals = np.exp(dt * psi)
+
+    integrand = cf_vals[None, :] * np.exp(-1j * u_grid[None, :] * x_grid[:, None])
+    pdf = np.trapezoid(integrand.real, u_grid, axis=1) / np.pi
+    pdf = np.maximum(pdf, 0.0)
+    dx = x_grid[1] - x_grid[0]
+    cdf = np.cumsum(pdf) * dx
+    cdf = np.clip(cdf / (cdf[-1] + 1e-300), 0.0, 1.0)
+
+    u_unif = rng.uniform(size=(n_paths, n_steps))
+    increments = np.interp(u_unif, cdf, x_grid)
+
+    paths[:, 1:] = np.cumsum(increments, axis=1)
+    return paths
+
+
+
 
 
 
