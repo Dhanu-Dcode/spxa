@@ -33,6 +33,7 @@ the running library. All signatures are exact.
    - [KouJumpDiffusion](#koujumpdiffusion)
 4. [Zoo — beyond Lévy](#zoo--beyond-lévy)
    - [BatesProcess](#batesprocess)
+   - [BNSModel](#bnsmodel)
    - [CEVProcess](#cevprocess)
    - [CIRProcess](#cirprocess)
    - [JCIRProcess](#jcirprocess)
@@ -120,6 +121,10 @@ spxa.NegativeBinomialProcess
 spxa.Bates96
 spxa.BatesModel
 spxa.BatesProcess
+spxa.BNS
+spxa.BNSModel
+spxa.BNSProcess
+spxa.BarndorffNielsenShephard
 spxa.BKModel
 spxa.BKProcess
 spxa.BlackKarasinski
@@ -1082,6 +1087,63 @@ with correlation $\mathbb{E}[dW_t^S dW_t^V] = \rho dt$, Poisson jump intensity $
 - Bates, D. S. (1996). *Jumps and stochastic volatility: Exchange rate processes implicit in Deutsche Mark options*. Review of Financial Studies, 9(1), 69–107.
 - Heston, S. L. (1993). *A closed-form solution for options with stochastic volatility*. Review of Financial Studies, 6(2), 327–343.
 - Albrecher, H., Mayer, P., Schoutens, W., & Tistaert, J. (2007). *The little Heston trap*. Wilmott Magazine, 83–92.
+
+---
+
+### BNSModel
+
+```python
+from spxa import BNSModel, BNSProcess, BarndorffNielsenShephard, BNS
+
+bns = BNSModel(
+    lambda_param=1.5,
+    alpha=2.0,
+    beta_bdlp=25.0,
+    rho=-0.50,
+    beta=-0.50,
+    sigma0_sq=0.04,
+    s0=100.0,
+    rate=0.05,
+    dividend=0.01,
+)
+```
+
+The Barndorff-Nielsen & Shephard (BNS, 2001) model couples non-Gaussian Ornstein-Uhlenbeck stochastic variance with asset price jump-diffusion dynamics:
+$$dX_t = (\mu + \beta \sigma_t^2) dt + \sigma_t dW_t + \rho dZ_{\lambda t}, \quad S_t = S_0 \exp(X_t)$$
+$$d\sigma_t^2 = -\lambda \sigma_t^2 dt + dZ_{\lambda t}, \quad \sigma_0^2 > 0$$
+where $Z_t$ is a compound Poisson Background Driving Lévy Process (BDLP) with arrival rate $\alpha$ and exponential jump size $\beta_{bdlp}$.
+
+**Parameters & Structural Properties:**
+- `lambda_param` (or `lam`) — variance mean-reversion rate $\lambda > 0$
+- `alpha` (or `a`) — BDLP Gamma shape parameter $\alpha > 0$
+- `beta_bdlp` (or `b`) — BDLP Gamma rate parameter $\beta_{bdlp} > 0$
+- `rho` — leverage parameter $\rho \le 0$
+- `beta` — drift risk parameter $\beta$ (default $-0.5$)
+- `sigma0_sq` (or `v0`) — initial variance $\sigma_0^2 > 0$
+- `s0` — initial asset price $S_0 > 0$
+- `rate` — risk-free rate $r$
+- `dividend` — dividend yield $q$
+- `stationary_variance_mean` — stationary variance $\mathbb{E}[\sigma_\infty^2] = \frac{\alpha}{\beta_{bdlp}}$
+- `stationary_variance_variance` — stationary variance of variance $\frac{\alpha}{\beta_{bdlp}^2}$
+
+**Distributional Analytics & Moments:**
+- `variance_mean(t=1.0)` — conditional variance expectation $\mathbb{E}[\sigma_t^2 \mid \sigma_0^2] = \sigma_0^2 e^{-\lambda t} + \frac{\alpha}{\beta_{bdlp}}(1 - e^{-\lambda t})$
+- `variance_variance(t=1.0)` — conditional variance of variance $\frac{\alpha}{\beta_{bdlp}^2}(1 - e^{-2\lambda t})$
+- `integrated_variance_mean(t=1.0)` — conditional integrated variance expectation $\mathbb{E}[\int_0^t \sigma_s^2 ds]$
+- `char_func(u, t=1.0)` — exact characteristic function $\phi(u; t) = \mathbb{E}[e^{i u \ln(S_t / S_0)}]$
+
+**Option Pricing & Volatility Smile:**
+- `call_price(strike, time_to_maturity=1.0)` — European call option price via Gil-Pelaez Fourier inversion
+- `put_price(strike, time_to_maturity=1.0)` — European put option price via exact Put-Call parity
+- `implied_volatility(strike, time_to_maturity=1.0)` — Black-Scholes implied volatility
+
+**Simulation:**
+- `simulate(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None)` — asset price paths $S_t$
+- `simulate_joint(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None)` — coupled asset and variance paths `(s_paths, var_paths)`
+
+**References:**
+- Barndorff-Nielsen, O. E., & Shephard, N. (2001). *Non-Gaussian Ornstein–Uhlenbeck-based models and some of their applications in financial economics*. Journal of the Royal Statistical Society: Series B, 63(2), 167–241.
+- Nicolato, E., & Venardos, E. (2003). *Option pricing in stochastic volatility models of the Ornstein–Uhlenbeck type*. Mathematical Finance, 13(4), 445–466.
 
 ---
 

@@ -2202,6 +2202,144 @@ def sample_schwartz_two_factor(
     return paths_s
 
 
+def sample_bns(
+    lambda_param: float = 1.5,
+    alpha: float = 2.0,
+    beta_bdlp: float = 25.0,
+    rho: float = -0.50,
+    beta: float = -0.50,
+    sigma0_sq: float = 0.04,
+    s0: float = 100.0,
+    rate: float = 0.05,
+    dividend: float = 0.0,
+    dt: Optional[float] = None,
+    n_steps: int = 100,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+    return_variance: bool = False,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    r"""
+    Simulate sample paths of the Barndorff-Nielsen & Shephard (BNS) model.
+
+    .. math::
+
+        dX_t = (\mu + \beta \sigma_t^2) dt + \sigma_t dW_t + \rho dZ_{\lambda t}, \quad S_t = S_0 \exp(X_t) \\
+        d\sigma_t^2 = -\lambda \sigma_t^2 dt + dZ_{\lambda t}
+
+    Parameters
+    ----------
+    lambda_param : float
+        Variance mean-reversion rate :math:`\lambda > 0`.
+    alpha : float
+        BDLP Gamma shape :math:`\alpha > 0`.
+    beta_bdlp : float
+        BDLP Gamma rate :math:`\beta_{bdlp} > 0`.
+    rho : float
+        Leverage parameter :math:`\rho \le 0`.
+    beta : float
+        Drift risk parameter :math:`\beta`.
+    sigma0_sq : float
+        Initial variance :math:`\sigma_0^2 > 0`.
+    s0 : float
+        Initial asset price :math:`S_0 > 0`.
+    rate : float
+        Risk-free interest rate :math:`r`.
+    dividend : float
+        Continuous dividend yield :math:`q`.
+    dt : float, optional
+        Time step size.
+    n_steps : int
+        Number of time steps.
+    n_paths : int
+        Number of paths.
+    T : float, optional
+        Time horizon.
+    rng : np.random.Generator, optional
+        NumPy random number generator.
+    return_variance : bool, optional
+        If True, returns tuple ``(spot_paths, variance_paths)``. Default False.
+
+    Returns
+    -------
+    np.ndarray or Tuple[np.ndarray, np.ndarray]
+        Asset price paths of shape ``(n_paths, n_steps + 1)``, or tuple with variance paths.
+    """
+    if lambda_param <= 0:
+        raise ValueError("Mean-reversion rate 'lambda_param' must be strictly positive")
+    if alpha <= 0:
+        raise ValueError("BDLP parameter 'alpha' must be strictly positive")
+    if beta_bdlp <= 0:
+        raise ValueError("BDLP parameter 'beta_bdlp' must be strictly positive")
+    if rho > 0:
+        raise ValueError("Leverage parameter 'rho' must be non-positive")
+    if sigma0_sq <= 0:
+        raise ValueError("Initial variance 'sigma0_sq' must be strictly positive")
+    if s0 <= 0:
+        raise ValueError("Initial asset price 's0' must be strictly positive")
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+    if n_paths < 1:
+        raise ValueError("n_paths must be >= 1")
+
+    if dt is None:
+        if T is not None:
+            if T <= 0:
+                raise ValueError("T must be strictly positive")
+            dt = T / n_steps if n_steps > 0 else 1.0
+        else:
+            dt = 1.0 / n_steps if n_steps > 0 else 1.0
+    else:
+        if dt <= 0:
+            raise ValueError("dt must be strictly positive")
+
+    paths_x = np.empty((n_paths, n_steps + 1), dtype=float)
+    paths_var = np.empty((n_paths, n_steps + 1), dtype=float)
+
+    paths_x[:, 0] = 0.0
+    paths_var[:, 0] = float(sigma0_sq)
+
+    if n_steps == 0:
+        paths_s = np.full((n_paths, 1), float(s0))
+        if return_variance:
+            return paths_s, paths_var
+        return paths_s
+
+    rng = rng or np.random.default_rng()
+    sq_dt = math.sqrt(dt)
+    exp_ldt = math.exp(-lambda_param * dt)
+    jump_rate = alpha * lambda_param * dt
+
+    k_rho = (alpha * rho) / (beta_bdlp - rho)
+    mu = (rate - dividend) - lambda_param * k_rho
+
+    for k in range(n_steps):
+        curr_x = paths_x[:, k]
+        curr_var = np.maximum(paths_var[:, k], 0.0)
+
+        dw = rng.standard_normal(n_paths) * sq_dt
+        num_jumps = rng.poisson(lam=jump_rate, size=n_paths)
+
+        has_jumps = num_jumps > 0
+        jumps = np.zeros(n_paths, dtype=float)
+        if np.any(has_jumps):
+            jumps[has_jumps] = rng.gamma(shape=num_jumps[has_jumps], scale=1.0 / beta_bdlp)
+
+        next_x = curr_x + (mu + beta * curr_var) * dt + np.sqrt(curr_var) * dw + rho * jumps
+        next_var = curr_var * exp_ldt + jumps
+
+        paths_x[:, k + 1] = next_x
+        paths_var[:, k + 1] = next_var
+
+    paths_s = s0 * np.exp(paths_x)
+    paths_s[:, 0] = float(s0)
+
+    if return_variance:
+        return paths_s, paths_var
+    return paths_s
+
+
+
 
 
 

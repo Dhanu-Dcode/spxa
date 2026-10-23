@@ -6,6 +6,16 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/bns.py` — `BNSModel` (`BNSProcess`, `BarndorffNielsenShephard`, `BNS`):
+  Non-Gaussian Ornstein-Uhlenbeck stochastic volatility model of Ole E. Barndorff-Nielsen & Neil Shephard (2001):
+  $dX_t = (\mu + \beta \sigma_t^2) dt + \sigma_t dW_t + \rho dZ_{\lambda t}, \quad d\sigma_t^2 = -\lambda \sigma_t^2 dt + dZ_{\lambda t}$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features Gamma-OU variance driven by a compound Poisson BDLP $Z_t$ with rate $\alpha$ and exponential jump size $\beta_{bdlp}$,
+  exact stationary variance distribution $\Gamma(\alpha, \beta_{bdlp})$, exact conditional and integrated variance moments,
+  continuous Fourier characteristic function $\phi(u; t)$, European call/put option pricing via Gil-Pelaez inversion with exact
+  Put-Call parity, Black-Scholes implied volatility smile computation, and coupled vectorized simulation.
+  References: Barndorff-Nielsen & Shephard (2001); Nicolato & Venardos (2003); Schoutens (2003).
+- `sim/exact.py` — Vectorized `sample_bns` coupled asset price and stochastic variance simulator.
 - `zoo/beyond/schwartz_two_factor.py` — `SchwartzTwoFactor` (`Schwartz97`, `Schwartz2F`, `SchwartzTwoFactorModel`):
   Canonical two-factor commodity pricing model of Eduardo Schwartz (1997) with mean-reverting convenience yield:
   $dS_t = (r - \delta_t) S_t dt + \sigma_1 S_t dW_1^Q(t), \quad d\delta_t = \kappa (\hat{\alpha} - \delta_t) dt + \sigma_2 dW_2^Q(t)$
