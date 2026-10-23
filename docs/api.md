@@ -44,6 +44,7 @@ the running library. All signatures are exact.
    - [HawkesProcess](#hawkesprocess)
    - [HestonProcess](#hestonprocess)
    - [SchobelZhuProcess](#schobelzhuprocess)
+   - [SchwartzTwoFactor](#schwartztwofactor)
    - [SquaredBesselProcess](#squaredbesselprocess)
    - [BesselProcess](#besselprocess)
    - [OrnsteinUhlenbeck](#ornsteinuhlenbeck)
@@ -144,6 +145,10 @@ spxa.SZModel
 spxa.SchobelZhu
 spxa.SchobelZhuModel
 spxa.SchobelZhuProcess
+spxa.Schwartz2F
+spxa.Schwartz97
+spxa.SchwartzTwoFactor
+spxa.SchwartzTwoFactorModel
 spxa.BES
 spxa.BESQ
 spxa.Bessel
@@ -1622,6 +1627,68 @@ Because volatility is mean-reverting and Gaussian, instantaneous variance $v_t =
 **References:**
 - Schöbel, R., & Zhu, J. (1999). *An analytic model for option pricing with lognormal and non-lognormal volatility processes*. Review of Derivatives Research, 3(1), 5–31.
 - Lord, R., & Kahl, C. (2007). *Complex logarithm and implementation of the Heston and Schöbel-Zhu models*. Journal of Computational Finance.
+
+---
+
+### SchwartzTwoFactor
+
+```python
+from spxa import SchwartzTwoFactor, Schwartz97, Schwartz2F, SchwartzTwoFactorModel
+
+s2f = SchwartzTwoFactor(
+    s0=20.0,
+    delta0=0.05,
+    kappa=1.2,
+    alpha=0.08,
+    sigma1=0.30,
+    sigma2=0.20,
+    rho=0.60,
+    rate=0.05,
+)
+```
+
+The Schwartz Two-Factor (1997) commodity pricing model describes spot commodity price $S_t$ coupled with mean-reverting convenience yield $\delta_t$:
+$$dS_t = (r - \delta_t) S_t dt + \sigma_1 S_t dW_1^Q(t), \quad S_0 > 0$$
+$$d\delta_t = \kappa (\hat{\alpha} - \delta_t) dt + \sigma_2 dW_2^Q(t), \quad \delta_0 \in \mathbb{R}$$
+$$\mathbb{E}[dW_1^Q dW_2^Q] = \rho dt$$
+
+Because $(X_t = \ln S_t, \delta_t)$ is a joint bivariate Gaussian diffusion system, futures prices, moments, and European options possess exact closed-form analytics.
+
+**Parameters & Structural Properties:**
+- `s0` — initial commodity spot price $S_0 > 0$ (default 20.0)
+- `delta0` — initial convenience yield $\delta_0 \in \mathbb{R}$ (default 0.05)
+- `kappa` — convenience yield mean-reversion speed $\kappa > 0$
+- `alpha` — physical long-term convenience yield target $\alpha \in \mathbb{R}$
+- `sigma1` — spot price volatility $\sigma_1 > 0$
+- `sigma2` — convenience yield volatility $\sigma_2 > 0$
+- `rho` — correlation $\rho \in [-1, 1]$ between spot and convenience yield shocks
+- `rate` — risk-free interest rate $r$
+- `lambda_yield` — market price of convenience yield risk $\lambda$
+- `alpha_hat` — risk-neutral convenience yield target $\hat{\alpha} = \alpha - \lambda/\kappa$
+- `stationary_yield_mean` — long-term convenience yield target $\hat{\alpha}$
+- `stationary_yield_variance` — stationary convenience yield variance $\frac{\sigma_2^2}{2\kappa}$
+
+**Distributional Analytics & Moments:**
+- `yield_mean(t=1.0)` — conditional convenience yield expectation $\mathbb{E}[\delta_t \mid \delta_0] = \delta_0 e^{-\kappa t} + \hat{\alpha}(1 - e^{-\kappa t})$
+- `yield_variance(t=1.0)` — conditional convenience yield variance $\frac{\sigma_2^2}{2\kappa}(1 - e^{-2\kappa t})$
+- `log_spot_mean(t=1.0)` — conditional expectation of $\ln S_t$
+- `log_spot_variance(t=1.0)` — conditional variance of $\ln S_t$
+- `char_func(u, t=1.0)` — exact characteristic function $\phi(u; t) = \mathbb{E}[e^{i u \ln S_t}]$
+
+**Commodity Futures & European Options:**
+- `futures_price(tau, s=None, delta=None)` — exact closed-form futures price $F(S_t, \delta_t, \tau)$ via Schwartz (1997) eq. (12)
+- `futures_curve(maturities)` — term structure of commodity futures across maturities
+- `call_price(strike, time_to_maturity=1.0)` — closed-form European call option price via Black-76
+- `put_price(strike, time_to_maturity=1.0)` — closed-form European put option price via Black-76 satisfying exact Put-Call parity
+
+**Simulation:**
+- `simulate(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None)` — spot price sample paths $S_t$
+- `simulate_joint(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None)` — coupled spot and convenience yield paths `(s_paths, yield_paths)`
+
+**References:**
+- Schwartz, E. S. (1997). *The stochastic behavior of commodity prices: Implications for valuation and hedging*. The Journal of Finance, 52(3), 923–973.
+- Bjerksund, P. (1991). *Contingent claims evaluation when interest rates and convenience yields are stochastic*. Working Paper, Norwegian School of Economics.
+
 
 ---
 

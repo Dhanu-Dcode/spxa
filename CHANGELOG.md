@@ -6,6 +6,16 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/schwartz_two_factor.py` — `SchwartzTwoFactor` (`Schwartz97`, `Schwartz2F`, `SchwartzTwoFactorModel`):
+  Canonical two-factor commodity pricing model of Eduardo Schwartz (1997) with mean-reverting convenience yield:
+  $dS_t = (r - \delta_t) S_t dt + \sigma_1 S_t dW_1^Q(t), \quad d\delta_t = \kappa (\hat{\alpha} - \delta_t) dt + \sigma_2 dW_2^Q(t)$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features exact closed-form futures pricing $F(S_t, \delta_t, \tau)$ via Schwartz (1997) Proposition 1 eq. (12),
+  exact conditional Gaussian moments for convenience yield $\delta_t$ and log-spot $X_t = \ln S_t$,
+  exact characteristic function $\phi(u; t)$, analytical Black-76 European call and put options with exact
+  Put-Call parity, and joint vectorized path simulation of spot prices and convenience yields.
+  References: Schwartz (1997); Bjerksund (1991).
+- `sim/exact.py` — Vectorized `sample_schwartz_two_factor` joint spot and convenience yield simulator.
 - `zoo/beyond/jcir.py` — `JCIRProcess` (`JCIR`, `JumpCIRProcess`, `JCIRModel`):
   Jump-Extended Cox-Ingersoll-Ross short-rate model of Duffie & Garleanu (2001) and Maghsoodi (1996):
   $dr_t = \kappa (\theta - r_t) dt + \sigma \sqrt{r_t} dW_t + dJ_t, \quad r_0 \ge 0$
