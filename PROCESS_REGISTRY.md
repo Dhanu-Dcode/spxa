@@ -25,6 +25,7 @@ Every process implemented in spxa. The exactness level, available cumulants, sim
 | `TemperedStable` | EXACT | all orders (C·Γ(n-α)/λ^{n-α}) | rejection from stable / Gil-Pelaez inversion | Rosiński 2007 |
 | `NegativeBinomialProcess` | EXACT | all orders (closed form to n=4, series above) | exact (numpy NegBin sampler) | Quenouille 1949 |
 | `MeixnerProcess` | EXACT | all orders (closed form to n=4, numerical above) | acceptance-rejection / Gil-Pelaez inversion | Schoutens & Teugels 1998 |
+| `MertonJumpDiffusion` (`Merton76`) | EXACT | all orders (λ·t·E[Yⁿ]) | exact (Gaussian + compound Poisson increments) | Merton 1976; Cont & Tankov 2004 |
 
 ## Beyond Lévy (`spxa.zoo.beyond`)
 

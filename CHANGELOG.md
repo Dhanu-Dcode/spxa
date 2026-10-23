@@ -6,6 +6,17 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/levy/merton.py` — `MertonJumpDiffusion` (`MertonProcess`, `Merton76`):
+  Merton (1976) jump-diffusion process combining continuous Brownian motion with
+  normally distributed compound Poisson jump shocks: $X_t = \mu t + \sigma W_t + \sum_{i=1}^{N_t} Y_i$,
+  $Y_i \sim \mathcal{N}(\mu_J, \sigma_J^2)$ under `EXACT` exactness level.
+  Features exact Lévy triplet $(b, \sigma^2, \nu)$ with analytical truncated Gaussian drift integral,
+  closed-form characteristic exponent, analytical cumulants of all orders $n$,
+  Merton (1976) analytical option pricing formula via Poisson mixture of Black–Scholes values,
+  Put-Call parity, Black-Scholes implied volatility smile/skew inversion, and exact
+  vectorized simulation with zero time discretization error.
+  References: Merton (1976); Cont & Tankov (2004).
+- `sim/exact.py` — Vectorized `sample_merton` exact path simulator with zero discretization error.
 - `zoo/beyond/heston.py` — `HestonProcess` (`Heston`):
   Continuous-time affine stochastic volatility diffusion model
   $dX_t = (\mu - \frac{1}{2}V_t)dt + \sqrt{V_t} dW_t^S$,
