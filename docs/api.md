@@ -35,6 +35,7 @@ the running library. All signatures are exact.
    - [BatesProcess](#batesprocess)
    - [CEVProcess](#cevprocess)
    - [CIRProcess](#cirprocess)
+   - [JCIRProcess](#jcirprocess)
    - [HullWhiteProcess](#hullwhiteprocess)
    - [BlackKarasinskiProcess](#blackkarasinskiprocess)
    - [SABRProcess](#sabrprocess)
@@ -128,6 +129,10 @@ spxa.CEVProcess
 spxa.ConstantElasticityOfVariance
 spxa.CIRProcess
 spxa.CoxIngersollRoss
+spxa.JCIR
+spxa.JCIRModel
+spxa.JCIRProcess
+spxa.JumpCIRProcess
 spxa.ExtendedVasicek
 spxa.HW1F
 spxa.HullWhite
@@ -1209,6 +1214,57 @@ Supports three methods:
 3. `"reflected_euler"`: Reflected Euler–Maruyama scheme.
 
 **Reference:** Cox, Ingersoll & Ross (1985); Feller (1951).
+
+---
+
+### JCIRProcess
+
+```python
+from spxa import JCIRProcess, JCIR, JumpCIRProcess, JCIRModel
+
+jcir = JCIRProcess(
+    kappa=1.2,
+    theta=0.05,
+    sigma=0.15,
+    lambda_j=0.8,
+    mu_j=0.03,
+    r0=0.04,
+)
+```
+
+The Jump-Extended Cox-Ingersoll-Ross (JCIR) process augments square-root diffusion dynamics with positive compound Poisson exponential jump shocks:
+$$dr_t = \kappa (\theta - r_t) dt + \sigma \sqrt{r_t} dW_t + dJ_t, \quad r_0 \ge 0$$
+where $J_t = \sum_{i=1}^{N_t} Y_i$ with $N_t \sim \mathrm{Pois}(\lambda_J t)$ and $Y_i \sim \mathrm{Exp}(\mu_J)$ with $\mu_J > 0$.
+
+**Parameters & Structural Properties:**
+- `kappa` — mean-reversion speed $\kappa > 0$
+- `theta` — diffusion long-term target $\theta > 0$
+- `sigma` — volatility-of-rate $\sigma > 0$
+- `lambda_j` (or `jump_intensity`) — jump arrival intensity $\lambda_J \ge 0$
+- `mu_j` (or `jump_mean`) — mean exponential jump size $\mu_J > 0$
+- `r0` — initial short rate $r_0 \ge 0$
+- `feller_ratio` — baseline Feller ratio $\frac{2\kappa\theta}{\sigma^2}$
+- `feller_satisfied` — whether $2\kappa\theta \ge \sigma^2$
+- `stationary_mean` — long-term rate expectation $\theta_\infty = \theta + \frac{\lambda_J \mu_J}{\kappa}$
+- `stationary_variance` — long-term rate variance $\frac{\sigma^2 \theta_\infty + 2 \lambda_J \mu_J^2}{2\kappa}$
+
+**Conditional Moments & Analytics:**
+- `conditional_mean(t=1.0)` — exact conditional expectation $r_0 e^{-\kappa t} + \theta_\infty (1 - e^{-\kappa t})$
+- `conditional_variance(t=1.0)` — exact conditional variance $\frac{\sigma^2(r_0 - \theta_\infty)}{\kappa}(e^{-\kappa t} - e^{-2\kappa t}) + V_\infty (1 - e^{-2\kappa t})$
+- `char_func(u, t=1.0)` — conditional characteristic function $\phi(u; t) = \mathbb{E}[e^{i u r_t} \mid r_0]$
+
+**Term Structure & Bond Pricing:**
+- `bond_price(tau, r=None)` — closed-form zero-coupon bond pricing $P(t, t+\tau) = \exp(A(\tau) - B(\tau) r_t)$ via Riccati system integration
+- `yield_curve(tau, r=None)` — continuously-compounded yield $y(t, t+\tau) = -\frac{\ln P(\tau)}{\tau}$
+- `forward_rate(tau, r=None)` — instantaneous forward rate $f(t, t+\tau) = -\frac{\partial \ln P}{\partial \tau} = B'(\tau) r_t + \kappa \theta B(\tau) + \frac{\lambda_J \mu_J B(\tau)}{1 + \mu_J B(\tau)}$
+
+**Simulation:**
+- `simulate(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None)` — exact simulation combining non-central chi-squared CIR transitions with Poisson compound exponential jumps
+
+**References:**
+- Duffie, D., & Garleanu, N. (2001). *Risk and valuation of collateralized debt obligations*. Financial Analysts Journal, 57(1), 41–59.
+- Maghsoodi, Y. (1996). *Solution of the extended CIR term structure and bond option valuation*. Mathematical Finance, 6(1), 89–109.
+- Brigo, D., & Mercurio, F. (2006). *Interest Rate Models - Theory and Practice*. Springer Finance.
 
 ---
 

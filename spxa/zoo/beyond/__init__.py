@@ -15,6 +15,12 @@ from spxa.zoo.beyond.black_karasinski import (
     BlackKarasinski,
     BlackKarasinskiProcess,
 )
+from spxa.zoo.beyond.jcir import (
+    JCIR,
+    JCIRModel,
+    JCIRProcess,
+    JumpCIRProcess,
+)
 from spxa.zoo.beyond.cev import CEV, CEVProcess, ConstantElasticityOfVariance
 from spxa.zoo.beyond.cir import CIRProcess, CoxIngersollRoss
 from spxa.zoo.beyond.fbm import FractionalBrownianMotion
@@ -53,6 +59,10 @@ __all__ = [
     "BKProcess",
     "BlackKarasinski",
     "BlackKarasinskiProcess",
+    "JCIR",
+    "JCIRModel",
+    "JCIRProcess",
+    "JumpCIRProcess",
     "CEV",
     "CEVProcess",
     "ConstantElasticityOfVariance",
