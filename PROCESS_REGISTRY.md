@@ -31,6 +31,7 @@ Every process implemented in spxa. The exactness level, available cumulants, sim
 
 | Class | Exactness | Notes | Reference |
 |---|---|---|---|
+| `CEVProcess` (`CEV`, `ConstantElasticityOfVariance`) | MOMENT | local volatility diffusion $dS_t = \mu S_t dt + \sigma S_t^\gamma dW_t$; constant variance elasticity $2(\gamma - 1)$; exact non-central $\chi^2$ European option pricing (Schroder 1989); analytical absorption / default probability at 0; Milstein / Euler simulation with absorbing boundary | Cox 1975; Schroder 1989; Emanuel & MacBeth 1982 |
 | `CIRProcess` (`CoxIngersollRoss`) | MOMENT | square-root diffusion; exact non-central χ² transitions & simulation; exact conditional & stationary moments; Riccati bond pricing | Cox, Ingersoll & Ross 1985; Feller 1951 |
 | `FractionalBrownianMotion` | MOMENT | not a semimartingale; Hurst algebra for self-similarity | Mandelbrot & Van Ness 1968 |
 | `HawkesProcess` | MOMENT | self-exciting; mean intensity and variance propagated | Hawkes 1971 |

@@ -800,3 +800,129 @@ def sample_merton(
 
     paths[:, 1:] = np.cumsum(increments, axis=1)
     return paths
+
+
+def sample_cev(
+    mu: float,
+    sigma: float,
+    gamma: float,
+    s0: float = 100.0,
+    dt: Optional[float] = None,
+    n_steps: int = 100,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+    method: str = "exact",
+) -> np.ndarray:
+    r"""
+    Simulate Constant Elasticity of Variance (CEV) diffusion paths.
+
+    .. math::
+
+        dS_t = \mu S_t dt + \sigma S_t^\gamma dW_t, \quad S_0 = s_0 \ge 0
+
+    For :math:`\gamma < 1`, zero is an absorbing boundary: once a path reaches
+    zero, it remains at zero indefinitely.
+
+    Parameters
+    ----------
+    mu : float
+        Drift rate :math:`\mu`.
+    sigma : float
+        Volatility scale parameter :math:`\sigma > 0`.
+    gamma : float
+        Elasticity power exponent :math:`\gamma \ge 0`.
+    s0 : float, default 100.0
+        Initial asset price :math:`s_0 \ge 0`.
+    dt : float, optional
+        Time step size :math:`\Delta t > 0`.
+    n_steps : int, default 100
+        Number of simulation time steps.
+    n_paths : int, default 1
+        Number of independent sample paths.
+    T : float, optional
+        Terminal time horizon :math:`T > 0`.
+    rng : np.random.Generator, optional
+        Random number generator.
+    method : {"exact", "milstein", "euler", "absorbed_euler"}, default "exact"
+        Simulation scheme:
+        - "exact": Exact geometric Brownian motion when :math:`\gamma = 1`;
+          second-order Milstein scheme with exact absorbing zero boundary when :math:`\gamma \ne 1`.
+        - "milstein": Milstein scheme with absorbing zero boundary.
+        - "euler" / "absorbed_euler": Euler–Maruyama scheme with absorbing zero boundary.
+
+    Returns
+    -------
+    np.ndarray
+        Path array of shape ``(n_paths, n_steps + 1)`` with ``paths[:, 0] == s0``.
+    """
+    if sigma <= 0:
+        raise ValueError("sigma must be strictly positive")
+    if gamma < 0:
+        raise ValueError("gamma must be non-negative")
+    if s0 < 0:
+        raise ValueError("s0 must be non-negative")
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+    if n_paths < 1:
+        raise ValueError("n_paths must be >= 1")
+
+    if dt is None:
+        if T is not None:
+            if T <= 0:
+                raise ValueError("T must be strictly positive")
+            dt = T / n_steps if n_steps > 0 else 1.0
+        else:
+            dt = 1.0 / n_steps if n_steps > 0 else 1.0
+    else:
+        if dt <= 0:
+            raise ValueError("dt must be strictly positive")
+
+    valid_methods = ("exact", "milstein", "euler", "absorbed_euler")
+    if method not in valid_methods:
+        raise ValueError(f"method must be one of {valid_methods}, got {method}")
+
+    rng = rng or np.random.default_rng()
+    paths = np.zeros((n_paths, n_steps + 1), dtype=float)
+    paths[:, 0] = float(s0)
+
+    if n_steps == 0 or s0 == 0.0:
+        return paths
+
+    # Case 1: Exact geometric Brownian motion when gamma == 1
+    if abs(gamma - 1.0) < 1e-7 or (method == "exact" and abs(gamma - 1.0) < 1e-7):
+        z = rng.standard_normal((n_paths, n_steps))
+        log_inc = (mu - 0.5 * sigma**2) * dt + sigma * math.sqrt(dt) * z
+        paths[:, 1:] = s0 * np.exp(np.cumsum(log_inc, axis=1))
+        return paths
+
+    # Step-by-step simulation with absorption at 0
+    curr = np.full(n_paths, float(s0), dtype=float)
+    sqrt_dt = math.sqrt(dt)
+    use_milstein = (method in ("exact", "milstein"))
+
+    for step in range(1, n_steps + 1):
+        pos = curr > 0.0
+        if not np.any(pos):
+            # All paths absorbed at 0
+            break
+
+        z = rng.standard_normal(n_paths)
+        s_pos = curr[pos]
+        z_pos = z[pos]
+
+        drift = mu * s_pos * dt
+        diff = sigma * (s_pos**gamma) * sqrt_dt * z_pos
+
+        if use_milstein and gamma > 0.0:
+            mil = 0.5 * gamma * (sigma**2) * (s_pos ** (2.0 * gamma - 1.0)) * dt * (z_pos**2 - 1.0)
+            s_next = s_pos + drift + diff + mil
+        else:
+            s_next = s_pos + drift + diff
+
+        # Absorbing boundary at 0
+        curr[pos] = np.maximum(s_next, 0.0)
+        paths[:, step] = curr
+
+    return paths
+

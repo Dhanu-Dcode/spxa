@@ -30,6 +30,7 @@ the running library. All signatures are exact.
    - [NegativeBinomialProcess](#negativebinomialprocess)
    - [MertonJumpDiffusion](#mertonjumpdiffusion)
 4. [Zoo — beyond Lévy](#zoo--beyond-lévy)
+   - [CEVProcess](#cevprocess)
    - [CIRProcess](#cirprocess)
    - [FractionalBrownianMotion](#fractionalbrownianmotion)
    - [MarkovModulatedPoissonProcess](#markovmodulatedpoissonprocess)
@@ -97,6 +98,9 @@ spxa.TemperedStable
 spxa.NegativeBinomialProcess
 
 # Beyond-Lévy processes
+spxa.CEV
+spxa.CEVProcess
+spxa.ConstantElasticityOfVariance
 spxa.CIRProcess
 spxa.CoxIngersollRoss
 spxa.FractionalBrownianMotion
@@ -873,6 +877,57 @@ paths = merton.simulate(n_steps=100, n_paths=1000, T=1.0)
 
 Processes in `spxa.zoo.beyond` have `ExactnessLevel.MOMENT_PROPAGATION`.
 Calling `.triplet` always raises `ExactnessError` with a mathematical explanation.
+
+### CEVProcess
+
+```python
+from spxa.zoo.beyond import CEV, CEVProcess, ConstantElasticityOfVariance
+# or from top-level:
+from spxa import CEV, CEVProcess, ConstantElasticityOfVariance
+
+CEVProcess(
+    mu: float = 0.0,
+    sigma: float = 0.2,
+    gamma: float = 0.5,
+    s0: float = 100.0,
+    r: float | None = None,
+    q: float = 0.0,
+)
+```
+
+The Constant Elasticity of Variance (CEV) diffusion satisfies the SDE:
+$$dS_t = \mu S_t dt + \sigma S_t^\gamma dW_t, \quad S_0 = s_0 > 0$$
+where $\mu \in \mathbb{R}$ is the drift rate (under risk-neutral pricing $\mu = r - q$), $\sigma > 0$ is the volatility scale parameter, and $\gamma \ge 0$ is the elasticity power exponent.
+
+**Structural properties**
+- `elasticity` — constant elasticity of return variance $2(\gamma - 1)$
+- `vol_elasticity` — elasticity of return volatility $\gamma - 1$
+- `is_absorbed_at_zero` — `True` when $\gamma < 1$ (the origin is an attainable absorbing boundary)
+- `feller_condition` — `True` when $\gamma \ge 1$ (the origin is strictly inaccessible)
+- `regime` — `"equity_leverage"` ($\gamma < 1$), `"geometric_brownian"` ($\gamma = 1$), or `"commodity"` ($\gamma > 1$)
+
+**Local Volatility & Default Probability**
+- `local_volatility(S: float | np.ndarray) -> float | np.ndarray` — local percentage volatility $\sigma_{\text{loc}}(S) = \sigma S^{\gamma - 1}$
+- `absorption_probability(T: float, r: float | None = None, q: float | None = None) -> float` — analytical default/bankruptcy probability $P(S_T = 0) = 1 - F_{\chi^2}(x; 1/(1-\gamma))$ for $\gamma < 1$; $0.0$ for $\gamma \ge 1$
+
+**Exact Option Pricing (Schroder 1989 / Cox 1975)**
+- `call_price(K: float, T: float, r: float | None = None, q: float | None = None) -> float` — exact European call price via non-central chi-squared distribution
+- `put_price(K: float, T: float, r: float | None = None, q: float | None = None) -> float` — exact European put price satisfying put-call parity $C - P = S_0 e^{-q T} - K e^{-r T}$
+- `price(K: float, T: float, option_type: str = "call", r: float | None = None, q: float | None = None) -> float` — unified option pricer
+
+**Greeks**
+- `delta(K: float, T: float, option_type: str = "call", r: float | None = None, q: float | None = None, eps: float = 1e-4) -> float` — $\partial V / \partial S_0$ satisfying $\Delta_{\text{call}} - \Delta_{\text{put}} = e^{-q T}$
+- `gamma_greek(K: float, T: float, r: float | None = None, q: float | None = None, eps: float = 1e-4) -> float` — $\partial^2 V / \partial S_0^2 > 0$
+- `vega(K: float, T: float, r: float | None = None, q: float | None = None, eps: float = 1e-4) -> float` — $\partial V / \partial \sigma > 0$
+
+**Distributions & Moments**
+- `transition_cdf(k: float, T: float, r: float | None = None, q: float | None = None) -> float` — cumulative distribution function $P(S_T \le k \mid S_0)$
+- `conditional_mean(t: float, s0: float | None = None) -> float` — conditional expectation $E[S_t \mid S_0] = S_0 e^{\mu t}$
+- `conditional_variance(t: float, s0: float | None = None) -> float` — conditional variance $\text{Var}(S_t \mid S_0)$ (closed-form for $\gamma \in \{0.5, 1.0\}$, quadrature propagation for general $\gamma$)
+- `conditional_std(t: float, s0: float | None = None) -> float` — conditional standard deviation
+
+**Simulation**
+- `simulate(n_steps: int, dt: float | None = None, time_horizon: float | None = None, n_paths: int = 1, rng: np.random.Generator | None = None, method: str = "exact") -> np.ndarray` — vectorized path simulation with absorbing boundary condition at 0
 
 ### CIRProcess
 

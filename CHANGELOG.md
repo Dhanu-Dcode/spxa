@@ -6,6 +6,21 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/cev.py` — `CEVProcess` (`CEV`, `ConstantElasticityOfVariance`):
+  Constant Elasticity of Variance (CEV) local volatility diffusion process
+  $dS_t = \mu S_t dt + \sigma S_t^\gamma dW_t, S_0 = s_0 > 0$ under `MOMENT_PROPAGATION` exactness.
+  Features state-dependent local return volatility $\sigma_{\text{loc}}(S) = \sigma S^{\gamma - 1}$,
+  constant return variance elasticity $2(\gamma - 1)$, boundary classification with absorbing zero
+  (default / bankruptcy risk) for $\gamma < 1$, exact European option pricing via Schroder's (1989)
+  non-central chi-squared representation across equity leverage ($\gamma < 1$), geometric Brownian motion
+  ($\gamma = 1$), and commodity inverse leverage ($\gamma > 1$) regimes, exact Put-Call parity,
+  analytical absorption probability $P(S_T = 0) = 1 - F_{\chi^2}(x; 1/(1-\gamma))$, transition CDF,
+  analytical Greeks (Delta, Gamma, Vega), conditional moments (closed-form for $\gamma \in \{0.5, 1.0\}$ and
+  quadrature propagation for general $\gamma$), and vectorized path simulation.
+  References: Cox (1975); Schroder (1989); Emanuel & MacBeth (1982); Choi & Wu (2021).
+- `sim/exact.py` — Vectorized `sample_cev` simulation routine supporting second-order Milstein
+  and Euler–Maruyama schemes with absorbing boundary conditions at zero and exact geometric Brownian motion
+  for $\gamma = 1$.
 - `zoo/levy/merton.py` — `MertonJumpDiffusion` (`MertonProcess`, `Merton76`):
   Merton (1976) jump-diffusion process combining continuous Brownian motion with
   normally distributed compound Poisson jump shocks: $X_t = \mu t + \sigma W_t + \sum_{i=1}^{N_t} Y_i$,

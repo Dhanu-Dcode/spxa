@@ -16,8 +16,11 @@ from spxa.core import (
     SpxaDegradationWarning,
 )
 from spxa.zoo import (
+    CEV,
+    CEVProcess,
     CGMY,
     CIRProcess,
+    ConstantElasticityOfVariance,
     CoxIngersollRoss,
     NIG,
     AlphaStable,
@@ -67,7 +70,10 @@ __all__ = [
     "ProcessProperties",
     "AlphaStable",
     "BrownianMotion",
+    "CEV",
+    "CEVProcess",
     "CGMY",
+    "ConstantElasticityOfVariance",
     "CIRProcess",
     "CoxIngersollRoss",
     "CompoundPoisson",

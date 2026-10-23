@@ -26,6 +26,7 @@ from spxa.sim.exact import (
     sample_gamma,
     sample_heston,
     sample_merton,
+    sample_cev,
     sample_nig,
     sample_ou,
     sample_vg,
@@ -447,6 +448,69 @@ class TestExactSamplers:
             sample_merton(drift=0.0, sigma=0.2, rate=1.0, jump_mean=0.0, jump_std=0.1, n_steps=-1)
         with pytest.raises(ValueError, match="n_paths"):
             sample_merton(drift=0.0, sigma=0.2, rate=1.0, jump_mean=0.0, jump_std=0.1, n_steps=10, n_paths=0)
+
+    def test_sample_cev_shape_and_initial_condition(self) -> None:
+        """sample_cev produces correct shape and initial values."""
+        rng = np.random.default_rng(42)
+        p = sample_cev(
+            mu=0.05, sigma=0.2, gamma=0.5, s0=100.0,
+            dt=0.05, n_steps=20, n_paths=5, rng=rng,
+        )
+        assert p.shape == (5, 21)
+        assert np.all(p[:, 0] == 100.0)
+        assert np.all(p >= 0.0)
+
+    def test_sample_cev_methods(self) -> None:
+        """sample_cev supports exact, milstein, euler, and absorbed_euler."""
+        for method in ("exact", "milstein", "euler", "absorbed_euler"):
+            rng = np.random.default_rng(42)
+            p = sample_cev(
+                mu=0.03, sigma=0.25, gamma=0.6, s0=50.0,
+                dt=0.02, n_steps=15, n_paths=4, rng=rng, method=method,
+            )
+            assert p.shape == (4, 16)
+            assert np.all(p[:, 0] == 50.0)
+            assert np.all(p >= 0.0)
+
+    def test_sample_cev_absorption(self) -> None:
+        """Paths starting at 0 or hitting 0 stay absorbed at 0."""
+        # Starting at zero
+        p0 = sample_cev(mu=0.05, sigma=0.2, gamma=0.5, s0=0.0, n_steps=10, n_paths=3)
+        assert np.all(p0 == 0.0)
+
+        # High volatility and low initial value to ensure absorption occurs
+        rng = np.random.default_rng(42)
+        p = sample_cev(mu=-0.2, sigma=2.0, gamma=0.5, s0=1.0, dt=0.1, n_steps=30, n_paths=100, rng=rng)
+        # Check that once a path hits 0, it never leaves 0
+        for i in range(p.shape[0]):
+            zero_indices = np.where(p[i] == 0.0)[0]
+            if len(zero_indices) > 0:
+                first_zero = zero_indices[0]
+                assert np.all(p[i, first_zero:] == 0.0)
+
+    def test_sample_cev_zero_steps(self) -> None:
+        """sample_cev with n_steps=0 returns shape (n_paths, 1)."""
+        p = sample_cev(mu=0.05, sigma=0.2, gamma=0.5, s0=100.0, dt=0.1, n_steps=0, n_paths=3)
+        assert p.shape == (3, 1)
+        assert np.all(p == 100.0)
+
+    def test_sample_cev_invalid_parameters_raise(self) -> None:
+        """sample_cev raises ValueError on invalid parameters."""
+        with pytest.raises(ValueError, match="sigma"):
+            sample_cev(mu=0.0, sigma=0.0, gamma=0.5, s0=100.0, n_steps=10)
+        with pytest.raises(ValueError, match="gamma"):
+            sample_cev(mu=0.0, sigma=0.2, gamma=-0.5, s0=100.0, n_steps=10)
+        with pytest.raises(ValueError, match="s0"):
+            sample_cev(mu=0.0, sigma=0.2, gamma=0.5, s0=-1.0, n_steps=10)
+        with pytest.raises(ValueError, match="dt"):
+            sample_cev(mu=0.0, sigma=0.2, gamma=0.5, s0=100.0, dt=-0.1, n_steps=10)
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_cev(mu=0.0, sigma=0.2, gamma=0.5, s0=100.0, n_steps=-1)
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_cev(mu=0.0, sigma=0.2, gamma=0.5, s0=100.0, n_steps=10, n_paths=0)
+        with pytest.raises(ValueError, match="method"):
+            sample_cev(mu=0.0, sigma=0.2, gamma=0.5, s0=100.0, n_steps=10, method="unknown")
+
 
 
 class TestBridge:
