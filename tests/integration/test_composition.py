@@ -142,7 +142,7 @@ class TestTopLevelImports:
         """All main process classes are importable directly from spxa."""
         import spxa
         for name in ["BrownianMotion", "GammaProcess", "VarianceGamma", "NIG",
-                     "AlphaStable", "CGMY", "PoissonProcess",
+                     "AlphaStable", "CGMY", "PoissonProcess", "CompoundPoisson",
                      "FractionalBrownianMotion", "HawkesProcess", "OULevy"]:
             assert hasattr(spxa, name), f"spxa.{name} not found"
 

@@ -21,6 +21,7 @@ from spxa.sim.exact import (
     increments_to_paths,
     sample_alpha_stable,
     sample_brownian,
+    sample_compound_poisson,
     sample_gamma,
     sample_nig,
     sample_vg,
@@ -181,6 +182,53 @@ class TestExactSamplers:
         inc = np.ones((1, 4))
         paths = increments_to_paths(inc, x0=0.0)
         np.testing.assert_array_equal(paths[0], [0.0, 1.0, 2.0, 3.0, 4.0])
+
+    def test_sample_compound_poisson_shape(self) -> None:
+        rng = np.random.default_rng(30)
+        inc = sample_compound_poisson(
+            rate=2.0,
+            jump_sampler=lambda g, sz: g.normal(0.0, 1.0, size=sz),
+            dt=0.05,
+            n_steps=20,
+            n_paths=15,
+            rng=rng,
+        )
+        assert inc.shape == (15, 20)
+
+    def test_sample_compound_poisson_mean_and_var(self) -> None:
+        rng = np.random.default_rng(31)
+        rate = 4.0
+        dt = 0.02
+        mu_jump = 1.5
+        sigma_jump = 0.5
+        inc = sample_compound_poisson(
+            rate=rate,
+            jump_sampler=lambda g, sz: g.normal(mu_jump, sigma_jump, size=sz),
+            dt=dt,
+            n_steps=500,
+            n_paths=1000,
+            rng=rng,
+        )
+        expected_mean = rate * dt * mu_jump
+        expected_var = rate * dt * (mu_jump**2 + sigma_jump**2)
+        assert inc.mean() == pytest.approx(expected_mean, rel=0.05)
+        assert inc.var() == pytest.approx(expected_var, rel=0.05)
+
+    def test_sample_compound_poisson_fallback_sampler(self) -> None:
+        """Custom sampler that returns a list or scalar without batch support."""
+        rng = np.random.default_rng(32)
+        def custom_sampler(g, n):
+            return [2.0] * n
+
+        inc = sample_compound_poisson(
+            rate=1.0,
+            jump_sampler=custom_sampler,
+            dt=0.1,
+            n_steps=10,
+            n_paths=5,
+            rng=rng,
+        )
+        assert inc.shape == (5, 10)
 
 
 class TestBridge:
