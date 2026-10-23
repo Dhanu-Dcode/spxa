@@ -1,6 +1,8 @@
 """Process zoo — all implemented stochastic processes."""
 
 from spxa.zoo.beyond import (
+    CIRProcess,
+    CoxIngersollRoss,
     FractionalBrownianMotion,
     HawkesProcess,
     MarkovModulatedPoissonProcess,
@@ -38,6 +40,8 @@ __all__ = [
     "AlphaStable",
     "BrownianMotion",
     "CGMY",
+    "CIRProcess",
+    "CoxIngersollRoss",
     "CompoundPoisson",
     "CorrelatedLevy",
     "DiscreteJump",
