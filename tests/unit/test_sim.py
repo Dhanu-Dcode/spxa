@@ -28,6 +28,7 @@ from spxa.sim.exact import (
     sample_merton,
     sample_cev,
     sample_kou,
+    sample_bates,
     sample_nig,
     sample_ou,
     sample_vg,
@@ -549,6 +550,89 @@ class TestExactSamplers:
             sample_kou(drift=0.0, sigma=0.2, rate=1.0, p=0.4, eta1=10.0, eta2=5.0, n_steps=-1)
         with pytest.raises(ValueError, match="n_paths"):
             sample_kou(drift=0.0, sigma=0.2, rate=1.0, p=0.4, eta1=10.0, eta2=5.0, n_steps=10, n_paths=0)
+
+    def test_sample_bates_shape_and_initial_condition(self) -> None:
+        """sample_bates produces correct shape and initial values."""
+        rng = np.random.default_rng(42)
+        px = sample_bates(
+            v0=0.04, kappa=2.0, theta=0.04, sigma_v=0.3, rho=-0.7,
+            rate=1.0, jump_mean=-0.05, jump_std=0.1,
+            dt=0.05, n_steps=20, n_paths=5, rng=rng,
+        )
+        assert px.shape == (5, 21)
+        assert np.all(px[:, 0] == 0.0)
+
+        px2, pv2 = sample_bates(
+            v0=0.04, kappa=2.0, theta=0.04, sigma_v=0.3, rho=-0.7,
+            rate=1.0, jump_mean=-0.05, jump_std=0.1,
+            dt=0.05, n_steps=20, n_paths=5, rng=rng,
+            return_variance=True,
+        )
+        assert px2.shape == (5, 21)
+        assert pv2.shape == (5, 21)
+        assert np.all(px2[:, 0] == 0.0)
+        assert np.all(pv2[:, 0] == 0.04)
+        assert np.all(pv2 >= 0.0)
+
+    def test_sample_bates_methods(self) -> None:
+        """Both full_truncation and euler methods run successfully."""
+        rng = np.random.default_rng(43)
+        for meth in ["full_truncation", "euler"]:
+            p = sample_bates(
+                v0=0.04, kappa=1.5, theta=0.04, sigma_v=0.25, rho=-0.5,
+                rate=1.0, jump_mean=-0.05, jump_std=0.1,
+                dt=0.02, n_steps=15, n_paths=4, rng=rng, method=meth,
+            )
+            assert p.shape == (4, 16)
+            assert np.all(p[:, 0] == 0.0)
+
+    def test_sample_bates_zero_steps(self) -> None:
+        """sample_bates with n_steps=0 returns shape (n_paths, 1)."""
+        px = sample_bates(
+            v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=-0.5,
+            rate=1.0, jump_mean=-0.05, jump_std=0.1,
+            dt=0.1, n_steps=0, n_paths=3,
+        )
+        assert px.shape == (3, 1)
+        assert np.all(px == 0.0)
+
+        px2, pv2 = sample_bates(
+            v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=-0.5,
+            rate=1.0, jump_mean=-0.05, jump_std=0.1,
+            dt=0.1, n_steps=0, n_paths=3,
+            return_variance=True,
+        )
+        assert px2.shape == (3, 1)
+        assert pv2.shape == (3, 1)
+        assert np.all(pv2 == 0.04)
+
+    def test_sample_bates_invalid_parameters_raise(self) -> None:
+        """sample_bates raises ValueError on invalid inputs."""
+        with pytest.raises(ValueError, match="v0"):
+            sample_bates(v0=0.0, kappa=1.0, theta=0.04, sigma_v=0.2, rho=0.0, n_steps=10)
+        with pytest.raises(ValueError, match="kappa"):
+            sample_bates(v0=0.04, kappa=-1.0, theta=0.04, sigma_v=0.2, rho=0.0, n_steps=10)
+        with pytest.raises(ValueError, match="theta"):
+            sample_bates(v0=0.04, kappa=1.0, theta=-0.04, sigma_v=0.2, rho=0.0, n_steps=10)
+        with pytest.raises(ValueError, match="sigma_v"):
+            sample_bates(v0=0.04, kappa=1.0, theta=0.04, sigma_v=-0.2, rho=0.0, n_steps=10)
+        with pytest.raises(ValueError, match="rho"):
+            sample_bates(v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=1.5, n_steps=10)
+        with pytest.raises(ValueError, match="rate"):
+            sample_bates(v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=0.0, rate=-1.0, n_steps=10)
+        with pytest.raises(ValueError, match="jump_std"):
+            sample_bates(v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=0.0, jump_std=-0.1, n_steps=10)
+        with pytest.raises(ValueError, match="s0"):
+            sample_bates(v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=0.0, s0=-1.0, n_steps=10)
+        with pytest.raises(ValueError, match="dt"):
+            sample_bates(v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=0.0, dt=-0.1, n_steps=10)
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_bates(v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=0.0, n_steps=-1)
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_bates(v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=0.0, n_steps=10, n_paths=0)
+        with pytest.raises(ValueError, match="method"):
+            sample_bates(v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=0.0, n_steps=10, method="invalid")
+
 
 
 

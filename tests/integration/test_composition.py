@@ -146,6 +146,7 @@ class TestTopLevelImports:
                      "FractionalBrownianMotion", "HawkesProcess", "OULevy",
                      "CIRProcess", "CoxIngersollRoss", "OrnsteinUhlenbeck", "Vasicek",
                      "Heston", "HestonProcess",
+                     "BatesProcess", "BatesModel", "Bates96", "SVJ",
                      "CEV", "CEVProcess", "ConstantElasticityOfVariance",
                      "KouJumpDiffusion", "KouProcess", "Kou72", "Kou02",
                      "MertonJumpDiffusion", "MertonProcess", "Merton76"]:
