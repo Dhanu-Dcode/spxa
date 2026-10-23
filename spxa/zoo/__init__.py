@@ -1,6 +1,10 @@
 """Process zoo — all implemented stochastic processes."""
 
 from spxa.zoo.beyond import (
+    Bates96,
+    BatesModel,
+    BatesProcess,
+    SVJ,
     CEV,
     CEVProcess,
     CIRProcess,
@@ -54,6 +58,10 @@ from spxa.zoo.multivariate import (
 
 __all__ = [
     "AlphaStable",
+    "Bates96",
+    "BatesModel",
+    "BatesProcess",
+    "SVJ",
     "BrownianMotion",
     "CEV",
     "CEVProcess",

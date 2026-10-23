@@ -21,6 +21,7 @@ from spxa.sim.exact import (
     sample_merton,
     sample_cev,
     sample_kou,
+    sample_bates,
     increments_to_paths,
 )
 from spxa.sim.bridge import (
@@ -50,6 +51,7 @@ __all__ = [
     "sample_merton",
     "sample_cev",
     "sample_kou",
+    "sample_bates",
     "increments_to_paths",
     "brownian_bridge",
     "gamma_bridge",
