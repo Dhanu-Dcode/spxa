@@ -14,6 +14,7 @@ from spxa.zoo.levy.compound_poisson import (
 from spxa.zoo.levy.gamma import GammaProcess
 from spxa.zoo.levy.inverse_gaussian import InverseGaussianProcess
 from spxa.zoo.levy.meixner import MeixnerProcess
+from spxa.zoo.levy.merton import Merton76, MertonJumpDiffusion, MertonProcess
 from spxa.zoo.levy.negative_binomial import NegativeBinomialProcess
 from spxa.zoo.levy.nig import NIG
 from spxa.zoo.levy.poisson import PoissonProcess
@@ -33,6 +34,9 @@ __all__ = [
     "InverseGaussianProcess",
     "JumpDistribution",
     "MeixnerProcess",
+    "Merton76",
+    "MertonJumpDiffusion",
+    "MertonProcess",
     "NegativeBinomialProcess",
     "NIG",
     "NormalJump",
