@@ -6,6 +6,15 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/jacobi.py` — `JacobiProcess` (`JacobiDiffusion`, `WrightFisherDiffusion`, `Jacobi`):
+  Jacobi bounded diffusion model on $[y_{\min}, y_{\max}]$ (canonical $[0, 1]$) of Ackerer, Filipović, & Turnes (2018):
+  $dY_t = \kappa (\theta - Y_t) dt + \sigma \sqrt{\frac{(Y_t - y_{\min})(y_{\max} - Y_t)}{y_{\max} - y_{\min}}} dW_t$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features exact Beta stationary law $\mathrm{Beta}(\alpha, \beta)$, exact polynomial moment propagation (mean, second moment,
+  and conditional variance), Feller boundary classifications at both lower and upper endpoints (entrance vs regular reflecting),
+  and high-order Milstein path simulation with strict boundary preservation.
+  References: Ackerer, Filipović, & Turnes (2018); Karlin & Taylor (1981); Filipović & Larsson (2016).
+- `sim/exact.py` — Vectorized `sample_jacobi` Milstein path simulator for bounded intervals.
 - `zoo/beyond/bns.py` — `BNSModel` (`BNSProcess`, `BarndorffNielsenShephard`, `BNS`):
   Non-Gaussian Ornstein-Uhlenbeck stochastic volatility model of Ole E. Barndorff-Nielsen & Neil Shephard (2001):
   $dX_t = (\mu + \beta \sigma_t^2) dt + \sigma_t dW_t + \rho dZ_{\lambda t}, \quad d\sigma_t^2 = -\lambda \sigma_t^2 dt + dZ_{\lambda t}$

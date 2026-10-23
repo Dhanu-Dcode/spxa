@@ -2339,6 +2339,116 @@ def sample_bns(
     return paths_s
 
 
+def sample_jacobi(
+    kappa: float = 1.5,
+    theta: float = 0.4,
+    sigma: float = 0.5,
+    y_min: float = 0.0,
+    y_max: float = 1.0,
+    y0: float = 0.3,
+    dt: Optional[float] = None,
+    n_steps: int = 100,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+) -> np.ndarray:
+    r"""
+    Simulate sample paths of the Jacobi diffusion on :math:`[y_{\min}, y_{\max}]`.
+
+    .. math::
+
+        dY_t = \kappa (\theta - Y_t) dt + \sigma \sqrt{\frac{(Y_t - y_{\min})(y_{\max} - Y_t)}{y_{\max} - y_{\min}}} dW_t
+
+    Integrated via the Milstein scheme on the normalized unit interval :math:`[0, 1]`:
+
+    .. math::
+
+        X_{t+\Delta t} = X_t + \kappa(\theta_{\mathrm{norm}} - X_t)\Delta t
+        + \sigma \sqrt{X_t(1 - X_t)}\Delta W + \frac{1}{4}\sigma^2(1 - 2X_t)(\Delta W^2 - \Delta t)
+
+    Parameters
+    ----------
+    kappa : float
+        Mean-reversion speed :math:`\kappa > 0`.
+    theta : float
+        Long-term mean :math:`\theta \in [y_{\min}, y_{\max}]`.
+    sigma : float
+        Diffusion parameter :math:`\sigma > 0`.
+    y_min : float
+        Lower bound.
+    y_max : float
+        Upper bound.
+    y0 : float
+        Initial value :math:`y_0 \in [y_{\min}, y_{\max}]`.
+    dt : float, optional
+        Time step size.
+    n_steps : int
+        Number of time steps.
+    n_paths : int
+        Number of paths.
+    T : float, optional
+        Time horizon.
+    rng : np.random.Generator, optional
+        NumPy random number generator.
+
+    Returns
+    -------
+    np.ndarray
+        Simulated sample paths of shape ``(n_paths, n_steps + 1)``.
+    """
+    if kappa <= 0:
+        raise ValueError("Mean-reversion speed 'kappa' must be strictly positive")
+    if sigma <= 0:
+        raise ValueError("Diffusion parameter 'sigma' must be strictly positive")
+    if y_max <= y_min:
+        raise ValueError("Upper bound 'y_max' must be strictly greater than 'y_min'")
+    if not (y_min <= theta <= y_max):
+        raise ValueError(f"Long-term mean 'theta' must be in [{y_min}, {y_max}]")
+    if not (y_min <= y0 <= y_max):
+        raise ValueError(f"Initial value 'y0' must be in [{y_min}, {y_max}]")
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+    if n_paths < 1:
+        raise ValueError("n_paths must be >= 1")
+
+    if dt is None:
+        if T is not None:
+            if T <= 0:
+                raise ValueError("T must be strictly positive")
+            dt = T / n_steps if n_steps > 0 else 1.0
+        else:
+            dt = 1.0 / n_steps if n_steps > 0 else 1.0
+    else:
+        if dt <= 0:
+            raise ValueError("dt must be strictly positive")
+
+    paths = np.empty((n_paths, n_steps + 1), dtype=float)
+    paths[:, 0] = float(y0)
+
+    if n_steps == 0:
+        return paths
+
+    rng = rng or np.random.default_rng()
+    scale = y_max - y_min
+    theta_norm = (theta - y_min) / scale
+    x = np.full(n_paths, (y0 - y_min) / scale, dtype=float)
+
+    sq_dt = math.sqrt(dt)
+
+    for k in range(n_steps):
+        dw = rng.standard_normal(n_paths) * sq_dt
+        x_clip = np.clip(x, 1e-8, 1.0 - 1e-8)
+        diff = sigma * np.sqrt(x_clip * (1.0 - x_clip))
+        drift = kappa * (theta_norm - x)
+        milstein = 0.25 * (sigma ** 2) * (1.0 - 2.0 * x_clip) * (dw ** 2 - dt)
+
+        x = np.clip(x + drift * dt + diff * dw + milstein, 0.0, 1.0)
+        paths[:, k + 1] = y_min + scale * x
+
+    return paths
+
+
+
 
 
 

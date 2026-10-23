@@ -37,6 +37,7 @@ the running library. All signatures are exact.
    - [CEVProcess](#cevprocess)
    - [CIRProcess](#cirprocess)
    - [JCIRProcess](#jcirprocess)
+   - [JacobiProcess](#jacobiprocess)
    - [HullWhiteProcess](#hullwhiteprocess)
    - [BlackKarasinskiProcess](#blackkarasinskiprocess)
    - [SABRProcess](#sabrprocess)
@@ -139,6 +140,10 @@ spxa.JCIR
 spxa.JCIRModel
 spxa.JCIRProcess
 spxa.JumpCIRProcess
+spxa.Jacobi
+spxa.JacobiDiffusion
+spxa.JacobiProcess
+spxa.WrightFisherDiffusion
 spxa.ExtendedVasicek
 spxa.HW1F
 spxa.HullWhite
@@ -1332,6 +1337,57 @@ where $J_t = \sum_{i=1}^{N_t} Y_i$ with $N_t \sim \mathrm{Pois}(\lambda_J t)$ an
 - Duffie, D., & Garleanu, N. (2001). *Risk and valuation of collateralized debt obligations*. Financial Analysts Journal, 57(1), 41–59.
 - Maghsoodi, Y. (1996). *Solution of the extended CIR term structure and bond option valuation*. Mathematical Finance, 6(1), 89–109.
 - Brigo, D., & Mercurio, F. (2006). *Interest Rate Models - Theory and Practice*. Springer Finance.
+
+---
+
+### JacobiProcess
+
+```python
+from spxa import JacobiProcess, JacobiDiffusion, WrightFisherDiffusion, Jacobi
+
+jp = JacobiProcess(
+    kappa=1.5,
+    theta=0.4,
+    sigma=0.5,
+    y_min=0.0,
+    y_max=1.0,
+    y0=0.3,
+)
+```
+
+The Jacobi diffusion (Wright-Fisher diffusion with mutation) is a bounded continuous diffusion on interval $[y_{\min}, y_{\max}]$ (canonical $[0, 1]$):
+$$dY_t = \kappa (\theta - Y_t) dt + \sigma \sqrt{\frac{(Y_t - y_{\min})(y_{\max} - Y_t)}{y_{\max} - y_{\min}}} dW_t, \quad Y_0 = y_0 \in [y_{\min}, y_{\max}]$$
+
+Because diffusion vanishes at the boundaries $y_{\min}$ and $y_{\max}$, the process remains naturally bounded.
+
+**Parameters & Structural Properties:**
+- `kappa` — mean-reversion speed $\kappa > 0$
+- `theta` — long-term target $\theta \in [y_{\min}, y_{\max}]$
+- `sigma` — diffusion volatility parameter $\sigma > 0$
+- `y_min` — lower boundary (default 0.0)
+- `y_max` — upper boundary (default 1.0)
+- `y0` — initial state $y_0 \in [y_{\min}, y_{\max}]$
+- `alpha` — Beta stationary shape parameter at lower boundary $\alpha = \frac{2\kappa (\theta - y_{\min})}{\sigma^2 (y_{\max} - y_{\min})}$
+- `beta` — Beta stationary shape parameter at upper boundary $\beta = \frac{2\kappa (y_{\max} - \theta)}{\sigma^2 (y_{\max} - y_{\min})}$
+- `boundary_classification_lower` — `"entrance"` ($\alpha \ge 1$) or `"instantaneously_reflecting"` ($\alpha < 1$)
+- `boundary_classification_upper` — `"entrance"` ($\beta \ge 1$) or `"instantaneously_reflecting"` ($\beta < 1$)
+- `stationary_mean` — stationary expectation $\theta$
+- `stationary_variance` — stationary variance $(y_{\max} - y_{\min})^2 \frac{\theta_{norm}(1 - \theta_{norm})}{1 + 2\kappa/\sigma^2}$
+
+**Polynomial Moments & Stationary Distribution:**
+- `conditional_mean(t=1.0)` — exact conditional expectation $\mathbb{E}[Y_t \mid Y_0]$
+- `conditional_second_moment(t=1.0)` — exact conditional second moment $\mathbb{E}[Y_t^2 \mid Y_0]$
+- `conditional_variance(t=1.0)` — exact conditional variance $\mathrm{Var}(Y_t \mid Y_0)$
+- `stationary_density(y)` — exact Beta stationary probability density function
+- `stationary_cdf(y)` — exact Beta stationary cumulative distribution function
+
+**Simulation:**
+- `simulate(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None)` — high-order Milstein path simulation with strict boundary compliance
+
+**References:**
+- Ackerer, D., Filipović, D., & Turnes, M. (2018). *The Jacobi stochastic volatility model*. Finance and Stochastics, 22(3), 667–700.
+- Karlin, S., & Taylor, H. M. (1981). *A Second Course in Stochastic Processes*. Academic Press.
+- Filipović, D., & Larsson, M. (2016). *Polynomial diffusions and applications in finance*. Finance and Stochastics, 20(4), 931–972.
 
 ---
 
