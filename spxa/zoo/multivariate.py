@@ -1,4 +1,4 @@
-"""
+r"""
 Multivariate Lévy processes.
 
 Extends the 1-dimensional algebra to ℝᵈ. The Lévy–Khintchine formula
@@ -52,7 +52,7 @@ from spxa.story.narrator import CompositionNode, NodeKind
 
 @dataclass(frozen=True)
 class MultivariateLevyTriplet:
-    """
+    r"""
     d-dimensional Lévy–Khintchine characteristic triplet (b, Σ, ν).
 
     Parameters
