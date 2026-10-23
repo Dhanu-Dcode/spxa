@@ -42,6 +42,7 @@ the running library. All signatures are exact.
    - [MarkovModulatedPoissonProcess](#markovmodulatedpoissonprocess)
    - [HawkesProcess](#hawkesprocess)
    - [HestonProcess](#hestonprocess)
+   - [SchobelZhuProcess](#schobelzhuprocess)
    - [OrnsteinUhlenbeck](#ornsteinuhlenbeck)
    - [OULevy](#oulevy)
 5. [Zoo — multivariate](#zoo--multivariate)
@@ -132,6 +133,10 @@ spxa.HullWhiteProcess
 spxa.SABR
 spxa.SABRModel
 spxa.SABRProcess
+spxa.SZModel
+spxa.SchobelZhu
+spxa.SchobelZhuModel
+spxa.SchobelZhuProcess
 spxa.FractionalBrownianMotion
 spxa.HawkesProcess
 spxa.Heston
@@ -1496,6 +1501,63 @@ s_paths, v_paths = heston.simulate_joint(n_steps=100, n_paths=1000, T=1.0)
 - Heston, S. L. (1993). *A closed-form solution for options with stochastic volatility with applications to bond and currency options*. The Review of Financial Studies, 6(2), 327–343.
 - Albrecher, H., Mayer, P., Schoutens, W., & Tistaert, J. (2007). *The little Heston trap*. Wilmott Magazine, 83–92.
 - Lord, R., Koekkoek, R., & van Dijk, D. (2010). *A comparison of biased simulation schemes for stochastic volatility models*. Quantitative Finance, 10(2), 177–194.
+
+---
+
+### SchobelZhuProcess
+
+```python
+from spxa import SchobelZhuProcess, SchobelZhu, SchobelZhuModel, SZModel
+
+sz = SchobelZhuProcess(
+    sigma0=0.20,
+    kappa=1.50,
+    theta=0.20,
+    tau=0.30,
+    rho=-0.50,
+    s0=100.0,
+    rate=0.04,
+    dividend=0.01,
+)
+```
+
+The Schöbel-Zhu (1999) stochastic volatility model models instantaneous volatility $\sigma_t$ as an Ornstein-Uhlenbeck Gaussian diffusion rather than CIR variance:
+$$dS_t = (r - q) S_t dt + \sigma_t S_t dW_t^S, \quad S_0 > 0$$
+$$d\sigma_t = \kappa (\theta - \sigma_t) dt + \tau dW_t^\sigma, \quad \sigma_0 \in \mathbb{R}$$
+$$\mathbb{E}[dW_t^S dW_t^\sigma] = \rho dt$$
+
+Because volatility is mean-reverting and Gaussian, instantaneous variance $v_t = \sigma_t^2 \ge 0$ is guaranteed non-negative.
+
+**Parameters & Structural Properties:**
+- `sigma0` (or `v0`) — initial volatility $\sigma_0 \in \mathbb{R}$
+- `kappa` — mean-reversion speed $\kappa > 0$
+- `theta` — long-term volatility target $\theta$
+- `tau` — vol-of-vol $\tau > 0$
+- `rho` — spot-volatility correlation $\rho \in [-1, 1]$
+- `s0` — initial asset price $S_0 > 0$
+- `rate` — risk-free rate $r$
+- `dividend` — continuous dividend yield $q$
+
+**Distributional Analytics & Moments:**
+- `volatility_mean(t=1.0)` — expected volatility $\mathbb{E}[\sigma_t] = \theta + (\sigma_0 - \theta) e^{-\kappa t}$
+- `volatility_variance(t=1.0)` — variance of volatility $\mathrm{Var}(\sigma_t) = \frac{\tau^2}{2\kappa}(1 - e^{-2\kappa t})$
+- `variance_mean(t=1.0)` — expected instantaneous variance $\mathbb{E}[\sigma_t^2]$
+- `variance_variance(t=1.0)` — variance of instantaneous variance $\mathrm{Var}(\sigma_t^2)$
+- `stationary_variance_mean` — long-term variance $\theta^2 + \frac{\tau^2}{2\kappa}$
+
+**Option Pricing & Characteristic Function:**
+- `char_func(u, t=1.0)` — exact continuous characteristic function $\phi(u; t)$
+- `call_price(K, T=1.0)` — European call option price via Gil-Pelaez Fourier inversion
+- `put_price(K, T=1.0)` — European put option price via Put-Call parity
+- `implied_volatility(K, T=1.0)` — Black-Scholes implied volatility
+
+**Simulation:**
+- `simulate(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None)` — returns asset price paths $S_t$
+- `simulate_joint(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None)` — returns coupled tuple `(s_paths, sigma_paths)`
+
+**References:**
+- Schöbel, R., & Zhu, J. (1999). *An analytic model for option pricing with lognormal and non-lognormal volatility processes*. Review of Derivatives Research, 3(1), 5–31.
+- Lord, R., & Kahl, C. (2007). *Complex logarithm and implementation of the Heston and Schöbel-Zhu models*. Journal of Computational Finance.
 
 ---
 

@@ -6,6 +6,16 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/schobel_zhu.py` — `SchobelZhuProcess` (`SchobelZhu`, `SchobelZhuModel`, `SZModel`):
+  Schöbel-Zhu (1999) stochastic volatility model:
+  $dS_t = (r - q) S_t dt + \sigma_t S_t dW_t^S, \quad d\sigma_t = \kappa (\theta - \sigma_t) dt + \tau dW_t^\sigma$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features Ornstein-Uhlenbeck Gaussian volatility dynamics with non-negative instantaneous variance
+  $v_t = \sigma_t^2$, exact continuous characteristic function, Gil-Pelaez European Call and Put pricing
+  satisfying exact Put-Call parity, Black-Scholes implied volatility smile inversion, and coupled
+  vectorized path simulation.
+  References: Schöbel & Zhu (1999); Lord & Kahl (2007).
+- `sim/exact.py` — Vectorized `sample_schobel_zhu` simulator supporting coupled asset and volatility paths.
 - `zoo/beyond/black_karasinski.py` — `BlackKarasinskiProcess` (`BlackKarasinski`, `BKProcess`, `BKModel`):
   Black-Karasinski (1991) lognormal short-rate model:
   $d(\ln r_t) = a(b - \ln r_t) dt + \sigma dW_t, \quad r_t = \exp(x_t) > 0$ under `MOMENT_PROPAGATION`
