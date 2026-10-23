@@ -1591,6 +1591,107 @@ def sample_gh(
     return paths
 
 
+def sample_black_karasinski(
+    a: float,
+    sigma: float,
+    b: Optional[float] = None,
+    r0: float = 0.03,
+    dt: Optional[float] = None,
+    n_steps: int = 100,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+    return_log_rate: bool = False,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    r"""
+    Simulate sample paths of the Black-Karasinski lognormal short-rate process.
+
+    .. math::
+
+        d(\ln r_t) = a (b - \ln r_t) dt + \sigma dW_t, \quad r_0 > 0
+        r_t = \exp(x_t), \quad x_t = \ln(r_t)
+
+    The log-rate :math:`x_t` is sampled via exact Gaussian Ornstein-Uhlenbeck transitions,
+    guaranteeing zero time-discretization error for :math:`x_t` and strictly positive rates
+    :math:`r_t > 0` almost surely.
+
+    Parameters
+    ----------
+    a : float
+        Mean-reversion speed :math:`a > 0`.
+    sigma : float
+        Volatility of log-rate :math:`\sigma > 0`.
+    b : float, optional
+        Long-term mean level of log-rate. Default :math:`\ln(r_0)`.
+    r0 : float
+        Initial short rate :math:`r_0 > 0`. Default 0.03.
+    dt : float, optional
+        Time step size.
+    n_steps : int
+        Number of time steps.
+    n_paths : int
+        Number of paths.
+    T : float, optional
+        Time horizon.
+    rng : np.random.Generator, optional
+        NumPy random number generator.
+    return_log_rate : bool
+        If True, returns tuple ``(r_paths, x_paths)``. Default False.
+
+    Returns
+    -------
+    np.ndarray or tuple[np.ndarray, np.ndarray]
+        Short-rate paths array of shape ``(n_paths, n_steps + 1)``.
+    """
+    if a <= 0.0:
+        raise ValueError("Mean-reversion speed 'a' must be strictly positive")
+    if sigma <= 0.0:
+        raise ValueError("Volatility 'sigma' must be strictly positive")
+    if r0 <= 0.0:
+        raise ValueError("Initial short rate 'r0' must be strictly positive")
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+    if n_paths < 1:
+        raise ValueError("n_paths must be >= 1")
+
+    if dt is None:
+        if T is not None:
+            if T <= 0:
+                raise ValueError("T must be strictly positive")
+            dt = T / n_steps if n_steps > 0 else 1.0
+        else:
+            dt = 1.0 / n_steps if n_steps > 0 else 1.0
+    else:
+        if dt <= 0:
+            raise ValueError("dt must be strictly positive")
+
+    rng = rng or np.random.default_rng()
+    x0 = math.log(r0)
+    b_val = float(b) if b is not None else x0
+
+    x_paths = np.empty((n_paths, n_steps + 1), dtype=float)
+    x_paths[:, 0] = x0
+
+    if n_steps == 0:
+        r_paths = np.full((n_paths, 1), float(r0), dtype=float)
+        if return_log_rate:
+            return r_paths, x_paths
+        return r_paths
+
+    exp_adt = math.exp(-a * dt)
+    std_step = math.sqrt((sigma ** 2 / (2.0 * a)) * (1.0 - math.exp(-2.0 * a * dt)))
+
+    for k in range(n_steps):
+        z = rng.standard_normal(size=n_paths)
+        x_paths[:, k + 1] = b_val + (x_paths[:, k] - b_val) * exp_adt + std_step * z
+
+    r_paths = np.exp(x_paths)
+    r_paths[:, 0] = float(r0)
+    if return_log_rate:
+        return r_paths, x_paths
+    return r_paths
+
+
 
 
 
