@@ -25,6 +25,7 @@ from spxa.sim.exact import (
     sample_compound_poisson,
     sample_gamma,
     sample_nig,
+    sample_ou,
     sample_vg,
 )
 from spxa.zoo.levy import BrownianMotion, GammaProcess, VarianceGamma
@@ -288,6 +289,60 @@ class TestExactSamplers:
             sample_cir(kappa=1.0, theta=0.05, sigma=0.1, r0=0.04, dt=0.1, n_steps=10, n_paths=0)
         with pytest.raises(ValueError, match="Unknown simulation method"):
             sample_cir(kappa=1.0, theta=0.05, sigma=0.1, r0=0.04, dt=0.1, n_steps=10, method="bad")
+
+    def test_sample_ou_shape_and_initial_condition(self) -> None:
+        """sample_ou outputs shape (n_paths, n_steps + 1) with paths[:, 0] == x0."""
+        rng = np.random.default_rng(35)
+        paths = sample_ou(
+            theta=1.5,
+            mu=0.05,
+            sigma=0.02,
+            x0=0.01,
+            dt=0.05,
+            n_steps=20,
+            n_paths=7,
+            rng=rng,
+            method="exact",
+        )
+        assert paths.shape == (7, 21)
+        assert np.all(paths[:, 0] == 0.01)
+
+    def test_sample_ou_methods(self) -> None:
+        """sample_ou supports exact and euler schemes."""
+        rng = np.random.default_rng(36)
+        for m in ["exact", "euler"]:
+            p = sample_ou(
+                theta=2.0,
+                mu=0.0,
+                sigma=0.1,
+                x0=0.05,
+                dt=0.02,
+                n_steps=15,
+                n_paths=4,
+                rng=rng,
+                method=m,
+            )
+            assert p.shape == (4, 16)
+            assert np.all(p[:, 0] == 0.05)
+
+    def test_sample_ou_zero_steps(self) -> None:
+        """sample_ou with n_steps=0 returns shape (n_paths, 1)."""
+        p = sample_ou(theta=1.0, mu=0.05, sigma=0.1, x0=0.02, dt=0.1, n_steps=0, n_paths=3)
+        assert p.shape == (3, 1)
+        assert np.all(p == 0.02)
+
+    def test_sample_ou_invalid_parameters_raise(self) -> None:
+        """sample_ou raises ValueError on invalid inputs."""
+        with pytest.raises(ValueError, match="strictly positive"):
+            sample_ou(theta=-1.0, mu=0.05, sigma=0.1, x0=0.0, dt=0.1, n_steps=10)
+        with pytest.raises(ValueError, match="dt"):
+            sample_ou(theta=1.0, mu=0.05, sigma=0.1, x0=0.0, dt=0.0, n_steps=10)
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_ou(theta=1.0, mu=0.05, sigma=0.1, x0=0.0, dt=0.1, n_steps=-1)
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_ou(theta=1.0, mu=0.05, sigma=0.1, x0=0.0, dt=0.1, n_steps=10, n_paths=0)
+        with pytest.raises(ValueError, match="Unknown simulation method"):
+            sample_ou(theta=1.0, mu=0.05, sigma=0.1, x0=0.0, dt=0.1, n_steps=10, method="bad")
 
 
 class TestBridge:
