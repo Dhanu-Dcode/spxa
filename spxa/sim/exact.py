@@ -1692,6 +1692,132 @@ def sample_black_karasinski(
     return r_paths
 
 
+def sample_schobel_zhu(
+    sigma0: float = 0.20,
+    kappa: float = 1.5,
+    theta: float = 0.20,
+    tau: float = 0.30,
+    rho: float = -0.5,
+    s0: float = 100.0,
+    rate: float = 0.0,
+    dividend: float = 0.0,
+    dt: Optional[float] = None,
+    n_steps: int = 100,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+    return_volatility: bool = False,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    r"""
+    Simulate sample paths of the Schöbel-Zhu stochastic volatility model.
+
+    .. math::
+
+        dS_t = (r - q) S_t dt + \sigma_t S_t dW_t^S \\
+        d\sigma_t = \kappa (\theta - \sigma_t) dt + \tau dW_t^\sigma
+
+    with :math:`\mathbb{E}[dW_t^S dW_t^\sigma] = \rho dt`.
+
+    Parameters
+    ----------
+    sigma0 : float
+        Initial volatility :math:`\sigma_0`.
+    kappa : float
+        Mean-reversion speed :math:`\kappa > 0`.
+    theta : float
+        Long-term mean volatility :math:`\theta`.
+    tau : float
+        Vol-of-vol :math:`\tau > 0`.
+    rho : float
+        Correlation :math:`\rho \in [-1, 1]`.
+    s0 : float
+        Initial asset price :math:`S_0 > 0`.
+    rate : float
+        Risk-free rate.
+    dividend : float
+        Dividend yield.
+    dt : float, optional
+        Time step size.
+    n_steps : int
+        Number of time steps.
+    n_paths : int
+        Number of paths.
+    T : float, optional
+        Time horizon.
+    rng : np.random.Generator, optional
+        NumPy random generator.
+    return_volatility : bool
+        If True, returns tuple ``(paths_s, paths_sigma)``. Default False.
+
+    Returns
+    -------
+    np.ndarray or tuple[np.ndarray, np.ndarray]
+        Asset price paths array of shape ``(n_paths, n_steps + 1)``.
+    """
+    if kappa <= 0.0:
+        raise ValueError("Mean-reversion speed 'kappa' must be strictly positive")
+    if tau <= 0.0:
+        raise ValueError("Vol-of-vol 'tau' must be strictly positive")
+    if not (-1.0 <= rho <= 1.0):
+        raise ValueError("Correlation 'rho' must lie in [-1, 1]")
+    if s0 <= 0.0:
+        raise ValueError("Initial price 's0' must be strictly positive")
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+    if n_paths < 1:
+        raise ValueError("n_paths must be >= 1")
+
+    if dt is None:
+        if T is not None:
+            if T <= 0:
+                raise ValueError("T must be strictly positive")
+            dt = T / n_steps if n_steps > 0 else 1.0
+        else:
+            dt = 1.0 / n_steps if n_steps > 0 else 1.0
+    else:
+        if dt <= 0:
+            raise ValueError("dt must be strictly positive")
+
+    rng = rng or np.random.default_rng()
+
+    paths_s = np.empty((n_paths, n_steps + 1), dtype=float)
+    paths_sigma = np.empty((n_paths, n_steps + 1), dtype=float)
+    paths_s[:, 0] = float(s0)
+    paths_sigma[:, 0] = float(sigma0)
+
+    if n_steps == 0:
+        if return_volatility:
+            return paths_s, paths_sigma
+        return paths_s
+
+    exp_kdt = math.exp(-kappa * dt)
+    std_step = math.sqrt((tau ** 2 / (2.0 * kappa)) * (1.0 - math.exp(-2.0 * kappa * dt)))
+    sqrt_dt = math.sqrt(dt)
+    sqrt_1_minus_rho2 = math.sqrt(max(0.0, 1.0 - rho ** 2))
+    drift_const = (rate - dividend) * dt
+
+    curr_s = np.full(n_paths, float(s0), dtype=float)
+    curr_sigma = np.full(n_paths, float(sigma0), dtype=float)
+
+    for k in range(n_steps):
+        z_vol = rng.standard_normal(size=n_paths)
+        z_indep = rng.standard_normal(size=n_paths)
+        z_s = rho * z_vol + sqrt_1_minus_rho2 * z_indep
+
+        next_sigma = theta + (curr_sigma - theta) * exp_kdt + std_step * z_vol
+        next_s = curr_s * np.exp(drift_const - 0.5 * (curr_sigma ** 2) * dt + curr_sigma * sqrt_dt * z_s)
+
+        curr_s = next_s
+        curr_sigma = next_sigma
+        paths_s[:, k + 1] = curr_s
+        paths_sigma[:, k + 1] = curr_sigma
+
+    if return_volatility:
+        return paths_s, paths_sigma
+    return paths_s
+
+
+
 
 
 

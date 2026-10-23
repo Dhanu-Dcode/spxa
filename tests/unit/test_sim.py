@@ -33,6 +33,7 @@ from spxa.sim.exact import (
     sample_sabr,
     sample_gh,
     sample_black_karasinski,
+    sample_schobel_zhu,
     sample_nig,
     sample_ou,
     sample_vg,
@@ -826,6 +827,50 @@ class TestExactSamplers:
             sample_black_karasinski(a=0.1, sigma=0.20, n_steps=-1)
         with pytest.raises(ValueError, match="n_paths"):
             sample_black_karasinski(a=0.1, sigma=0.20, n_paths=0)
+
+    def test_sample_sz_shape_and_initial_condition(self) -> None:
+        """sample_schobel_zhu produces correct shape and positive prices."""
+        rng = np.random.default_rng(80)
+        p = sample_schobel_zhu(
+            sigma0=0.2, kappa=1.5, theta=0.2, tau=0.3, rho=-0.5, s0=100.0,
+            dt=0.05, n_steps=20, n_paths=5, rng=rng,
+        )
+        assert p.shape == (5, 21)
+        assert np.all(p[:, 0] == 100.0)
+        assert np.all(p > 0.0)
+
+        s_paths, sig_paths = sample_schobel_zhu(
+            sigma0=0.2, kappa=1.5, theta=0.2, tau=0.3, rho=-0.5, s0=100.0,
+            dt=0.05, n_steps=20, n_paths=5, rng=rng, return_volatility=True,
+        )
+        assert s_paths.shape == (5, 21)
+        assert sig_paths.shape == (5, 21)
+        assert np.all(s_paths[:, 0] == 100.0)
+        assert np.all(sig_paths[:, 0] == 0.2)
+
+    def test_sample_sz_zero_steps(self) -> None:
+        """sample_schobel_zhu with n_steps=0 returns shape (n_paths, 1)."""
+        p = sample_schobel_zhu(
+            sigma0=0.2, kappa=1.5, theta=0.2, tau=0.3, rho=-0.5, s0=100.0,
+            dt=0.1, n_steps=0, n_paths=3,
+        )
+        assert p.shape == (3, 1)
+        assert np.all(p == 100.0)
+
+    def test_sample_sz_invalid_parameters_raise(self) -> None:
+        """sample_schobel_zhu raises ValueError on invalid inputs."""
+        with pytest.raises(ValueError, match="Mean-reversion speed 'kappa'"):
+            sample_schobel_zhu(kappa=-1.5)
+        with pytest.raises(ValueError, match="Vol-of-vol 'tau'"):
+            sample_schobel_zhu(tau=-0.3)
+        with pytest.raises(ValueError, match="Correlation 'rho'"):
+            sample_schobel_zhu(rho=1.5)
+        with pytest.raises(ValueError, match="Initial price 's0'"):
+            sample_schobel_zhu(s0=-10.0)
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_schobel_zhu(n_steps=-1)
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_schobel_zhu(n_paths=0)
 
 
 
