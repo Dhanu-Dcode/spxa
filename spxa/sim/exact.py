@@ -1317,5 +1317,153 @@ def sample_hull_white(
     return paths
 
 
+def sample_sabr(
+    alpha: float,
+    beta: float,
+    nu: float,
+    rho: float,
+    f0: float = 100.0,
+    dt: Optional[float] = None,
+    n_steps: int = 100,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+    method: str = "log_euler",
+    return_volatility: bool = False,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    r"""
+    Simulate sample paths of the SABR stochastic volatility model.
+
+    .. math::
+
+        dF_t = \alpha_t F_t^\beta dW_t^F, \quad F_0 = f_0 > 0 \\
+        d\alpha_t = \nu \alpha_t dW_t^\alpha, \quad \alpha_0 = \alpha > 0
+
+    with :math:`\mathbb{E}[dW_t^F dW_t^\alpha] = \rho dt`.
+
+    Parameters
+    ----------
+    alpha : float
+        Initial volatility :math:`\alpha > 0`.
+    beta : float
+        Elasticity power exponent :math:`\beta \in [0, 1]`.
+    nu : float
+        Vol-of-vol :math:`\nu \ge 0`.
+    rho : float
+        Correlation :math:`\rho \in [-1, 1]`.
+    f0 : float
+        Initial forward :math:`F_0 > 0`. Default 100.0.
+    dt : float, optional
+        Time step size.
+    n_steps : int
+        Number of time steps. Default 100.
+    n_paths : int
+        Number of paths. Default 1.
+    T : float, optional
+        Time horizon.
+    rng : np.random.Generator, optional
+        NumPy random number generator.
+    method : str
+        Simulation method: ``'log_euler'`` (exact geometric stepping for :math:`\alpha_t`)
+        or ``'euler'``.
+    return_volatility : bool
+        If True, returns tuple ``(paths_f, paths_alpha)``. Default False.
+
+    Returns
+    -------
+    np.ndarray or tuple[np.ndarray, np.ndarray]
+        Path array of shape ``(n_paths, n_steps + 1)``.
+    """
+    if alpha <= 0:
+        raise ValueError("Initial volatility alpha must be strictly positive")
+    if not (0.0 <= beta <= 1.0):
+        raise ValueError("Elasticity exponent beta must lie in [0, 1]")
+    if nu < 0:
+        raise ValueError("Vol-of-vol nu must be non-negative")
+    if not (-1.0 <= rho <= 1.0):
+        raise ValueError("Correlation rho must lie in [-1, 1]")
+    if f0 <= 0:
+        raise ValueError("Forward f0 must be strictly positive")
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+    if n_paths < 1:
+        raise ValueError("n_paths must be >= 1")
+
+    if dt is None:
+        if T is not None:
+            if T <= 0:
+                raise ValueError("T must be strictly positive")
+            dt = T / n_steps if n_steps > 0 else 1.0
+        else:
+            dt = 1.0 / n_steps if n_steps > 0 else 1.0
+    else:
+        if dt <= 0:
+            raise ValueError("dt must be strictly positive")
+
+    rng = rng or np.random.default_rng()
+    paths_f = np.empty((n_paths, n_steps + 1), dtype=float)
+    paths_a = np.empty((n_paths, n_steps + 1), dtype=float)
+    paths_f[:, 0] = float(f0)
+    paths_a[:, 0] = float(alpha)
+
+    if n_steps == 0:
+        if return_volatility:
+            return paths_f, paths_a
+        return paths_f
+
+    sqrt_dt = math.sqrt(dt)
+    sqrt_1_minus_rho2 = math.sqrt(max(0.0, 1.0 - rho ** 2))
+
+    curr_f = np.full(n_paths, float(f0), dtype=float)
+    curr_a = np.full(n_paths, float(alpha), dtype=float)
+
+    if method == "log_euler":
+        for k in range(n_steps):
+            z_vol = rng.standard_normal(size=n_paths)
+            z_indep = rng.standard_normal(size=n_paths)
+            z_fwd = rho * z_vol + sqrt_1_minus_rho2 * z_indep
+
+            next_a = curr_a * np.exp(-0.5 * (nu ** 2) * dt + nu * sqrt_dt * z_vol)
+            f_pos = np.maximum(curr_f, 0.0)
+            next_f = curr_f + curr_a * (f_pos ** beta) * sqrt_dt * z_fwd
+
+            if beta < 1.0:
+                next_f = np.maximum(0.0, next_f)
+
+            curr_f = next_f
+            curr_a = next_a
+            paths_f[:, k + 1] = curr_f
+            paths_a[:, k + 1] = curr_a
+
+    elif method == "euler":
+        for k in range(n_steps):
+            z_vol = rng.standard_normal(size=n_paths)
+            z_indep = rng.standard_normal(size=n_paths)
+            z_fwd = rho * z_vol + sqrt_1_minus_rho2 * z_indep
+
+            next_a = np.maximum(1e-10, curr_a + nu * curr_a * sqrt_dt * z_vol)
+            f_pos = np.maximum(curr_f, 0.0)
+            next_f = curr_f + curr_a * (f_pos ** beta) * sqrt_dt * z_fwd
+
+            if beta < 1.0:
+                next_f = np.maximum(0.0, next_f)
+
+            curr_f = next_f
+            curr_a = next_a
+            paths_f[:, k + 1] = curr_f
+            paths_a[:, k + 1] = curr_a
+
+    else:
+        raise ValueError(
+            f"Unknown simulation method '{method}'. "
+            "Supported methods: 'log_euler', 'euler'."
+        )
+
+    if return_volatility:
+        return paths_f, paths_a
+    return paths_f
+
+
+
 
 

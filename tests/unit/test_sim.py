@@ -30,6 +30,7 @@ from spxa.sim.exact import (
     sample_kou,
     sample_bates,
     sample_hull_white,
+    sample_sabr,
     sample_nig,
     sample_ou,
     sample_vg,
@@ -678,6 +679,64 @@ class TestExactSamplers:
             sample_hull_white(a=0.1, sigma=0.02, n_steps=10, n_paths=0)
         with pytest.raises(ValueError, match="simulation method"):
             sample_hull_white(a=0.1, sigma=0.02, n_steps=10, method="unknown")
+
+    def test_sample_sabr_shape_and_initial_condition(self) -> None:
+        """sample_sabr produces correct shape and initial forward/volatility."""
+        rng = np.random.default_rng(50)
+        p = sample_sabr(
+            alpha=0.2, beta=0.5, nu=0.4, rho=-0.3, f0=100.0,
+            dt=0.05, n_steps=20, n_paths=5, rng=rng,
+        )
+        assert p.shape == (5, 21)
+        assert np.all(p[:, 0] == 100.0)
+
+        f_paths, a_paths = sample_sabr(
+            alpha=0.2, beta=0.5, nu=0.4, rho=-0.3, f0=100.0,
+            dt=0.05, n_steps=20, n_paths=5, rng=rng, return_volatility=True,
+        )
+        assert f_paths.shape == (5, 21)
+        assert a_paths.shape == (5, 21)
+        assert np.all(f_paths[:, 0] == 100.0)
+        assert np.all(a_paths[:, 0] == 0.2)
+
+    def test_sample_sabr_methods(self) -> None:
+        """Both log_euler and euler methods run successfully."""
+        rng = np.random.default_rng(51)
+        for meth in ["log_euler", "euler"]:
+            p = sample_sabr(
+                alpha=0.25, beta=0.7, nu=0.3, rho=0.1, f0=50.0,
+                dt=0.02, n_steps=15, n_paths=4, rng=rng, method=meth,
+            )
+            assert p.shape == (4, 16)
+            assert np.all(p[:, 0] == 50.0)
+
+    def test_sample_sabr_zero_steps(self) -> None:
+        """sample_sabr with n_steps=0 returns shape (n_paths, 1)."""
+        p = sample_sabr(
+            alpha=0.2, beta=0.5, nu=0.4, rho=-0.3, f0=100.0,
+            dt=0.1, n_steps=0, n_paths=3,
+        )
+        assert p.shape == (3, 1)
+        assert np.all(p == 100.0)
+
+    def test_sample_sabr_invalid_parameters_raise(self) -> None:
+        """sample_sabr raises ValueError on invalid inputs."""
+        with pytest.raises(ValueError, match="alpha"):
+            sample_sabr(alpha=-0.1, beta=0.5, nu=0.4, rho=0.0)
+        with pytest.raises(ValueError, match="beta"):
+            sample_sabr(alpha=0.2, beta=1.5, nu=0.4, rho=0.0)
+        with pytest.raises(ValueError, match="nu"):
+            sample_sabr(alpha=0.2, beta=0.5, nu=-0.4, rho=0.0)
+        with pytest.raises(ValueError, match="rho"):
+            sample_sabr(alpha=0.2, beta=0.5, nu=0.4, rho=1.5)
+        with pytest.raises(ValueError, match="f0"):
+            sample_sabr(alpha=0.2, beta=0.5, nu=0.4, rho=0.0, f0=-10.0)
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_sabr(alpha=0.2, beta=0.5, nu=0.4, rho=0.0, n_steps=-1)
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_sabr(alpha=0.2, beta=0.5, nu=0.4, rho=0.0, n_paths=0)
+        with pytest.raises(ValueError, match="simulation method"):
+            sample_sabr(alpha=0.2, beta=0.5, nu=0.4, rho=0.0, method="unknown")
 
 
 

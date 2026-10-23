@@ -23,6 +23,7 @@ from spxa.sim.exact import (
     sample_kou,
     sample_bates,
     sample_hull_white,
+    sample_sabr,
     increments_to_paths,
 )
 from spxa.sim.bridge import (
@@ -54,6 +55,7 @@ __all__ = [
     "sample_kou",
     "sample_bates",
     "sample_hull_white",
+    "sample_sabr",
     "increments_to_paths",
     "brownian_bridge",
     "gamma_bridge",
