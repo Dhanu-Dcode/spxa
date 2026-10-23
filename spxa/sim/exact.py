@@ -1038,3 +1038,186 @@ def sample_kou(
     return paths
 
 
+def sample_bates(
+    v0: float,
+    kappa: float,
+    theta: float,
+    sigma_v: float,
+    rho: float,
+    rate: float = 1.0,
+    jump_mean: float = -0.05,
+    jump_std: float = 0.1,
+    mu: float = 0.0,
+    s0: float = 1.0,
+    dt: Optional[float] = None,
+    n_steps: int = 100,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+    method: str = "full_truncation",
+    return_variance: bool = False,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    r"""
+    Simulate sample paths of the Bates (1996) stochastic volatility with jumps model.
+
+    .. math::
+
+        dX_t = \left(\mu - \lambda \bar{k} - \frac{1}{2} V_t\right) dt + \sqrt{V_t} \, dW_t^S + Y \, dN_t, \quad X_0 = 0 \\
+        dV_t = \kappa (\theta - V_t) dt + \sigma_v \sqrt{V_t} \, dW_t^V, \quad V_0 = v_0
+
+    with :math:`\mathbb{E}[dW_t^S dW_t^V] = \rho \, dt`, Poisson intensity :math:`\lambda`,
+    and :math:`Y \sim \mathcal{N}(\mu_J, \sigma_J^2)`.
+
+    Parameters
+    ----------
+    v0 : float
+        Initial variance :math:`V_0 > 0`.
+    kappa : float
+        Mean-reversion rate :math:`\kappa > 0`.
+    theta : float
+        Long-term variance :math:`\theta > 0`.
+    sigma_v : float
+        Volatility of variance :math:`\sigma_v > 0`.
+    rho : float
+        Correlation :math:`\rho \in [-1, 1]`.
+    rate : float
+        Poisson jump intensity :math:`\lambda \ge 0`. Default 1.0.
+    jump_mean : float
+        Mean log-jump size :math:`\mu_J`. Default -0.05.
+    jump_std : float
+        Log-jump standard deviation :math:`\sigma_J > 0`. Default 0.10.
+    mu : float
+        Continuous drift rate :math:`\mu`. Default 0.0.
+    s0 : float
+        Initial spot price :math:`S_0 > 0`. Default 1.0.
+    dt : float, optional
+        Time step size.
+    n_steps : int
+        Number of time steps. Default 100.
+    n_paths : int
+        Number of independent paths. Default 1.
+    T : float, optional
+        Time horizon.
+    rng : np.random.Generator, optional
+        NumPy random number generator.
+    method : str
+        Simulation method for variance: ``'full_truncation'`` (Lord et al. 2010) or ``'euler'``.
+    return_variance : bool
+        If True, returns tuple ``(paths_x, paths_v)``. Default False.
+
+    Returns
+    -------
+    np.ndarray or tuple[np.ndarray, np.ndarray]
+        Path array of shape ``(n_paths, n_steps + 1)``.
+    """
+    if v0 <= 0:
+        raise ValueError("v0 must be strictly positive")
+    if kappa <= 0 or theta <= 0 or sigma_v <= 0:
+        raise ValueError("kappa, theta, and sigma_v must be strictly positive")
+    if not (-1.0 <= rho <= 1.0):
+        raise ValueError("rho must be in [-1, 1]")
+    if rate < 0:
+        raise ValueError("rate must be non-negative")
+    if jump_std <= 0:
+        raise ValueError("jump_std must be strictly positive")
+    if s0 <= 0:
+        raise ValueError("s0 must be strictly positive")
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+    if n_paths < 1:
+        raise ValueError("n_paths must be >= 1")
+
+    if dt is None:
+        if T is not None:
+            if T <= 0:
+                raise ValueError("T must be strictly positive")
+            dt = T / n_steps if n_steps > 0 else 1.0
+        else:
+            dt = 1.0 / n_steps if n_steps > 0 else 1.0
+    else:
+        if dt <= 0:
+            raise ValueError("dt must be strictly positive")
+
+    rng = rng or np.random.default_rng()
+    paths_x = np.zeros((n_paths, n_steps + 1), dtype=float)
+    paths_v = np.empty((n_paths, n_steps + 1), dtype=float)
+    paths_v[:, 0] = float(v0)
+
+    if n_steps == 0:
+        if return_variance:
+            return paths_x, paths_v
+        return paths_x
+
+    sqrt_dt = math.sqrt(dt)
+    sqrt_1_minus_rho2 = math.sqrt(max(0.0, 1.0 - rho ** 2))
+    k_bar = math.exp(jump_mean + 0.5 * jump_std ** 2) - 1.0
+
+    curr_x = np.zeros(n_paths, dtype=float)
+    curr_v = np.full(n_paths, float(v0), dtype=float)
+
+    if method == "full_truncation":
+        for k in range(n_steps):
+            z1 = rng.standard_normal(size=n_paths)
+            z_indep = rng.standard_normal(size=n_paths)
+            z2 = rho * z1 + sqrt_1_minus_rho2 * z_indep
+
+            v_pos = np.maximum(curr_v, 0.0)
+            sqrt_v_pos = np.sqrt(v_pos)
+
+            v_next = curr_v + kappa * (theta - v_pos) * dt + sigma_v * sqrt_v_pos * sqrt_dt * z1
+
+            if rate > 0.0:
+                n_jumps = rng.poisson(lam=rate * dt, size=n_paths)
+                jump_shock = np.where(
+                    n_jumps > 0,
+                    n_jumps * jump_mean + np.sqrt(n_jumps) * jump_std * rng.standard_normal(size=n_paths),
+                    0.0,
+                )
+                curr_x = curr_x + (mu - rate * k_bar - 0.5 * v_pos) * dt + sqrt_v_pos * sqrt_dt * z2 + jump_shock
+            else:
+                curr_x = curr_x + (mu - 0.5 * v_pos) * dt + sqrt_v_pos * sqrt_dt * z2
+
+            curr_v = np.maximum(v_next, 0.0)
+
+            paths_x[:, k + 1] = curr_x
+            paths_v[:, k + 1] = curr_v
+
+    elif method == "euler":
+        for k in range(n_steps):
+            z1 = rng.standard_normal(size=n_paths)
+            z_indep = rng.standard_normal(size=n_paths)
+            z2 = rho * z1 + sqrt_1_minus_rho2 * z_indep
+
+            v_pos = np.maximum(curr_v, 0.0)
+            sqrt_v_pos = np.sqrt(v_pos)
+
+            v_next = np.maximum(0.0, curr_v + kappa * (theta - v_pos) * dt + sigma_v * sqrt_v_pos * sqrt_dt * z1)
+
+            if rate > 0.0:
+                n_jumps = rng.poisson(lam=rate * dt, size=n_paths)
+                jump_shock = np.where(
+                    n_jumps > 0,
+                    n_jumps * jump_mean + np.sqrt(n_jumps) * jump_std * rng.standard_normal(size=n_paths),
+                    0.0,
+                )
+                curr_x = curr_x + (mu - rate * k_bar - 0.5 * v_pos) * dt + sqrt_v_pos * sqrt_dt * z2 + jump_shock
+            else:
+                curr_x = curr_x + (mu - 0.5 * v_pos) * dt + sqrt_v_pos * sqrt_dt * z2
+
+            curr_v = v_next
+
+            paths_x[:, k + 1] = curr_x
+            paths_v[:, k + 1] = curr_v
+
+    else:
+        raise ValueError(
+            f"Unknown simulation method '{method}'. "
+            "Supported methods: 'full_truncation', 'euler'."
+        )
+
+    if return_variance:
+        return paths_x, paths_v
+    return paths_x
+
+
+
