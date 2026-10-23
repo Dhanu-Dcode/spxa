@@ -145,6 +145,7 @@ class TestTopLevelImports:
                      "AlphaStable", "CGMY", "PoissonProcess", "CompoundPoisson",
                      "FractionalBrownianMotion", "HawkesProcess", "OULevy",
                      "CIRProcess", "CoxIngersollRoss", "OrnsteinUhlenbeck", "Vasicek",
+                     "HullWhite", "HullWhiteProcess", "HW1F", "ExtendedVasicek",
                      "Heston", "HestonProcess",
                      "BatesProcess", "BatesModel", "Bates96", "SVJ",
                      "CEV", "CEVProcess", "ConstantElasticityOfVariance",
