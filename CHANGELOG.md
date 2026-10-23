@@ -6,6 +6,18 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/bessel.py` — `SquaredBesselProcess` (`BESQ`, `SquaredBessel`) and `BesselProcess` (`BES`, `Bessel`):
+  Canonical squared Bessel and Bessel diffusion processes of Feller (1951), Pitman & Yor (1982), and Revuz & Yor (1999):
+  $dX_t = \delta dt + 2\sqrt{X_t} dW_t, \quad R_t = \sqrt{X_t}, \quad dR_t = \frac{\delta - 1}{2 R_t} dt + dW_t$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features exact transition density and CDF via non-central $\chi^2$ distribution $\frac{X_t}{t} \sim \chi^2(\delta, \frac{x_0}{t})$,
+  exact closed-form cumulants $\kappa_1, \kappa_2, \kappa_3, \kappa_4$ to arbitrary order, exact Laplace transform
+  $\mathbb{E}[e^{-\lambda X_t}] = (1 + 2\lambda t)^{-\delta/2} \exp\left(-\frac{\lambda x_0}{1 + 2\lambda t}\right)$,
+  exact continuous characteristic function $\phi(u; t)$, Feller boundary classification at 0 (entrance for $\delta \ge 2$,
+  reflecting for $0 < \delta < 2$, absorbing for $\delta = 0$), exact Bessel process confluent hypergeometric moments
+  $\mathbb{E}[R_t]$, and exact path simulation with zero time discretization error.
+  References: Feller (1951); Pitman & Yor (1982); Revuz & Yor (1999).
+- `sim/exact.py` — Vectorized `sample_besq` and `sample_bessel` exact path simulators using scaled non-central chi-squared increments.
 - `zoo/beyond/schobel_zhu.py` — `SchobelZhuProcess` (`SchobelZhu`, `SchobelZhuModel`, `SZModel`):
   Schöbel-Zhu (1999) stochastic volatility model:
   $dS_t = (r - q) S_t dt + \sigma_t S_t dW_t^S, \quad d\sigma_t = \kappa (\theta - \sigma_t) dt + \tau dW_t^\sigma$
