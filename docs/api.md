@@ -24,6 +24,7 @@ the running library. All signatures are exact.
    - [AlphaStable](#alphastable)
    - [MeixnerProcess](#meixnerprocess)
    - [PoissonProcess](#poissonprocess)
+   - [CompoundPoisson](#compoundpoisson)
    - [InverseGaussianProcess](#inversegaussianprocess)
    - [TemperedStable](#temperedstable)
    - [NegativeBinomialProcess](#negativebinomialprocess)
@@ -83,6 +84,7 @@ spxa.CGMY
 spxa.AlphaStable
 spxa.MeixnerProcess
 spxa.PoissonProcess
+spxa.CompoundPoisson
 spxa.InverseGaussianProcess
 spxa.TemperedStable
 spxa.NegativeBinomialProcess
@@ -623,6 +625,57 @@ Homogeneous Poisson process with constant jump size. Finite activity, discrete j
 **Simulation:** Poisson-distributed increment counts.
 
 **Reference:** Kingman (1993); Sato (1999), Example 8.4.
+
+---
+
+### CompoundPoisson
+
+```python
+from spxa.zoo.levy import (
+    CompoundPoisson,
+    NormalJump,
+    ExponentialJump,
+    DoubleExponentialJump,
+    UniformJump,
+    DiscreteJump,
+)
+
+CompoundPoisson(
+    rate: float,
+    jump_dist: JumpDistribution | str | float = None,
+    **kwargs,
+)
+```
+
+Compound Poisson process: $X_t = \sum_{i=1}^{N_t} Y_i$, where $N_t \sim \text{Poisson}(\lambda t)$
+and $\{Y_i\}$ are i.i.d. random jump sizes. Finite activity, pure jump.
+
+| Parameter | Constraint | Meaning |
+|---|---|---|
+| `rate` | > 0 | Arrival intensity $\lambda$ (jumps per unit time) |
+| `jump_dist` | `JumpDistribution`, `str`, or `float` | Jump size probability law (default: `NormalJump(mean=0, std=1)`) |
+
+**Supported Jump Distributions:**
+- `NormalJump(mean=0.0, std=1.0)`: Gaussian jump sizes $Y \sim \mathcal{N}(\mu, \sigma^2)$
+- `ExponentialJump(rate=1.0)`: Positive exponential jump sizes $Y \sim \text{Exp}(\beta)$
+- `DoubleExponentialJump(p=0.5, eta1=1.0, eta2=1.0)`: Asymmetric double-exponential (Laplace) jump sizes
+- `UniformJump(low=-1.0, high=1.0)`: Continuous uniform jump sizes on $[a, b]$
+- `DiscreteJump(values, probs=None)`: Discrete point mass jump sizes $\{v_k\}$ with probabilities $\{p_k\}$
+
+**Triplet:** $(b = \lambda \mathbb{E}[Y \mathbf{1}_{|Y| \le 1}], \sigma^2 = 0, \nu = \lambda F_Y)$.
+
+**Cumulants:** $\kappa_n(X_t) = \lambda t \mathbb{E}[Y^n]$ for all $n \ge 1$.
+
+**Characteristic function:** $\mathbb{E}[e^{iuX_t}] = \exp(\lambda t (\phi_Y(u) - 1))$.
+
+**Properties:**
+- `is_martingale=True` iff $\mathbb{E}[Y] = 0$.
+- `is_subordinator=True` iff jumps are strictly positive ($Y > 0$).
+- Finite activity: $\nu(\mathbb{R} \setminus \{0\}) = \lambda < \infty$.
+
+**Simulation:** Exact vectorized increment simulation via Poisson thinning and jump compounding.
+
+**Reference:** Kingman (1993); Cont & Tankov (2004), Section 3.4; Sato (1999), Example 8.4.
 
 ---
 
