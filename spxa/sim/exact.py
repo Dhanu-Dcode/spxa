@@ -476,3 +476,91 @@ def sample_cir(
         )
 
     return paths
+
+
+def sample_ou(
+    theta: float,
+    mu: float,
+    sigma: float,
+    x0: float,
+    dt: float,
+    n_steps: int,
+    n_paths: int = 1,
+    rng: Optional[np.random.Generator] = None,
+    method: str = "exact",
+) -> np.ndarray:
+    r"""
+    Simulate Gaussian Ornstein–Uhlenbeck (Vasicek) process paths.
+
+    dX_t = θ(μ - X_t)dt + σ dW_t,  X_0 = x0.
+
+    Parameters
+    ----------
+    theta : float
+        Mean-reversion speed θ > 0.
+    mu : float
+        Long-term mean level μ ∈ ℝ.
+    sigma : float
+        Diffusion volatility coefficient σ > 0.
+    x0 : float
+        Initial position X_0.
+    dt : float
+        Time step size Δt > 0.
+    n_steps : int
+        Number of time steps.
+    n_paths : int, default 1
+        Number of independent sample paths.
+    rng : np.random.Generator, optional
+        Random number generator.
+    method : {"exact", "euler"}, default "exact"
+        Simulation algorithm:
+        - "exact": Exact Gaussian transition law (zero discretization error).
+        - "euler": Standard Euler–Maruyama scheme.
+
+    Returns
+    -------
+    np.ndarray
+        Path array of shape (n_paths, n_steps + 1), with paths[:, 0] == x0.
+    """
+    if theta <= 0 or sigma <= 0:
+        raise ValueError("theta and sigma must be strictly positive")
+    if dt <= 0:
+        raise ValueError("dt must be strictly positive")
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+    if n_paths < 1:
+        raise ValueError("n_paths must be >= 1")
+
+    rng = rng or np.random.default_rng()
+    paths = np.empty((n_paths, n_steps + 1), dtype=float)
+    paths[:, 0] = float(x0)
+
+    if n_steps == 0:
+        return paths
+
+    curr = np.full(n_paths, float(x0), dtype=float)
+
+    if method == "exact":
+        exp_th = math.exp(-theta * dt)
+        cond_var = (sigma**2 / (2.0 * theta)) * (1.0 - math.exp(-2.0 * theta * dt))
+        std_inc = math.sqrt(max(cond_var, 0.0))
+
+        for k in range(n_steps):
+            z = rng.standard_normal(size=n_paths)
+            curr = mu + (curr - mu) * exp_th + std_inc * z
+            paths[:, k + 1] = curr
+
+    elif method == "euler":
+        sqrt_dt = math.sqrt(dt)
+        for k in range(n_steps):
+            z = rng.standard_normal(size=n_paths)
+            curr = curr + theta * (mu - curr) * dt + sigma * sqrt_dt * z
+            paths[:, k + 1] = curr
+
+    else:
+        raise ValueError(
+            f"Unknown simulation method '{method}'. "
+            "Supported methods: 'exact', 'euler'."
+        )
+
+    return paths
