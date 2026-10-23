@@ -34,6 +34,7 @@ the running library. All signatures are exact.
    - [BatesProcess](#batesprocess)
    - [CEVProcess](#cevprocess)
    - [CIRProcess](#cirprocess)
+   - [HullWhiteProcess](#hullwhiteprocess)
    - [FractionalBrownianMotion](#fractionalbrownianmotion)
    - [MarkovModulatedPoissonProcess](#markovmodulatedpoissonprocess)
    - [HawkesProcess](#hawkesprocess)
@@ -113,6 +114,10 @@ spxa.CEVProcess
 spxa.ConstantElasticityOfVariance
 spxa.CIRProcess
 spxa.CoxIngersollRoss
+spxa.ExtendedVasicek
+spxa.HW1F
+spxa.HullWhite
+spxa.HullWhiteProcess
 spxa.FractionalBrownianMotion
 spxa.HawkesProcess
 spxa.Heston
@@ -1123,6 +1128,66 @@ Supports three methods:
 3. `"reflected_euler"`: Reflected Euler–Maruyama scheme.
 
 **Reference:** Cox, Ingersoll & Ross (1985); Feller (1951).
+
+---
+
+### HullWhiteProcess
+
+```python
+from spxa import HullWhiteProcess, HullWhite, HW1F, ExtendedVasicek
+
+hw = HullWhiteProcess(
+    a=0.10,
+    sigma=0.015,
+    b=0.035,
+    r0=0.025,
+)
+```
+
+The Hull-White (1990) one-factor short-rate model (extended Vasicek) follows the Gaussian SDE:
+$$dr_t = a(b - r_t) dt + \sigma dW_t, \quad r_0 \in \mathbb{R}$$
+where $a > 0$ is the mean-reversion speed, $b \in \mathbb{R}$ is the long-term reversion level ($\theta = a \cdot b$), and $\sigma > 0$ is the short-rate volatility.
+
+**Parameters & Structural Properties:**
+- `a` (or `kappa`) — mean-reversion speed $a > 0$
+- `sigma` — short-rate volatility $\sigma > 0$
+- `b` — long-term target rate level $b \in \mathbb{R}$
+- `theta` — drift parameter $\theta = a \cdot b$
+- `r0` — initial short rate $r_0 \in \mathbb{R}$
+
+**Moments & Distributional Analytics:**
+- `conditional_mean(t=1.0)` — expected rate $\mathbb{E}[r_t \mid r_0] = b + (r_0 - b) e^{-at}$
+- `conditional_variance(t=1.0)` — variance $\mathrm{Var}(r_t \mid r_0) = \frac{\sigma^2}{2a}(1 - e^{-2at})$
+- `conditional_std(t=1.0)` — standard deviation $\sqrt{\mathrm{Var}(r_t \mid r_0)}$
+- `stationary_mean` — long-term stationary mean $b$
+- `stationary_variance` — long-term stationary variance $\frac{\sigma^2}{2a}$
+- `integrated_mean(t)` — expected integrated short rate $\mathbb{E}\left[\int_0^t r_s ds \mid r_0\right]$
+- `integrated_variance(t)` — variance of integrated short rate $\mathrm{Var}\left(\int_0^t r_s ds \mid r_0\right)$
+- `autocovariance(t, s)` — short-rate autocovariance $\mathrm{Cov}(r_t, r_s \mid r_0)$
+- `char_func(u, t=1.0)` — Gaussian characteristic function
+- `conditional_cumulants(t=1.0, order=4)` — cumulants $\kappa_1, \dots, \kappa_4$
+
+**Term Structure & Zero-Coupon Bond Pricing:**
+- `B(t, T)` — affine bond pricing exponent $B(t, T) = \frac{1 - e^{-a(T - t)}}{a}$
+- `A(t, T)` — affine bond pricing scale factor $A(t, T)$
+- `bond_price(T, r=None, t=0.0)` — zero-coupon bond price $P(t, T) = A(t, T) \exp(-B(t, T) r_t)$
+- `yield_to_maturity(T, r=None, t=0.0)` — continuously compounded spot yield $y(t, T) = -\frac{\ln P(t, T)}{T - t}$
+- `instantaneous_forward_rate(T, r=None, t=0.0)` — forward rate $f(t, T) = -\frac{\partial \ln P(t, T)}{\partial T}$
+
+**Derivatives Pricing:**
+- `bond_call_price(T, S, K, r=None, t=0.0)` — Jamshidian (1989) closed-form European call option on zero-coupon bond $P(t, S)$ expiring at $T$
+- `bond_put_price(T, S, K, r=None, t=0.0)` — Jamshidian closed-form European put option on zero-coupon bond $P(t, S)$
+- `caplet_price(T, strike_rate, tau=0.5, r=None, t=0.0)` — European interest rate caplet
+- `floorlet_price(T, strike_rate, tau=0.5, r=None, t=0.0)` — European interest rate floorlet
+
+**Simulation:**
+- `simulate(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None, method="exact")` — exact Gaussian conditional transitions with zero time discretization error
+
+**References:**
+- Hull, J., & White, A. (1990). *Pricing interest-rate-derivative securities*. Review of Financial Studies, 3(4), 573–592.
+- Hull, J., & White, A. (1993). *One-factor interest-rate models and the valuation of interest-rate derivative securities*. Journal of Financial and Quantitative Analysis, 28(2), 235–254.
+- Jamshidian, F. (1989). *An exact bond option formula*. The Journal of Finance, 44(1), 205–209.
+- Vasicek, O. (1977). *An equilibrium characterization of the term structure*. Journal of Financial Economics, 5(2), 177–188.
 
 ---
 

@@ -29,6 +29,7 @@ from spxa.sim.exact import (
     sample_cev,
     sample_kou,
     sample_bates,
+    sample_hull_white,
     sample_nig,
     sample_ou,
     sample_vg,
@@ -632,6 +633,52 @@ class TestExactSamplers:
             sample_bates(v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=0.0, n_steps=10, n_paths=0)
         with pytest.raises(ValueError, match="method"):
             sample_bates(v0=0.04, kappa=1.0, theta=0.04, sigma_v=0.2, rho=0.0, n_steps=10, method="invalid")
+
+    def test_sample_hull_white_shape_and_initial_condition(self) -> None:
+        """sample_hull_white produces correct shape and initial values."""
+        rng = np.random.default_rng(42)
+        p = sample_hull_white(
+            a=0.1, sigma=0.02, b=0.03, r0=0.025,
+            dt=0.05, n_steps=20, n_paths=5, rng=rng,
+        )
+        assert p.shape == (5, 21)
+        assert np.all(p[:, 0] == 0.025)
+
+    def test_sample_hull_white_methods(self) -> None:
+        """Both exact and euler methods run successfully."""
+        rng = np.random.default_rng(43)
+        for meth in ["exact", "euler"]:
+            p = sample_hull_white(
+                a=0.15, sigma=0.015, b=0.04, r0=0.03,
+                dt=0.02, n_steps=15, n_paths=4, rng=rng, method=meth,
+            )
+            assert p.shape == (4, 16)
+            assert np.all(p[:, 0] == 0.03)
+
+    def test_sample_hull_white_zero_steps(self) -> None:
+        """sample_hull_white with n_steps=0 returns shape (n_paths, 1)."""
+        p = sample_hull_white(
+            a=0.1, sigma=0.02, b=0.03, r0=0.025,
+            dt=0.1, n_steps=0, n_paths=3,
+        )
+        assert p.shape == (3, 1)
+        assert np.all(p == 0.025)
+
+    def test_sample_hull_white_invalid_parameters_raise(self) -> None:
+        """sample_hull_white raises ValueError on invalid inputs."""
+        with pytest.raises(ValueError, match="Mean-reversion speed 'a'"):
+            sample_hull_white(a=-0.1, sigma=0.02, n_steps=10)
+        with pytest.raises(ValueError, match="Volatility 'sigma'"):
+            sample_hull_white(a=0.1, sigma=-0.02, n_steps=10)
+        with pytest.raises(ValueError, match="dt"):
+            sample_hull_white(a=0.1, sigma=0.02, dt=-0.1, n_steps=10)
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_hull_white(a=0.1, sigma=0.02, n_steps=-1)
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_hull_white(a=0.1, sigma=0.02, n_steps=10, n_paths=0)
+        with pytest.raises(ValueError, match="simulation method"):
+            sample_hull_white(a=0.1, sigma=0.02, n_steps=10, method="unknown")
+
 
 
 

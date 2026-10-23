@@ -6,6 +6,16 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/hull_white.py` — `HullWhiteProcess` (`HullWhite`, `HW1F`, `ExtendedVasicek`):
+  Hull-White (1990) one-factor Gaussian short-rate model (extended Vasicek):
+  $dr_t = a(b - r_t) dt + \sigma dW_t$ with mean-reversion speed $a > 0$, volatility $\sigma > 0$,
+  and long-term target rate $b \in \mathbb{R}$ under `MOMENT_PROPAGATION` exactness level.
+  Features exact zero-coupon bond pricing $P(t, T) = A(t, T) \exp(-B(t, T) r_t)$, spot yield curve,
+  instantaneous forward rates, conditional short rate and integrated rate moments, autocovariance,
+  Jamshidian (1989) closed-form European bond Call and Put options with exact Put-Call parity,
+  caplets and floorlets, and exact path simulation without time discretization error.
+  References: Hull & White (1990, 1993); Jamshidian (1989); Vasicek (1977).
+- `sim/exact.py` — Vectorized `sample_hull_white` simulator with exact Gaussian transitions and Euler fallback.
 - `zoo/beyond/bates.py` — `BatesProcess` (`BatesModel`, `Bates96`, `SVJ`):
   Bates (1996) stochastic volatility with jumps model coupling the Heston (1993) CIR variance diffusion
   with Merton (1976) log-normal price jumps:

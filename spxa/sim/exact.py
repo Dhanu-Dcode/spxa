@@ -1220,4 +1220,102 @@ def sample_bates(
     return paths_x
 
 
+def sample_hull_white(
+    a: float,
+    sigma: float,
+    b: float = 0.03,
+    r0: float = 0.03,
+    dt: Optional[float] = None,
+    n_steps: int = 100,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+    method: str = "exact",
+) -> np.ndarray:
+    r"""
+    Simulate sample paths of the Hull-White (1990) Gaussian short rate process.
+
+    .. math::
+
+        dr_t = a(b - r_t) dt + \sigma dW_t, \quad r_0 \in \mathbb{R}
+
+    Parameters
+    ----------
+    a : float
+        Mean reversion speed :math:`a > 0`.
+    sigma : float
+        Short-rate volatility :math:`\sigma > 0`.
+    b : float
+        Long-term rate level :math:`b \in \mathbb{R}`. Default 0.03.
+    r0 : float
+        Initial rate :math:`r_0`. Default 0.03.
+    dt : float, optional
+        Time step size.
+    n_steps : int
+        Number of steps. Default 100.
+    n_paths : int
+        Number of paths. Default 1.
+    T : float, optional
+        Time horizon.
+    rng : np.random.Generator, optional
+        NumPy random number generator.
+    method : str
+        Simulation method: ``'exact'`` (Gaussian conditional transition with zero
+        discretization error) or ``'euler'``.
+
+    Returns
+    -------
+    np.ndarray
+        Array of shape ``(n_paths, n_steps + 1)``.
+    """
+    if a <= 0:
+        raise ValueError("Mean-reversion speed 'a' must be strictly positive")
+    if sigma <= 0:
+        raise ValueError("Volatility 'sigma' must be strictly positive")
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+    if n_paths < 1:
+        raise ValueError("n_paths must be >= 1")
+
+    if dt is None:
+        if T is not None:
+            if T <= 0:
+                raise ValueError("T must be strictly positive")
+            dt = T / n_steps if n_steps > 0 else 1.0
+        else:
+            dt = 1.0 / n_steps if n_steps > 0 else 1.0
+    else:
+        if dt <= 0:
+            raise ValueError("dt must be strictly positive")
+
+    rng = rng or np.random.default_rng()
+    paths = np.empty((n_paths, n_steps + 1), dtype=float)
+    paths[:, 0] = float(r0)
+
+    if n_steps == 0:
+        return paths
+
+    if method == "exact":
+        exp_adt = math.exp(-a * dt)
+        std_step = math.sqrt((sigma ** 2 / (2.0 * a)) * (1.0 - math.exp(-2.0 * a * dt)))
+        for k in range(n_steps):
+            z = rng.standard_normal(size=n_paths)
+            paths[:, k + 1] = b + (paths[:, k] - b) * exp_adt + std_step * z
+
+    elif method == "euler":
+        sqrt_dt = math.sqrt(dt)
+        for k in range(n_steps):
+            z = rng.standard_normal(size=n_paths)
+            paths[:, k + 1] = paths[:, k] + a * (b - paths[:, k]) * dt + sigma * sqrt_dt * z
+
+    else:
+        raise ValueError(
+            f"Unknown simulation method '{method}'. "
+            "Supported methods: 'exact', 'euler'."
+        )
+
+    return paths
+
+
+
 
