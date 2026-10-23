@@ -2077,6 +2077,132 @@ def sample_jcir(
     return paths
 
 
+def sample_schwartz_two_factor(
+    s0: float = 20.0,
+    delta0: float = 0.05,
+    kappa: float = 1.2,
+    alpha_hat: float = 0.08,
+    sigma1: float = 0.30,
+    sigma2: float = 0.20,
+    rho: float = 0.60,
+    rate: float = 0.05,
+    dt: Optional[float] = None,
+    n_steps: int = 100,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+    return_yield: bool = False,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    r"""
+    Simulate sample paths of the Schwartz Two-Factor commodity model.
+
+    .. math::
+
+        dX_t = (r - \delta_t - \frac{1}{2}\sigma_1^2) dt + \sigma_1 dW_1^Q(t), \quad S_t = \exp(X_t) \\
+        d\delta_t = \kappa (\hat{\alpha} - \delta_t) dt + \sigma_2 dW_2^Q(t) \\
+        \mathbb{E}[dW_1^Q dW_2^Q] = \rho dt
+
+    Parameters
+    ----------
+    s0 : float
+        Initial commodity spot price :math:`S_0 > 0`.
+    delta0 : float
+        Initial convenience yield :math:`\delta_0 \in \mathbb{R}`.
+    kappa : float
+        Mean-reversion speed of convenience yield :math:`\kappa > 0`.
+    alpha_hat : float
+        Risk-neutral long-term convenience yield level :math:`\hat{\alpha}`.
+    sigma1 : float
+        Commodity spot price volatility :math:`\sigma_1 > 0`.
+    sigma2 : float
+        Convenience yield volatility :math:`\sigma_2 > 0`.
+    rho : float
+        Spot-yield correlation :math:`\rho \in [-1, 1]`.
+    rate : float
+        Risk-free interest rate :math:`r`.
+    dt : float, optional
+        Time step size.
+    n_steps : int
+        Number of time steps.
+    n_paths : int
+        Number of paths.
+    T : float, optional
+        Time horizon.
+    rng : np.random.Generator, optional
+        NumPy random number generator.
+    return_yield : bool, optional
+        If True, returns tuple ``(spot_paths, yield_paths)``. Default False.
+
+    Returns
+    -------
+    np.ndarray or Tuple[np.ndarray, np.ndarray]
+        Spot price paths of shape ``(n_paths, n_steps + 1)``, or tuple with yield paths.
+    """
+    if s0 <= 0:
+        raise ValueError("Initial spot price 's0' must be strictly positive")
+    if kappa <= 0:
+        raise ValueError("Mean-reversion speed 'kappa' must be strictly positive")
+    if sigma1 <= 0:
+        raise ValueError("Spot volatility 'sigma1' must be strictly positive")
+    if sigma2 <= 0:
+        raise ValueError("Yield volatility 'sigma2' must be strictly positive")
+    if not (-1.0 <= rho <= 1.0):
+        raise ValueError("Correlation 'rho' must be in [-1, 1]")
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+    if n_paths < 1:
+        raise ValueError("n_paths must be >= 1")
+
+    if dt is None:
+        if T is not None:
+            if T <= 0:
+                raise ValueError("T must be strictly positive")
+            dt = T / n_steps if n_steps > 0 else 1.0
+        else:
+            dt = 1.0 / n_steps if n_steps > 0 else 1.0
+    else:
+        if dt <= 0:
+            raise ValueError("dt must be strictly positive")
+
+    paths_x = np.empty((n_paths, n_steps + 1), dtype=float)
+    paths_delta = np.empty((n_paths, n_steps + 1), dtype=float)
+
+    paths_x[:, 0] = math.log(s0)
+    paths_delta[:, 0] = float(delta0)
+
+    if n_steps == 0:
+        paths_s = np.full((n_paths, 1), float(s0))
+        if return_yield:
+            return paths_s, paths_delta
+        return paths_s
+
+    rng = rng or np.random.default_rng()
+    sq_dt = math.sqrt(dt)
+    sqrt_1_rho2 = math.sqrt(max(0.0, 1.0 - rho ** 2))
+
+    for k in range(n_steps):
+        z1 = rng.standard_normal(n_paths)
+        z2_ind = rng.standard_normal(n_paths)
+        z2 = rho * z1 + sqrt_1_rho2 * z2_ind
+
+        curr_x = paths_x[:, k]
+        curr_delta = paths_delta[:, k]
+
+        next_x = curr_x + (rate - curr_delta - 0.5 * (sigma1 ** 2)) * dt + sigma1 * sq_dt * z1
+        next_delta = curr_delta + kappa * (alpha_hat - curr_delta) * dt + sigma2 * sq_dt * z2
+
+        paths_x[:, k + 1] = next_x
+        paths_delta[:, k + 1] = next_delta
+
+    paths_s = np.exp(paths_x)
+    paths_s[:, 0] = float(s0)
+
+    if return_yield:
+        return paths_s, paths_delta
+    return paths_s
+
+
+
 
 
 
