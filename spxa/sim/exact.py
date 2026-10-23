@@ -241,12 +241,27 @@ def sample_compound_poisson(
         Increments, shape (n_paths, n_steps).
     """
     jump_counts = rng.poisson(lam=rate * dt, size=(n_paths, n_steps))
-    increments = np.zeros((n_paths, n_steps))
+    flat_counts = jump_counts.ravel()
+    total_jumps = int(flat_counts.sum())
+
+    if total_jumps > 0:
+        try:
+            cell_ids = np.repeat(np.arange(flat_counts.size), flat_counts)
+            all_jumps = jump_sampler(rng, total_jumps)
+            all_jumps = np.asarray(all_jumps, dtype=float).ravel()
+            increments = np.bincount(
+                cell_ids, weights=all_jumps, minlength=flat_counts.size
+            ).reshape(n_paths, n_steps)
+            return increments
+        except Exception:
+            pass
+
+    increments = np.zeros((n_paths, n_steps), dtype=float)
     for i in range(n_paths):
         for k in range(n_steps):
             n_jumps = jump_counts[i, k]
             if n_jumps > 0:
-                increments[i, k] = jump_sampler(rng, n_jumps).sum()
+                increments[i, k] = np.sum(jump_sampler(rng, n_jumps))
     return increments
 
 
