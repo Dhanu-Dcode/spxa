@@ -16,6 +16,10 @@ from spxa.core import (
     SpxaDegradationWarning,
 )
 from spxa.zoo import (
+    Bates96,
+    BatesModel,
+    BatesProcess,
+    SVJ,
     CEV,
     CEVProcess,
     CGMY,
@@ -73,6 +77,10 @@ __all__ = [
     "Process",
     "ProcessProperties",
     "AlphaStable",
+    "Bates96",
+    "BatesModel",
+    "BatesProcess",
+    "SVJ",
     "BrownianMotion",
     "CEV",
     "CEVProcess",
