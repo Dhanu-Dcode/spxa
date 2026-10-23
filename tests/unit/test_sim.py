@@ -21,6 +21,7 @@ from spxa.sim.exact import (
     increments_to_paths,
     sample_alpha_stable,
     sample_brownian,
+    sample_cir,
     sample_compound_poisson,
     sample_gamma,
     sample_nig,
@@ -229,6 +230,64 @@ class TestExactSamplers:
             rng=rng,
         )
         assert inc.shape == (5, 10)
+
+    def test_sample_cir_shape_and_initial_condition(self) -> None:
+        """sample_cir outputs shape (n_paths, n_steps + 1) with paths[:, 0] == r0."""
+        rng = np.random.default_rng(33)
+        paths = sample_cir(
+            kappa=1.5,
+            theta=0.04,
+            sigma=0.1,
+            r0=0.03,
+            dt=0.05,
+            n_steps=20,
+            n_paths=8,
+            rng=rng,
+            method="exact",
+        )
+        assert paths.shape == (8, 21)
+        assert np.all(paths[:, 0] == 0.03)
+        assert np.all(paths >= 0.0)
+
+    def test_sample_cir_methods(self) -> None:
+        """sample_cir supports truncated_euler and reflected_euler."""
+        rng = np.random.default_rng(34)
+        for m in ["exact", "truncated_euler", "reflected_euler"]:
+            p = sample_cir(
+                kappa=2.0,
+                theta=0.05,
+                sigma=0.15,
+                r0=0.04,
+                dt=0.02,
+                n_steps=15,
+                n_paths=5,
+                rng=rng,
+                method=m,
+            )
+            assert p.shape == (5, 16)
+            assert np.all(p[:, 0] == 0.04)
+            assert np.all(p >= 0.0)
+
+    def test_sample_cir_zero_steps(self) -> None:
+        """sample_cir with n_steps=0 returns shape (n_paths, 1)."""
+        p = sample_cir(kappa=1.0, theta=0.05, sigma=0.1, r0=0.04, dt=0.1, n_steps=0, n_paths=4)
+        assert p.shape == (4, 1)
+        assert np.all(p == 0.04)
+
+    def test_sample_cir_invalid_parameters_raise(self) -> None:
+        """sample_cir raises ValueError on invalid inputs."""
+        with pytest.raises(ValueError, match="strictly positive"):
+            sample_cir(kappa=-1.0, theta=0.05, sigma=0.1, r0=0.04, dt=0.1, n_steps=10)
+        with pytest.raises(ValueError, match="non-negative"):
+            sample_cir(kappa=1.0, theta=0.05, sigma=0.1, r0=-0.04, dt=0.1, n_steps=10)
+        with pytest.raises(ValueError, match="dt"):
+            sample_cir(kappa=1.0, theta=0.05, sigma=0.1, r0=0.04, dt=0.0, n_steps=10)
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_cir(kappa=1.0, theta=0.05, sigma=0.1, r0=0.04, dt=0.1, n_steps=-1)
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_cir(kappa=1.0, theta=0.05, sigma=0.1, r0=0.04, dt=0.1, n_steps=10, n_paths=0)
+        with pytest.raises(ValueError, match="Unknown simulation method"):
+            sample_cir(kappa=1.0, theta=0.05, sigma=0.1, r0=0.04, dt=0.1, n_steps=10, method="bad")
 
 
 class TestBridge:

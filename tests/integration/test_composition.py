@@ -143,7 +143,8 @@ class TestTopLevelImports:
         import spxa
         for name in ["BrownianMotion", "GammaProcess", "VarianceGamma", "NIG",
                      "AlphaStable", "CGMY", "PoissonProcess", "CompoundPoisson",
-                     "FractionalBrownianMotion", "HawkesProcess", "OULevy"]:
+                     "FractionalBrownianMotion", "HawkesProcess", "OULevy",
+                     "CIRProcess", "CoxIngersollRoss"]:
             assert hasattr(spxa, name), f"spxa.{name} not found"
 
     def test_core_types_importable(self) -> None:
