@@ -7,6 +7,10 @@ from spxa.zoo.beyond import (
     HawkesProcess,
     MarkovModulatedPoissonProcess,
     OULevy,
+    OrnsteinUhlenbeck,
+    OrnsteinUhlenbeckProcess,
+    Vasicek,
+    VasicekProcess,
 )
 from spxa.zoo.levy import (
     CGMY,
@@ -60,10 +64,14 @@ __all__ = [
     "NIG",
     "NormalJump",
     "OULevy",
+    "OrnsteinUhlenbeck",
+    "OrnsteinUhlenbeckProcess",
     "PoissonProcess",
     "TemperedStable",
     "UniformJump",
     "VarianceGamma",
+    "Vasicek",
+    "VasicekProcess",
     "correlated_brownian_motion",
     "independent_levy_vector",
 ]
