@@ -30,6 +30,7 @@ Every process implemented in spxa. The exactness level, available cumulants, sim
 
 | Class | Exactness | Notes | Reference |
 |---|---|---|---|
+| `CIRProcess` (`CoxIngersollRoss`) | MOMENT | square-root diffusion; exact non-central χ² transitions & simulation; exact conditional & stationary moments; Riccati bond pricing | Cox, Ingersoll & Ross 1985; Feller 1951 |
 | `FractionalBrownianMotion` | MOMENT | not a semimartingale; Hurst algebra for self-similarity | Mandelbrot & Van Ness 1968 |
 | `HawkesProcess` | MOMENT | self-exciting; mean intensity and variance propagated | Hawkes 1971 |
 | `OULevy` | MOMENT | OU driven by Lévy subordinator; stationary dist. exact | Barndorff-Nielsen & Shephard 2001 |

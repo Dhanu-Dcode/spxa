@@ -17,6 +17,8 @@ from spxa.core import (
 )
 from spxa.zoo import (
     CGMY,
+    CIRProcess,
+    CoxIngersollRoss,
     NIG,
     AlphaStable,
     BrownianMotion,
@@ -57,6 +59,8 @@ __all__ = [
     "AlphaStable",
     "BrownianMotion",
     "CGMY",
+    "CIRProcess",
+    "CoxIngersollRoss",
     "CompoundPoisson",
     "CorrelatedLevy",
     "DiscreteJump",

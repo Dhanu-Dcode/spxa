@@ -32,6 +32,7 @@ Chapter 9 (Gamma), Chapter 4 (Inverse Gaussian).
 
 from __future__ import annotations
 
+import math
 from typing import Optional
 
 import numpy as np
@@ -370,4 +371,108 @@ def increments_to_paths(
     paths = np.empty((n_paths, n_steps + 1))
     paths[:, 0] = x0
     paths[:, 1:] = x0 + np.cumsum(increments, axis=1)
+    return paths
+
+
+def sample_cir(
+    kappa: float,
+    theta: float,
+    sigma: float,
+    r0: float,
+    dt: float,
+    n_steps: int,
+    n_paths: int = 1,
+    rng: Optional[np.random.Generator] = None,
+    method: str = "exact",
+) -> np.ndarray:
+    r"""
+    Simulate Cox–Ingersoll–Ross (CIR) square-root diffusion paths.
+
+    dr_t = κ(θ - r_t)dt + σ√r_t dW_t,  r_0 = r0.
+
+    Parameters
+    ----------
+    kappa : float
+        Mean-reversion speed κ > 0.
+    theta : float
+        Long-term mean level θ > 0.
+    sigma : float
+        Volatility parameter σ > 0.
+    r0 : float
+        Initial value r_0 ≥ 0.
+    dt : float
+        Time step size Δt > 0.
+    n_steps : int
+        Number of simulation time steps.
+    n_paths : int, default 1
+        Number of independent sample paths.
+    rng : np.random.Generator, optional
+        Random number generator.
+    method : {"exact", "truncated_euler", "reflected_euler"}, default "exact"
+        Simulation scheme:
+        - "exact": Non-central chi-squared transition distribution (exact in law).
+        - "truncated_euler": Higham–Mao full-truncation Euler–Maruyama scheme.
+        - "reflected_euler": Reflected Euler–Maruyama scheme.
+
+    Returns
+    -------
+    np.ndarray
+        Path array of shape (n_paths, n_steps + 1), with paths[:, 0] == r0.
+    """
+    if kappa <= 0 or theta <= 0 or sigma <= 0:
+        raise ValueError("kappa, theta, and sigma must be strictly positive")
+    if r0 < 0:
+        raise ValueError("r0 must be non-negative")
+    if dt <= 0:
+        raise ValueError("dt must be strictly positive")
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+    if n_paths < 1:
+        raise ValueError("n_paths must be >= 1")
+
+    rng = rng or np.random.default_rng()
+    paths = np.empty((n_paths, n_steps + 1), dtype=float)
+    paths[:, 0] = float(r0)
+
+    if n_steps == 0:
+        return paths
+
+    curr = np.full(n_paths, float(r0), dtype=float)
+
+    if method == "exact":
+        exp_k = math.exp(-kappa * dt)
+        c = 2.0 * kappa / (sigma**2 * (1.0 - exp_k))
+        d = 4.0 * kappa * theta / (sigma**2)
+        inv_2c = 1.0 / (2.0 * c)
+        two_c_exp_k = 2.0 * c * exp_k
+
+        for k in range(n_steps):
+            nonc = two_c_exp_k * np.maximum(curr, 0.0)
+            curr = rng.noncentral_chisquare(df=d, nonc=nonc) * inv_2c
+            paths[:, k + 1] = curr
+
+    elif method == "truncated_euler":
+        # Higham & Mao (2005) / Lord, Koekkoek, van Dijk (2010) full truncation
+        sqrt_dt = math.sqrt(dt)
+        for k in range(n_steps):
+            pos = np.maximum(curr, 0.0)
+            z = rng.standard_normal(size=n_paths)
+            curr = curr + kappa * (theta - pos) * dt + sigma * np.sqrt(pos) * sqrt_dt * z
+            curr = np.maximum(curr, 0.0)
+            paths[:, k + 1] = curr
+
+    elif method == "reflected_euler":
+        sqrt_dt = math.sqrt(dt)
+        for k in range(n_steps):
+            pos = np.maximum(curr, 0.0)
+            z = rng.standard_normal(size=n_paths)
+            curr = np.abs(curr + kappa * (theta - curr) * dt + sigma * np.sqrt(pos) * sqrt_dt * z)
+            paths[:, k + 1] = curr
+
+    else:
+        raise ValueError(
+            f"Unknown simulation method '{method}'. "
+            "Supported methods: 'exact', 'truncated_euler', 'reflected_euler'."
+        )
+
     return paths
