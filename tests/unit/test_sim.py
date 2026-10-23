@@ -39,6 +39,7 @@ from spxa.sim.exact import (
     sample_jcir,
     sample_schwartz_two_factor,
     sample_bns,
+    sample_jacobi,
     sample_nig,
     sample_ou,
     sample_vg,
@@ -1050,6 +1051,49 @@ class TestExactSamplers:
             sample_bns(n_steps=-1)
         with pytest.raises(ValueError, match="n_paths"):
             sample_bns(n_paths=0)
+
+    def test_sample_jacobi_shape_and_bounds(self) -> None:
+        """sample_jacobi produces correct shape and stays strictly inside bounds."""
+        rng = np.random.default_rng(95)
+        p = sample_jacobi(
+            kappa=1.5,
+            theta=0.4,
+            sigma=0.5,
+            y_min=0.0,
+            y_max=1.0,
+            y0=0.3,
+            dt=0.05,
+            n_steps=20,
+            n_paths=5,
+            rng=rng,
+        )
+        assert p.shape == (5, 21)
+        assert np.all(p[:, 0] == 0.3)
+        assert np.all(p >= 0.0)
+        assert np.all(p <= 1.0)
+
+    def test_sample_jacobi_zero_steps(self) -> None:
+        """sample_jacobi with n_steps=0 returns shape (n_paths, 1)."""
+        p = sample_jacobi(y0=0.5, n_steps=0, n_paths=4)
+        assert p.shape == (4, 1)
+        assert np.all(p == 0.5)
+
+    def test_sample_jacobi_invalid_parameters_raise(self) -> None:
+        """sample_jacobi raises ValueError on invalid inputs."""
+        with pytest.raises(ValueError, match="kappa"):
+            sample_jacobi(kappa=-1.0)
+        with pytest.raises(ValueError, match="sigma"):
+            sample_jacobi(sigma=-0.5)
+        with pytest.raises(ValueError, match="y_max"):
+            sample_jacobi(y_min=1.0, y_max=0.0)
+        with pytest.raises(ValueError, match="theta"):
+            sample_jacobi(theta=2.0, y_min=0.0, y_max=1.0)
+        with pytest.raises(ValueError, match="y0"):
+            sample_jacobi(y0=-0.1, y_min=0.0, y_max=1.0)
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_jacobi(n_steps=-1)
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_jacobi(n_paths=0)
 
 
 
