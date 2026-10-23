@@ -6,6 +6,18 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/levy/kou.py` — `KouJumpDiffusion` (`KouProcess`, `Kou72`, `Kou02`):
+  Kou (2002) double exponential jump-diffusion process combining continuous Brownian motion with
+  asymmetric double exponential jump shocks: $X_t = \mu t + \sigma W_t + \sum_{i=1}^{N_t} Y_i$,
+  $f_Y(y) = p \eta_1 e^{-\eta_1 y}\mathbb{I}_{y \ge 0} + (1-p) \eta_2 e^{\eta_2 y}\mathbb{I}_{y < 0}$
+  under `EXACT` exactness level.
+  Features exact closed-form Lévy triplet $(b, \sigma^2, \nu)$ with analytical truncated drift integral,
+  characteristic exponent $\psi(u)$, analytical cumulants of all orders $n$,
+  European Call and Put option pricing via Gil–Pelaez / Carr–Madan Fourier inversion,
+  Put-Call parity, Black–Scholes implied volatility smile/skew inversion, and exact
+  simulation with zero time discretization error.
+  References: Kou (2002); Cont & Tankov (2004).
+- `sim/exact.py` — Vectorized `sample_kou` exact path simulator with zero discretization error.
 - `zoo/beyond/cev.py` — `CEVProcess` (`CEV`, `ConstantElasticityOfVariance`):
   Constant Elasticity of Variance (CEV) local volatility diffusion process
   $dS_t = \mu S_t dt + \sigma S_t^\gamma dW_t, S_0 = s_0 > 0$ under `MOMENT_PROPAGATION` exactness.
