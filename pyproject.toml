@@ -26,6 +26,7 @@ dependencies = [
     "scipy>=1.10",
     "sympy>=1.12",
     "matplotlib>=3.7",
+    "networkx>=3.0",
 ]
 
 [project.optional-dependencies]
