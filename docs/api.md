@@ -2810,6 +2810,196 @@ Requires `level > 0`.
 
 ---
 
+### milstein
+
+```python
+from spxa.sim import milstein, milstein_autonomous, milstein_multivariate
+```
+
+```python
+milstein(
+    drift: Callable[[float, np.ndarray], np.ndarray],
+    diffusion: Callable[[float, np.ndarray], np.ndarray],
+    diffusion_prime: Callable[[float, np.ndarray], np.ndarray] | None = None,
+    x0: float | Sequence[float] | np.ndarray = 0.0,
+    dt: float | None = None,
+    n_steps: int | None = None,
+    n_paths: int = 1,
+    T: float | None = None,
+    rng: np.random.Generator | None = None,
+    eps: float = 1e-5,
+) -> np.ndarray
+```
+Order 1.0 strong convergence Milstein scheme:
+$$X_{k+1} = X_k + a(t_k, X_k)\Delta t + b(t_k, X_k)\Delta W_k + \frac{1}{2} b(t_k, X_k) b'(t_k, X_k) (\Delta W_k^2 - \Delta t)$$
+If `diffusion_prime` is omitted, evaluated automatically via centered finite differences with step `eps`.
+Returns shape `(n_paths, n_steps + 1)`.
+
+```python
+milstein_multivariate(
+    drift: Callable[[float, np.ndarray], np.ndarray],
+    diffusion: Callable[[float, np.ndarray], np.ndarray],
+    diffusion_jacobian: Callable[[float, np.ndarray], np.ndarray],
+    x0: Sequence[float],
+    dt: float | None = None,
+    n_steps: int | None = None,
+    n_paths: int = 1,
+    T: float | None = None,
+    rng: np.random.Generator | None = None,
+) -> np.ndarray
+```
+Multivariate commutative Milstein scheme for $d$-dimensional coupled SDEs driven by $m$-dimensional Brownian motion.
+Returns shape `(n_paths, n_steps + 1, d)`.
+
+---
+
+### stochastic runge-kutta
+
+```python
+from spxa.sim import stochastic_runge_kutta, srk_weak2
+```
+
+```python
+stochastic_runge_kutta(
+    drift: Callable[[float, np.ndarray], np.ndarray],
+    diffusion: Callable[[float, np.ndarray], np.ndarray],
+    x0: float | Sequence[float] | np.ndarray = 0.0,
+    dt: float | None = None,
+    n_steps: int | None = None,
+    n_paths: int = 1,
+    T: float | None = None,
+    rng: np.random.Generator | None = None,
+) -> np.ndarray
+```
+Derivative-free order 1.0 strong Stochastic Runge-Kutta (SRK) scheme:
+$$\Upsilon_k = X_k + a(t_k, X_k)\Delta t + b(t_k, X_k)\sqrt{\Delta t}$$
+$$X_{k+1} = X_k + a(t_k, X_k)\Delta t + b(t_k, X_k)\Delta W_k + \frac{1}{2\sqrt{\Delta t}} [b(t_k, \Upsilon_k) - b(t_k, X_k)] (\Delta W_k^2 - \Delta t)$$
+Achieves strong order 1.0 convergence without requiring analytical or numerical derivatives of $b(t, x)$.
+
+```python
+srk_weak2(
+    drift: Callable[[float, np.ndarray], np.ndarray],
+    diffusion: Callable[[float, np.ndarray], np.ndarray],
+    x0: float | Sequence[float] | np.ndarray = 0.0,
+    dt: float | None = None,
+    n_steps: int | None = None,
+    n_paths: int = 1,
+    T: float | None = None,
+    rng: np.random.Generator | None = None,
+) -> np.ndarray
+```
+Weak order 2.0 Runge-Kutta scheme for computing expectations $\mathbb{E}[f(X_T)]$ with larger step sizes.
+
+---
+
+### quasi-monte carlo (qmc)
+
+```python
+from spxa.sim import (
+    sample_qmc_uniforms,
+    sample_qmc_normals,
+    sample_qmc_brownian,
+    brownian_bridge_construction,
+)
+```
+
+```python
+sample_qmc_brownian(
+    n_paths: int,
+    n_steps: int,
+    T: float = 1.0,
+    bridge: bool = True,
+    engine: str = "sobol",
+    scramble: bool = True,
+    seed: int | None = None,
+) -> np.ndarray
+```
+Simulate Brownian motion paths using low-discrepancy Sobol or Halton sequences.
+When `bridge=True`, uses hierarchical Brownian bridge construction to concentrate variance into the leading Sobol dimensions, achieving $O((\ln N)^d / N)$ convergence.
+
+---
+
+### variance reduction
+
+```python
+from spxa.sim import (
+    control_variate_estimate,
+    sample_antithetic_normals,
+    sample_antithetic_brownian,
+    importance_sampling_gaussian_shift,
+    stratified_uniform_1d,
+)
+```
+
+```python
+control_variate_estimate(
+    y: np.ndarray,
+    x: np.ndarray,
+    mean_x: float | Sequence[float] | np.ndarray,
+) -> ControlVariateResult
+```
+Optimal single and multivariate control variate estimator:
+$$\hat{Y}_{\mathrm{CV}} = Y - \boldsymbol{\beta}^{* T} (X - \mathbb{E}[X]), \quad \boldsymbol{\beta}^* = \Sigma_{XX}^{-1} \Sigma_{XY}$$
+Returns `ControlVariateResult` with `mean`, `std_err`, `beta`, `r_squared`, and `variance_reduction_ratio`.
+
+```python
+sample_antithetic_brownian(n_pairs: int, n_steps: int, T: float = 1.0) -> tuple[np.ndarray, np.ndarray]
+```
+Generates mirrored pairs $(W, -W)$ of Brownian paths.
+
+```python
+importance_sampling_gaussian_shift(
+    n_samples: int,
+    mu_shift: float | Sequence[float] | np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]
+```
+Samples under shifted Gaussian drift $\mu_{\mathrm{IS}}$ and returns Radon-Nikodym likelihood ratio weights $L(Z) = \exp(-\mu_{\mathrm{IS}}^T Z + \frac{1}{2} \|\mu_{\mathrm{IS}}\|^2)$.
+
+---
+
+### predictor-corrector
+
+```python
+from spxa.sim import predictor_corrector_euler, predictor_corrector_milstein
+```
+
+```python
+predictor_corrector_euler(
+    drift: Callable[[float, np.ndarray], np.ndarray],
+    diffusion: Callable[[float, np.ndarray], np.ndarray],
+    x0: float = 0.0,
+    theta: float = 0.5,
+    dt: float = 0.01,
+    n_steps: int = 100,
+    n_paths: int = 1,
+) -> np.ndarray
+```
+Drift-implicit predictor-corrector scheme for stiff SDEs (e.g. mean-reverting diffusions with large $\kappa$).
+Unconditionally stable for trapezoidal $\theta = 0.5$.
+
+---
+
+### multilevel monte carlo (mlmc)
+
+```python
+from spxa.sim import mlmc_estimate, MLMCResult
+```
+
+```python
+mlmc_estimate(
+    path_coupler: Callable[[int, int, np.random.Generator], tuple[np.ndarray, np.ndarray | None]],
+    target_eps: float = 1e-3,
+    l_min: int = 2,
+    l_max: int = 8,
+    m: int = 2,
+) -> MLMCResult
+```
+Giles (2008) Multilevel Monte Carlo algorithm for estimating $\mathbb{E}[P]$ with optimal computational complexity $O(\epsilon^{-2})$.
+Couples coarse and fine grid discretizations using shared Brownian increments with automated sample size allocation $N_l$.
+Returns `MLMCResult(estimate, variance, std_err, levels, n_samples_per_level, sample_variances, total_cost)`.
+
+---
+
 ## story — derivation traces
 
 ```python
