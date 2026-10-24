@@ -33,6 +33,12 @@ from spxa.zoo.beyond.jacobi import (
     JacobiProcess,
     WrightFisherDiffusion,
 )
+from spxa.zoo.beyond.cbi import (
+    CBISubordinator,
+    CBIProcess,
+    ContinuousStateBranching,
+    DawsonWatanabeProcess,
+)
 from spxa.zoo.beyond.chen import (
     ChenModel,
     ChenProcess,
@@ -101,6 +107,10 @@ __all__ = [
     "JacobiDiffusion",
     "JacobiProcess",
     "WrightFisherDiffusion",
+    "CBISubordinator",
+    "CBIProcess",
+    "ContinuousStateBranching",
+    "DawsonWatanabeProcess",
     "ChenModel",
     "ChenProcess",
     "ChenShortRate",
