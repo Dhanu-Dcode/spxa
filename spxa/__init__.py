@@ -140,6 +140,21 @@ from spxa.sim import (
     MLMCResult,
     mlmc_estimate,
 )
+from spxa.vis import (
+    LevyInspection,
+    compute_iv_surface,
+    dag_to_ascii,
+    dag_to_dot,
+    dag_to_mermaid,
+    estimate_blumenthal_getoor_index,
+    inspect_levy_triplet,
+    plot_dag,
+    plot_iv_surface,
+    plot_levy_comparison,
+    plot_levy_density,
+    plot_smile_comparison,
+    plot_term_structure,
+)
 
 __all__ = [
     "__version__",
@@ -271,4 +286,17 @@ __all__ = [
     "predictor_corrector_milstein",
     "MLMCResult",
     "mlmc_estimate",
+    "LevyInspection",
+    "inspect_levy_triplet",
+    "estimate_blumenthal_getoor_index",
+    "plot_levy_density",
+    "plot_levy_comparison",
+    "compute_iv_surface",
+    "plot_iv_surface",
+    "plot_smile_comparison",
+    "plot_term_structure",
+    "dag_to_ascii",
+    "dag_to_mermaid",
+    "dag_to_dot",
+    "plot_dag",
 ]
