@@ -33,9 +33,10 @@ Chapter 9 (Gamma), Chapter 4 (Inverse Gaussian).
 from __future__ import annotations
 
 import math
-from typing import Optional
+from typing import Optional, Sequence, Union, Tuple
 
 import numpy as np
+from scipy import linalg as la
 
 
 def sample_brownian(
@@ -2446,6 +2447,119 @@ def sample_jacobi(
         paths[:, k + 1] = y_min + scale * x
 
     return paths
+
+
+def sample_regime_switching_gbm(
+    mu: Sequence[float],
+    sigma: Sequence[float],
+    transition_rates: Union[Sequence[Sequence[float]], np.ndarray],
+    s0: float,
+    initial_regime: int = 0,
+    dt: Optional[float] = None,
+    n_steps: Optional[int] = None,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+    return_regimes: bool = False,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    r"""
+    Sample paths of Regime-Switching Geometric Brownian Motion (RS-GBM).
+
+    Simulates the continuous-time Markov chain regimes using exact transition
+    probabilities :math:`P(\Delta t) = \exp(Q \Delta t)` and exact conditional log-GBM
+    increments.
+
+    Parameters
+    ----------
+    mu : Sequence[float]
+        Regime drifts, length :math:`K`.
+    sigma : Sequence[float]
+        Regime volatilities, length :math:`K`.
+    transition_rates : Sequence[Sequence[float]] or np.ndarray
+        Continuous-time Markov chain generator matrix :math:`Q` of size :math:`K \times K`.
+    s0 : float
+        Initial spot price :math:`S_0 > 0`.
+    initial_regime : int
+        Initial regime index :math:`Y_0 \in \{0, \dots, K-1\}`.
+    dt : float, optional
+        Time step.
+    n_steps : int, optional
+        Number of steps.
+    n_paths : int
+        Number of paths.
+    T : float, optional
+        Time horizon.
+    rng : np.random.Generator, optional
+        RNG instance.
+    return_regimes : bool
+        If True, returns ``(spot_paths, regime_paths)``.
+    """
+    mu_arr = np.asarray(mu, dtype=float)
+    sigma_arr = np.asarray(sigma, dtype=float)
+    q_mat = np.asarray(transition_rates, dtype=float)
+    k_states = len(mu_arr)
+
+    if n_paths <= 0:
+        raise ValueError(f"n_paths must be > 0, got {n_paths}")
+    if s0 <= 0.0:
+        raise ValueError(f"s0 must be > 0, got {s0}")
+    if not (0 <= initial_regime < k_states):
+        raise ValueError(f"initial_regime must be in [0, {k_states - 1}], got {initial_regime}")
+
+    if n_steps is None:
+        n_steps = 100
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+
+    if dt is None:
+        if T is not None:
+            if T <= 0:
+                raise ValueError("T must be strictly positive")
+            dt = T / n_steps if n_steps > 0 else 1.0
+        else:
+            dt = 1.0 / n_steps if n_steps > 0 else 1.0
+    else:
+        if dt <= 0:
+            raise ValueError("dt must be strictly positive")
+
+    s_paths = np.empty((n_paths, n_steps + 1), dtype=float)
+    s_paths[:, 0] = float(s0)
+    reg_paths = np.empty((n_paths, n_steps + 1), dtype=int)
+    reg_paths[:, 0] = int(initial_regime)
+
+    if n_steps == 0:
+        return (s_paths, reg_paths) if return_regimes else s_paths
+
+    rng = rng or np.random.default_rng()
+
+    # Exact transition probability matrix over time step dt
+    p_dt = la.expm(q_mat * dt)
+    p_dt = np.maximum(p_dt, 0.0)
+    p_dt = p_dt / np.sum(p_dt, axis=1, keepdims=True)
+    cum_p = np.cumsum(p_dt, axis=1)
+    cum_p[:, -1] = 1.0  # Ensure numerical closure
+
+    current_regimes = np.full(n_paths, initial_regime, dtype=int)
+    current_s = np.full(n_paths, s0, dtype=float)
+    sq_dt = math.sqrt(dt)
+
+    for k in range(n_steps):
+        # 1. Diffusion step under current regime
+        m_curr = mu_arr[current_regimes]
+        sig_curr = sigma_arr[current_regimes]
+        z = rng.standard_normal(n_paths)
+        log_inc = (m_curr - 0.5 * (sig_curr ** 2)) * dt + sig_curr * sq_dt * z
+        current_s *= np.exp(log_inc)
+        s_paths[:, k + 1] = current_s
+
+        # 2. Vectorized Markov chain transition for the next step
+        u = rng.uniform(0.0, 1.0, size=n_paths)
+        thresholds = cum_p[current_regimes, :-1]
+        current_regimes = np.sum(u[:, None] > thresholds, axis=1)
+        reg_paths[:, k + 1] = current_regimes
+
+    return (s_paths, reg_paths) if return_regimes else s_paths
+
 
 
 
