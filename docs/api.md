@@ -40,6 +40,7 @@ the running library. All signatures are exact.
    - [JacobiProcess](#jacobiprocess)
    - [RegimeSwitchingGBM](#regimeswitchinggbm)
    - [ChenModel](#chenmodel)
+   - [CBISubordinator](#cbisubordinator)
    - [HullWhiteProcess](#hullwhiteprocess)
    - [BlackKarasinskiProcess](#blackkarasinskiprocess)
    - [SABRProcess](#sabrprocess)
@@ -154,6 +155,10 @@ spxa.ChenModel
 spxa.ChenProcess
 spxa.ChenShortRate
 spxa.ChenThreeFactor
+spxa.CBISubordinator
+spxa.CBIProcess
+spxa.ContinuousStateBranching
+spxa.DawsonWatanabeProcess
 spxa.ExtendedVasicek
 spxa.HW1F
 spxa.HullWhite
@@ -1504,6 +1509,56 @@ $$d\zeta_t = \lambda (\bar{\zeta} - \zeta_t) dt + \beta \sqrt{\zeta_t} dW_{3,t}$
 **References:**
 - Chen, L. (1996). *Stochastic Mean and Stochastic Volatility - A Three-Factor Model of the Term Structure of Interest Rates and Its Application in Derivatives Pricing*. Financial Markets, Institutions & Instruments, 5(1), 1–88.
 - Chen, L. (1996). *A Three-Factor Model of Interest Rates*. The Journal of Fixed Income, 6(3), 8–29.
+
+---
+
+### CBISubordinator
+
+```python
+from spxa import CBISubordinator, CBIProcess, DawsonWatanabeProcess, ContinuousStateBranching
+
+cbi = CBISubordinator(
+    a=0.05,
+    b=0.8,
+    c=0.1,
+    lambda_j=0.4,
+    eta=20.0,
+    x0=0.1,
+)
+```
+
+The Continuous-State Branching Process with Immigration (CBI) / Dawson-Watanabe process (Kawazu & Watanabe 1971; Dawson & Li 2012) evolves on $[0, \infty)$ according to:
+$$dX_t = (a - b X_t) dt + \sqrt{c X_t} dW_t + dJ_t, \quad X_0 \ge 0$$
+where $a \ge 0$ is continuous immigration, $b \ge 0$ is branching drift (decay), $c > 0$ is branching diffusion, and $J_t$ is a compound Poisson jump immigration subordinator with arrival rate $\lambda_J \ge 0$ and exponential jump size distribution $\mathrm{Exp}(\eta)$.
+
+**Parameters & Structural Properties:**
+- `a` — continuous immigration rate ($a \ge 0$)
+- `b` — branching drift ($b \ge 0$, subcritical if $b > 0$, critical if $b = 0$)
+- `c` — branching diffusion coefficient ($c > 0$)
+- `lambda_j` — jump immigration rate ($\lambda_J \ge 0$)
+- `eta` — jump parameter ($\eta > 0$, mean jump $1/\eta$)
+- `x0` — initial state ($X_0 \ge 0$)
+- `is_subcritical` — True if $b > 0$
+- `is_critical` — True if $b = 0$
+- `stationary_mean` — stationary expectation $(a + \mu_J)/b$
+- `stationary_variance` — stationary variance $\frac{(a + \mu_J)c}{2b^2} + \frac{\sigma_J^2}{2b}$
+
+**Exact Laplace & Moments Analytics:**
+- `riccati_v(lam, t)` — exact closed-form solution $v(t, \lambda) = \frac{\lambda e^{-bt}}{1 + \frac{c\lambda}{2b}(1 - e^{-bt})}$
+- `laplace_transform(lam, t=1.0)` — exact Laplace transform $\mathbb{E}[e^{-\lambda X_t} \mid X_0]$
+- `conditional_mean(t=1.0)` — exact expectation $\mathbb{E}[X_t \mid X_0]$
+- `conditional_variance(t=1.0)` — exact variance $\mathrm{Var}(X_t \mid X_0)$
+- `extinction_probability(t=1.0)` — analytical extinction probability $\mathbb{P}(X_t = 0 \mid X_0) = \exp(-\frac{2b X_0}{c(e^{bt}-1)})$ for pure CSBP ($a = 0, \lambda_J = 0$)
+- `char_func(u, t=1.0)` — exact characteristic function $\mathbb{E}[e^{i u X_t}]$
+
+**Simulation:**
+- `simulate(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None)` — high-order Milstein path simulation with non-negative reflection
+
+**References:**
+- Kawazu, K., & Watanabe, S. (1971). *Branching processes with immigration and related limit theorems*. Theory of Probability & Its Applications, 16(1), 36–54.
+- Dawson, D. A., & Li, Z. (2012). *Stochastic equations, flows and measure-valued processes*. The Annals of Probability, 40(2), 813–857.
+- Li, Z. (2011). *Measure-Valued Branching Markov Processes*. Springer.
+- Grey, D. R. (1974). *Asymptotic behaviour of continuous time, continuous state-space branching processes*. Journal of Applied Probability, 11(4), 669–677.
 
 ---
 

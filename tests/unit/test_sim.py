@@ -42,6 +42,7 @@ from spxa.sim.exact import (
     sample_jacobi,
     sample_regime_switching_gbm,
     sample_chen,
+    sample_cbi,
     sample_nig,
     sample_ou,
     sample_vg,
@@ -1214,6 +1215,42 @@ class TestExactSamplers:
             sample_chen(n_steps=-1)
         with pytest.raises(ValueError, match="n_paths"):
             sample_chen(n_paths=0)
+
+    def test_sample_cbi_shape_and_initial_condition(self) -> None:
+        """sample_cbi produces correct shape and non-negative paths."""
+        rng = np.random.default_rng(98)
+        p = sample_cbi(
+            a=0.05, b=0.8, c=0.1, lambda_j=0.5, eta=20.0, x0=0.1,
+            dt=0.05, n_steps=20, n_paths=5, rng=rng,
+        )
+        assert p.shape == (5, 21)
+        assert np.all(p[:, 0] == 0.1)
+        assert np.all(p >= 0.0)
+
+    def test_sample_cbi_zero_steps(self) -> None:
+        """sample_cbi with n_steps=0 returns shape (n_paths, 1)."""
+        p = sample_cbi(x0=0.2, n_steps=0, n_paths=4)
+        assert p.shape == (4, 1)
+        assert np.all(p == 0.2)
+
+    def test_sample_cbi_invalid_parameters_raise(self) -> None:
+        """sample_cbi raises ValueError on invalid inputs."""
+        with pytest.raises(ValueError, match="a"):
+            sample_cbi(a=-0.05)
+        with pytest.raises(ValueError, match="b"):
+            sample_cbi(b=-0.8)
+        with pytest.raises(ValueError, match="c"):
+            sample_cbi(c=-0.1)
+        with pytest.raises(ValueError, match="lambda_j"):
+            sample_cbi(lambda_j=-1.0)
+        with pytest.raises(ValueError, match="eta"):
+            sample_cbi(eta=-10.0)
+        with pytest.raises(ValueError, match="x0"):
+            sample_cbi(x0=-0.1)
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_cbi(n_steps=-1)
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_cbi(n_paths=0)
 
 
 

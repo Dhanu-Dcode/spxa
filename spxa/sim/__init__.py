@@ -35,6 +35,7 @@ from spxa.sim.exact import (
     sample_jacobi,
     sample_regime_switching_gbm,
     sample_chen,
+    sample_cbi,
     increments_to_paths,
 )
 from spxa.sim.bridge import (
@@ -78,6 +79,7 @@ __all__ = [
     "sample_jacobi",
     "sample_regime_switching_gbm",
     "sample_chen",
+    "sample_cbi",
     "increments_to_paths",
     "brownian_bridge",
     "gamma_bridge",

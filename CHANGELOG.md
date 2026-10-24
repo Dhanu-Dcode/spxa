@@ -6,6 +6,15 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/cbi.py` — `CBISubordinator` (`CBIProcess`, `DawsonWatanabeProcess`, `ContinuousStateBranching`):
+  Dawson-Watanabe continuous-state branching process with continuous and jump immigration (Kawazu & Watanabe 1971; Dawson & Li 2012):
+  $dX_t = (a - b X_t) dt + \sqrt{c X_t} dW_t + dJ_t$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features exact closed-form Riccati solution $v(t, \lambda)$, affine Laplace transform $\mathbb{E}[e^{-\lambda X_t}]$,
+  exact conditional mean and variance with compound Poisson immigration, analytical extinction probability for pure CSBP,
+  and high-order Milstein simulation with non-negative reflection.
+  References: Kawazu & Watanabe (1971); Dawson & Li (2012); Li (2011); Grey (1974).
+- `sim/exact.py` — Vectorized `sample_cbi` Dawson-Watanabe Milstein sampler with jump immigration.
 - `zoo/beyond/chen.py` — `ChenModel` (`ChenThreeFactor`, `ChenShortRate`, `ChenProcess`):
   Chen (1996) three-factor interest rate model with stochastic central tendency (mean) and stochastic variance:
   $dr_t = k (\theta_t - r_t) dt + \sqrt{\zeta_t r_t} dW_{1,t}$,
