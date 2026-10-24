@@ -45,6 +45,37 @@ from spxa.sim.bridge import (
     first_passage_time_bm,
     first_passage_time_exact_bm,
 )
+from spxa.sim.milstein import (
+    milstein,
+    milstein_autonomous,
+    milstein_multivariate,
+)
+from spxa.sim.runge_kutta import (
+    stochastic_runge_kutta,
+    srk_weak2,
+)
+from spxa.sim.qmc import (
+    sample_qmc_uniforms,
+    sample_qmc_normals,
+    sample_qmc_brownian,
+    brownian_bridge_construction,
+)
+from spxa.sim.variance_reduction import (
+    ControlVariateResult,
+    control_variate_estimate,
+    sample_antithetic_normals,
+    sample_antithetic_brownian,
+    importance_sampling_gaussian_shift,
+    stratified_uniform_1d,
+)
+from spxa.sim.predictor_corrector import (
+    predictor_corrector_euler,
+    predictor_corrector_milstein,
+)
+from spxa.sim.mlmc import (
+    MLMCResult,
+    mlmc_estimate,
+)
 
 __all__ = [
     "euler_maruyama",
@@ -86,4 +117,23 @@ __all__ = [
     "brownian_bridge_interpolate",
     "first_passage_time_bm",
     "first_passage_time_exact_bm",
+    "milstein",
+    "milstein_autonomous",
+    "milstein_multivariate",
+    "stochastic_runge_kutta",
+    "srk_weak2",
+    "sample_qmc_uniforms",
+    "sample_qmc_normals",
+    "sample_qmc_brownian",
+    "brownian_bridge_construction",
+    "ControlVariateResult",
+    "control_variate_estimate",
+    "sample_antithetic_normals",
+    "sample_antithetic_brownian",
+    "importance_sampling_gaussian_shift",
+    "stratified_uniform_1d",
+    "predictor_corrector_euler",
+    "predictor_corrector_milstein",
+    "MLMCResult",
+    "mlmc_estimate",
 ]

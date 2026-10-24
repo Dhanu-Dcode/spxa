@@ -6,6 +6,19 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `sim/milstein.py` — High-order 1D and multivariate commutative Milstein simulation schemes:
+  Order 1.0 strong convergence with analytical or automatic centered finite-difference diffusion derivatives.
+- `sim/runge_kutta.py` — Derivative-free Stochastic Runge-Kutta schemes:
+  Strong order 1.0 Kloeden-Platen scheme (matching Milstein accuracy without diffusion derivatives) and weak order 2.0 scheme for expectation evaluation.
+- `sim/qmc.py` — Quasi-Monte Carlo simulation engine:
+  Sobol and Halton low-discrepancy sequences, Owen scrambling, and hierarchical Brownian bridge path construction.
+- `sim/variance_reduction.py` — Comprehensive variance reduction toolkit:
+  Optimal single/multivariate control variate regression estimator, antithetic Gaussian and Brownian paths, Girsanov importance sampling with Radon-Nikodym likelihood weights, and 1D stratified uniform sampling.
+- `sim/predictor_corrector.py` — Drift-implicit predictor-corrector schemes for stiff SDEs:
+  Unconditionally stable trapezoidal integration for stiff mean-reverting processes.
+- `sim/mlmc.py` — Giles (2008) Multilevel Monte Carlo (MLMC) framework:
+  Optimal $O(\epsilon^{-2})$ estimation complexity, adaptive level selection, and optimal variance allocation.
+- `examples/simulation_backends_example.py` — Comprehensive demonstration of all advanced simulation backends.
 - `zoo/beyond/cbi.py` — `CBISubordinator` (`CBIProcess`, `DawsonWatanabeProcess`, `ContinuousStateBranching`):
   Dawson-Watanabe continuous-state branching process with continuous and jump immigration (Kawazu & Watanabe 1971; Dawson & Li 2012):
   $dX_t = (a - b X_t) dt + \sqrt{c X_t} dW_t + dJ_t$
