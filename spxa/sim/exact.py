@@ -2561,6 +2561,154 @@ def sample_regime_switching_gbm(
     return (s_paths, reg_paths) if return_regimes else s_paths
 
 
+def sample_chen(
+    k: float = 1.5,
+    theta_bar: float = 0.05,
+    kappa: float = 0.8,
+    alpha: float = 0.04,
+    zeta_bar: float = 0.02,
+    lambda_param: float = 1.0,
+    beta: float = 0.05,
+    r0: float = 0.04,
+    theta0: Optional[float] = None,
+    zeta0: Optional[float] = None,
+    dt: Optional[float] = None,
+    n_steps: Optional[int] = None,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+    return_factors: bool = False,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+    r"""
+    Sample paths of the Chen Three-Factor Short Rate Model.
+
+    Parameters
+    ----------
+    k : float
+        Reversion rate of short rate towards stochastic mean.
+    theta_bar : float
+        Long-term central tendency level.
+    kappa : float
+        Reversion rate of central tendency.
+    alpha : float
+        Diffusion coefficient of central tendency.
+    zeta_bar : float
+        Long-term variance level.
+    lambda_param : float
+        Reversion rate of variance factor.
+    beta : float
+        Diffusion coefficient of variance factor.
+    r0 : float
+        Initial short rate.
+    theta0 : float, optional
+        Initial central tendency (defaults to theta_bar).
+    zeta0 : float, optional
+        Initial variance factor (defaults to zeta_bar).
+    dt : float, optional
+        Time step size.
+    n_steps : int, optional
+        Number of time steps.
+    n_paths : int
+        Number of paths.
+    T : float, optional
+        Time horizon.
+    rng : np.random.Generator, optional
+        Random number generator.
+    return_factors : bool
+        If True, returns ``(r_paths, theta_paths, zeta_paths)``.
+    """
+    if k <= 0:
+        raise ValueError("k must be strictly positive")
+    if theta_bar <= 0:
+        raise ValueError("theta_bar must be strictly positive")
+    if kappa <= 0:
+        raise ValueError("kappa must be strictly positive")
+    if alpha <= 0:
+        raise ValueError("alpha must be strictly positive")
+    if zeta_bar <= 0:
+        raise ValueError("zeta_bar must be strictly positive")
+    if lambda_param <= 0:
+        raise ValueError("lambda_param must be strictly positive")
+    if beta <= 0:
+        raise ValueError("beta must be strictly positive")
+    if r0 <= 0:
+        raise ValueError("r0 must be strictly positive")
+    if n_paths <= 0:
+        raise ValueError("n_paths must be > 0")
+
+    th0 = theta_bar if theta0 is None else float(theta0)
+    z0 = zeta_bar if zeta0 is None else float(zeta0)
+    if th0 <= 0:
+        raise ValueError("theta0 must be strictly positive")
+    if z0 <= 0:
+        raise ValueError("zeta0 must be strictly positive")
+
+    if n_steps is None:
+        n_steps = 100
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+
+    if dt is None:
+        if T is not None:
+            if T <= 0:
+                raise ValueError("T must be strictly positive")
+            dt = T / n_steps if n_steps > 0 else 1.0
+        else:
+            dt = 1.0 / n_steps if n_steps > 0 else 1.0
+    else:
+        if dt <= 0:
+            raise ValueError("dt must be strictly positive")
+
+    r_paths = np.empty((n_paths, n_steps + 1), dtype=float)
+    r_paths[:, 0] = float(r0)
+    th_paths = np.empty((n_paths, n_steps + 1), dtype=float)
+    th_paths[:, 0] = float(th0)
+    z_paths = np.empty((n_paths, n_steps + 1), dtype=float)
+    z_paths[:, 0] = float(z0)
+
+    if n_steps == 0:
+        return (r_paths, th_paths, z_paths) if return_factors else r_paths
+
+    rng = rng or np.random.default_rng()
+    sq_dt = math.sqrt(dt)
+
+    curr_r = np.full(n_paths, r0, dtype=float)
+    curr_th = np.full(n_paths, th0, dtype=float)
+    curr_z = np.full(n_paths, z0, dtype=float)
+
+    for step in range(n_steps):
+        dw1 = rng.standard_normal(n_paths) * sq_dt
+        dw2 = rng.standard_normal(n_paths) * sq_dt
+        dw3 = rng.standard_normal(n_paths) * sq_dt
+
+        # Factor 3: Variance factor zeta (CIR)
+        z_pos = np.maximum(curr_z, 0.0)
+        curr_z = np.maximum(
+            curr_z + lambda_param * (zeta_bar - curr_z) * dt + beta * np.sqrt(z_pos) * dw3,
+            0.0,
+        )
+        z_paths[:, step + 1] = curr_z
+
+        # Factor 2: Central tendency theta (CIR)
+        th_pos = np.maximum(curr_th, 0.0)
+        curr_th = np.maximum(
+            curr_th + kappa * (theta_bar - curr_th) * dt + alpha * np.sqrt(th_pos) * dw2,
+            0.0,
+        )
+        th_paths[:, step + 1] = curr_th
+
+        # Factor 1: Short rate r
+        r_pos = np.maximum(curr_r, 0.0)
+        curr_r = np.maximum(
+            curr_r + k * (th_pos - curr_r) * dt + np.sqrt(z_pos * r_pos) * dw1,
+            0.0,
+        )
+        r_paths[:, step + 1] = curr_r
+
+    return (r_paths, th_paths, z_paths) if return_factors else r_paths
+
+
+
 
 
 

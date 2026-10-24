@@ -41,6 +41,7 @@ from spxa.sim.exact import (
     sample_bns,
     sample_jacobi,
     sample_regime_switching_gbm,
+    sample_chen,
     sample_nig,
     sample_ou,
     sample_vg,
@@ -1167,6 +1168,52 @@ class TestExactSamplers:
                 mu=(0.05, -0.02), sigma=(0.15, 0.30),
                 transition_rates=[[-0.5, 0.5], [1.0, -1.0]], s0=100.0, n_paths=0,
             )
+
+    def test_sample_chen_shape_and_initial_condition(self) -> None:
+        """sample_chen produces correct shape and non-negative short rates."""
+        rng = np.random.default_rng(97)
+        p = sample_chen(
+            k=1.5, theta_bar=0.05, kappa=0.8, alpha=0.04, zeta_bar=0.02,
+            lambda_param=1.0, beta=0.05, r0=0.04, theta0=0.05, zeta0=0.02,
+            dt=0.05, n_steps=20, n_paths=5, rng=rng,
+        )
+        assert p.shape == (5, 21)
+        assert np.all(p[:, 0] == 0.04)
+        assert np.all(p >= 0.0)
+
+        r_p, th_p, z_p = sample_chen(
+            k=1.5, theta_bar=0.05, kappa=0.8, alpha=0.04, zeta_bar=0.02,
+            lambda_param=1.0, beta=0.05, r0=0.04, theta0=0.05, zeta0=0.02,
+            dt=0.05, n_steps=20, n_paths=5, rng=rng, return_factors=True,
+        )
+        assert r_p.shape == (5, 21)
+        assert th_p.shape == (5, 21)
+        assert z_p.shape == (5, 21)
+        assert np.all(r_p[:, 0] == 0.04)
+        assert np.all(th_p[:, 0] == 0.05)
+        assert np.all(z_p[:, 0] == 0.02)
+        assert np.all(r_p >= 0.0)
+        assert np.all(th_p >= 0.0)
+        assert np.all(z_p >= 0.0)
+
+    def test_sample_chen_zero_steps(self) -> None:
+        """sample_chen with n_steps=0 returns shape (n_paths, 1)."""
+        p = sample_chen(r0=0.03, theta0=0.04, zeta0=0.01, n_steps=0, n_paths=4)
+        assert p.shape == (4, 1)
+        assert np.all(p == 0.03)
+
+    def test_sample_chen_invalid_parameters_raise(self) -> None:
+        """sample_chen raises ValueError on invalid inputs."""
+        with pytest.raises(ValueError, match="k"):
+            sample_chen(k=-1.0)
+        with pytest.raises(ValueError, match="theta_bar"):
+            sample_chen(theta_bar=-0.05)
+        with pytest.raises(ValueError, match="r0"):
+            sample_chen(r0=-0.04)
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_chen(n_steps=-1)
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_chen(n_paths=0)
 
 
 
