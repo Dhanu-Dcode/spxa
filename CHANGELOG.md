@@ -6,6 +6,16 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/regime_switching_gbm.py` — `RegimeSwitchingGBM` (`RSGBM`, `RegimeSwitchingBlackScholes`, `MarkovSwitchingGBM`):
+  Continuous-time Markov-modulated Black-Scholes diffusion of Hamilton (1989), Naik (1993), and Guo (2001):
+  $dS_t = \mu(Y_t) S_t dt + \sigma(Y_t) S_t dW_t$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features exact CTMC transition probabilities $P(t) = \exp(Q t)$, stationary probability distribution $\boldsymbol{\pi}$,
+  arbitrary order exact matrix exponential moments $\mathbb{E}[S_t^n \mid S_0, Y_0]$, continuous characteristic function via
+  matrix exponentials, closed-form Gil-Pelaez European call and put option pricing with machine-precision put-call parity,
+  and coupled Markov-jump and diffusion path simulation.
+  References: Hamilton (1989); Naik (1993); Guo (2001); Elliott, Aggoun, & Moore (1994).
+- `sim/exact.py` — Vectorized `sample_regime_switching_gbm` coupled Markov chain and diffusion path sampler.
 - `zoo/beyond/jacobi.py` — `JacobiProcess` (`JacobiDiffusion`, `WrightFisherDiffusion`, `Jacobi`):
   Jacobi bounded diffusion model on $[y_{\min}, y_{\max}]$ (canonical $[0, 1]$) of Ackerer, Filipović, & Turnes (2018):
   $dY_t = \kappa (\theta - Y_t) dt + \sigma \sqrt{\frac{(Y_t - y_{\min})(y_{\max} - Y_t)}{y_{\max} - y_{\min}}} dW_t$
