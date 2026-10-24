@@ -6,6 +6,19 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `vis/levy_inspector.py` — Lévy triplet diagnostic inspector and dual-panel density visualizer:
+  Decomposes $(b, \sigma^2, \nu)$, classifies finite activity ($\int \nu(dx) < \infty$) vs infinite activity ($\nu(\mathbb{R}) = \infty$),
+  finite vs infinite path variation, estimates Blumenthal-Getoor index $\beta \in [0, 2]$ and singularity order $s$,
+  and plots near-zero singularity zoom vs tail decay on semi-log scale.
+- `vis/surface.py` — 3D implied volatility surface and cross-model smile visualizer:
+  Computes and renders 3D $(K, T, \sigma_{\mathrm{IV}})$ surfaces with isoline contours, cross-model smile comparison curves
+  across diffusions, jumps, and stochastic volatility models, and volatility term structure plots.
+- `vis/story_dag.py` — Process composition DAG visualizer and multi-format exporter:
+  Walks `CompositionNode` trees and exports to ASCII / Unicode tree structures, Mermaid flowcharts for Markdown previews,
+  Graphviz DOT files, and publication-quality hierarchical NetworkX + Matplotlib diagrams.
+- `vis/__init__.py` — Unified visualization namespace exposing all diagnostic, surface, and DAG tools.
+- `examples/visualization_example.py` — End-to-end demonstration script generating sample plots and diagrams.
+- `tests/unit/test_vis.py` — Comprehensive unit test suite for all visualization submodules.
 - `sim/milstein.py` — High-order 1D and multivariate commutative Milstein simulation schemes:
   Order 1.0 strong convergence with analytical or automatic centered finite-difference diffusion derivatives.
 - `sim/runge_kutta.py` — Derivative-free Stochastic Runge-Kutta schemes:

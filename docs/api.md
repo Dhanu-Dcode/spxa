@@ -3061,3 +3061,191 @@ the composition tree (via `narrate_latex`), exactness level, and all
 from IPython.display import display, Math
 display(Math(story_latex(Z)))
 ```
+
+---
+
+## Visualization Module (`spxa.vis`)
+
+Interactive diagnostics, volatility surface generators, and composition DAG visualizers.
+
+```python
+from spxa.vis import (
+    LevyInspection,
+    inspect_levy_triplet,
+    estimate_blumenthal_getoor_index,
+    plot_levy_density,
+    plot_levy_comparison,
+    compute_iv_surface,
+    plot_iv_surface,
+    plot_smile_comparison,
+    plot_term_structure,
+    dag_to_ascii,
+    dag_to_mermaid,
+    dag_to_dot,
+    plot_dag,
+)
+```
+
+### Lévy Inspector (`spxa.vis.levy_inspector`)
+
+#### `inspect_levy_triplet`
+```python
+inspect_levy_triplet(process: Union[Process, LevyTriplet]) -> LevyInspection
+```
+Performs diagnostic analysis on the characteristic triplet $(b, \sigma^2, \nu)$:
+- Drift $b$ and Gaussian diffusion variance $\sigma^2$
+- Activity classification: Finite activity ($\int \nu(dx) < \infty$) with total jump rate $\lambda$, or Infinite activity ($\nu(\mathbb{R}) = \infty$)
+- Variation classification: Finite variation ($\sigma^2 = 0$ and $\int_{|x|\le 1} |x|\nu(dx) < \infty$) vs Infinite variation
+- Blumenthal-Getoor index $\beta \in [0, 2]$ and singularity order $s \ge 0$ near zero
+
+#### `estimate_blumenthal_getoor_index`
+```python
+estimate_blumenthal_getoor_index(process_or_triplet, eps_range=(1e-5, 1e-2), n_points=30) -> tuple[float, float]
+```
+Analytically extracts or numerically estimates $(\beta, s)$ via log-log regression of $\nu(x)$ on $|x|$ near zero.
+
+#### `plot_levy_density`
+```python
+plot_levy_density(
+    process: Union[Process, LevyTriplet],
+    x_range=(-2.0, 2.0),
+    near_zero_range=0.1,
+    n_points=500,
+    eps=1e-4,
+    log_scale=True,
+    figsize=(13, 5),
+    ax=None,
+    show=False,
+    save_path=None,
+) -> tuple[Figure, np.ndarray]
+```
+Renders a dual-panel figure:
+- **Left panel**: Near-zero zoom $[-0.1, -\epsilon] \cup [\epsilon, 0.1]$ illustrating singularity explosion (VG, CGMY) vs finite activity bounds (Merton, Kou).
+- **Right panel**: Tail decay view across $[x_{\min}, x_{\max}]$ on semi-log scale illustrating exponential decay slopes vs Gaussian parabolic decay.
+
+#### `plot_levy_comparison`
+```python
+plot_levy_comparison(
+    processes: list[Process] | dict[str, Process],
+    x_range=(-1.5, 1.5),
+    near_zero_range=0.1,
+    n_points=400,
+    eps=1e-3,
+    figsize=(14, 5.5),
+    log_scale=True,
+    show=False,
+    save_path=None,
+) -> tuple[Figure, np.ndarray]
+```
+Overlays multiple Lévy densities on common axes for cross-model comparison.
+
+---
+
+### Volatility Surfaces & Smiles (`spxa.vis.surface`)
+
+#### `compute_iv_surface`
+```python
+compute_iv_surface(
+    process: Any,
+    strikes: ArrayLike,
+    maturities: ArrayLike,
+    S0: float = 100.0,
+    r: float = 0.05,
+    q: float = 0.0,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]
+```
+Evaluates implied volatilities across a 2D meshgrid of strikes and maturities. Automatically binds parameters to `implied_vol_smile`, `implied_volatility`, or `call_price` via Black-Scholes inversion. Returns `(K_grid, T_grid, iv_grid)`.
+
+#### `plot_iv_surface`
+```python
+plot_iv_surface(
+    process_or_surface: Any,
+    strikes=None,
+    maturities=None,
+    S0=100.0,
+    r=0.05,
+    q=0.0,
+    cmap="viridis",
+    contour=True,
+    elev=28.0,
+    azim=-60.0,
+    figsize=(11, 7),
+    ax=None,
+    show=False,
+    title=None,
+    save_path=None,
+) -> tuple[Figure, Axes3D]
+```
+Renders a 3D surface plot $(K, T, \sigma_{\mathrm{IV}})$ with optional 2D isoline projections and colorbar.
+
+#### `plot_smile_comparison`
+```python
+plot_smile_comparison(
+    processes: list[Any] | dict[str, Any],
+    strikes: ArrayLike,
+    T: float = 1.0,
+    S0: float = 100.0,
+    r: float = 0.05,
+    q: float = 0.0,
+    figsize=(10, 6),
+    ax=None,
+    show=False,
+    title=None,
+    save_path=None,
+) -> tuple[Figure, Axes]
+```
+Plots cross-model smile comparison curves at fixed maturity $T$, illustrating differences in skew, wings, and ATM curvature across diffusions, jumps, and stochastic volatility models.
+
+#### `plot_term_structure`
+```python
+plot_term_structure(
+    processes: Any | list[Any] | dict[str, Any],
+    maturities: ArrayLike,
+    strike: float = 100.0,
+    S0: float = 100.0,
+    r: float = 0.05,
+    q: float = 0.0,
+    figsize=(9, 5),
+    ax=None,
+    show=False,
+    title=None,
+    save_path=None,
+) -> tuple[Figure, Axes]
+```
+Plots implied volatility term structure for a fixed strike across maturities $T$.
+
+---
+
+### Story Composition DAG Visualizer (`spxa.vis.story_dag`)
+
+#### `dag_to_ascii`
+```python
+dag_to_ascii(process_or_node: Any, show_math=True, show_ref=True) -> str
+```
+Exports composition DAG to an ASCII / Unicode branch tree (`├── `, `└── `) with node classifications, formulas, and citations.
+
+#### `dag_to_mermaid`
+```python
+dag_to_mermaid(process_or_node: Any, orientation="TB", show_math=True) -> str
+```
+Exports composition DAG to Mermaid flowchart syntax with styled color-coded nodes.
+
+#### `dag_to_dot`
+```python
+dag_to_dot(process_or_node: Any, graph_name="CompositionDAG", show_math=True) -> str
+```
+Exports composition DAG to Graphviz DOT syntax.
+
+#### `plot_dag`
+```python
+plot_dag(
+    process_or_node: Any,
+    figsize=(10, 6),
+    ax=None,
+    show=False,
+    title=None,
+    save_path=None,
+) -> tuple[Figure, Axes]
+```
+Renders a hierarchical NetworkX + Matplotlib diagram of the composition tree, color-coded by `NodeKind` with directed edges and legend.
+
