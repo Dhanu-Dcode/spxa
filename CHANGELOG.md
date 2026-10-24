@@ -6,6 +6,16 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/chen.py` — `ChenModel` (`ChenThreeFactor`, `ChenShortRate`, `ChenProcess`):
+  Chen (1996) three-factor interest rate model with stochastic central tendency (mean) and stochastic variance:
+  $dr_t = k (\theta_t - r_t) dt + \sqrt{\zeta_t r_t} dW_{1,t}$,
+  $d\theta_t = \kappa (\bar{\theta} - \theta_t) dt + \alpha \sqrt{\theta_t} dW_{2,t}$,
+  $d\zeta_t = \lambda (\bar{\zeta} - \zeta_t) dt + \beta \sqrt{\zeta_t} dW_{3,t}$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features exact closed-form expectations, Feller condition analytics, exact 10-dimensional matrix exponential moment system
+  for second moments and conditional variance, term structure zero-coupon bond pricing and yield curve, and coupled 3-factor simulation.
+  References: Chen (1996).
+- `sim/exact.py` — Vectorized `sample_chen` coupled 3-factor path sampler.
 - `zoo/beyond/regime_switching_gbm.py` — `RegimeSwitchingGBM` (`RSGBM`, `RegimeSwitchingBlackScholes`, `MarkovSwitchingGBM`):
   Continuous-time Markov-modulated Black-Scholes diffusion of Hamilton (1989), Naik (1993), and Guo (2001):
   $dS_t = \mu(Y_t) S_t dt + \sigma(Y_t) S_t dW_t$

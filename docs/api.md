@@ -39,6 +39,7 @@ the running library. All signatures are exact.
    - [JCIRProcess](#jcirprocess)
    - [JacobiProcess](#jacobiprocess)
    - [RegimeSwitchingGBM](#regimeswitchinggbm)
+   - [ChenModel](#chenmodel)
    - [HullWhiteProcess](#hullwhiteprocess)
    - [BlackKarasinskiProcess](#blackkarasinskiprocess)
    - [SABRProcess](#sabrprocess)
@@ -149,6 +150,10 @@ spxa.MarkovSwitchingGBM
 spxa.RegimeSwitchingBlackScholes
 spxa.RegimeSwitchingGBM
 spxa.RSGBM
+spxa.ChenModel
+spxa.ChenProcess
+spxa.ChenShortRate
+spxa.ChenThreeFactor
 spxa.ExtendedVasicek
 spxa.HW1F
 spxa.HullWhite
@@ -1443,6 +1448,62 @@ where $Y_t \in \{0, 1, \dots, K-1\}$ is a continuous-time Markov chain (CTMC) wi
 - Naik, V. (1993). *Option valuation and hedging in a regime switching framework*. The Journal of Finance, 48(5), 1969–1997.
 - Guo, X. (2001). *Information and option pricings*. Quantitative Finance, 1(1), 38–44.
 - Elliott, R. J., Aggoun, L., & Moore, J. B. (1994). *Hidden Markov Models: Estimation and Control*. Springer-Verlag.
+
+---
+
+### ChenModel
+
+```python
+from spxa import ChenModel, ChenThreeFactor, ChenShortRate, ChenProcess
+
+model = ChenModel(
+    k=1.5,
+    theta_bar=0.05,
+    kappa=0.8,
+    alpha=0.04,
+    zeta_bar=0.02,
+    lambda_param=1.0,
+    beta=0.05,
+    r0=0.04,
+)
+```
+
+The Chen (1996) Three-Factor Short Rate Model couples the instantaneous short rate with both a stochastic central tendency (stochastic mean) and stochastic variance:
+$$dr_t = k (\theta_t - r_t) dt + \sqrt{\zeta_t r_t} dW_{1,t}$$
+$$d\theta_t = \kappa (\bar{\theta} - \theta_t) dt + \alpha \sqrt{\theta_t} dW_{2,t}$$
+$$d\zeta_t = \lambda (\bar{\zeta} - \zeta_t) dt + \beta \sqrt{\zeta_t} dW_{3,t}$$
+
+**Parameters & Structural Properties:**
+- `k` — mean-reversion speed of the short rate towards $\theta_t$ ($k > 0$)
+- `theta_bar` — long-term central tendency target $\bar{\theta} > 0$
+- `kappa` — mean-reversion speed of central tendency ($\kappa > 0$)
+- `alpha` — volatility parameter of central tendency ($\alpha > 0$)
+- `zeta_bar` — long-term variance factor level $\bar{\zeta} > 0$
+- `lambda_param` — mean-reversion speed of variance factor ($\lambda > 0$)
+- `beta` — volatility parameter of variance factor ($\beta > 0$)
+- `r0`, `theta0`, `zeta0` — initial states
+- `feller_theta` — boolean check for Feller condition $2\kappa\bar{\theta} \ge \alpha^2$
+- `feller_zeta` — boolean check for Feller condition $2\lambda\bar{\zeta} \ge \beta^2$
+- `stationary_mean_short_rate` — stationary expectation $\bar{\theta}$
+- `stationary_mean_volatility` — stationary variance factor $\bar{\zeta}$
+
+**Moments & Term Structure Analytics:**
+- `conditional_mean(t=1.0)` — exact conditional expectation $\mathbb{E}[r_t \mid r_0, \theta_0]$
+- `conditional_mean_central_tendency(t=1.0)` — exact conditional expectation $\mathbb{E}[\theta_t \mid \theta_0]$
+- `conditional_mean_volatility(t=1.0)` — exact conditional expectation $\mathbb{E}[\zeta_t \mid \zeta_0]$
+- `conditional_moments_system(t=1.0)` — exact 10-dimensional matrix exponential moment system
+- `conditional_second_moment(t=1.0)` — exact conditional second moment $\mathbb{E}[r_t^2]$
+- `conditional_variance(t=1.0)` — exact conditional variance $\mathrm{Var}(r_t)$
+- `bond_price(maturity=1.0)` — zero-coupon bond price $P(0, T)$
+- `yield_curve(maturities)` — term structure zero yields $y(T) = -\frac{\ln P(0, T)}{T}$
+
+**Simulation:**
+- `simulate(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None)` — sample paths of the short rate $r_t$
+- `simulate_factors(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None)` — coupled paths `(r_paths, theta_paths, zeta_paths)`
+
+**References:**
+- Chen, L. (1996). *Stochastic Mean and Stochastic Volatility - A Three-Factor Model of the Term Structure of Interest Rates and Its Application in Derivatives Pricing*. Financial Markets, Institutions & Instruments, 5(1), 1–88.
+- Chen, L. (1996). *A Three-Factor Model of Interest Rates*. The Journal of Fixed Income, 6(3), 8–29.
 
 ---
 
