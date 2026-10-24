@@ -152,7 +152,11 @@ class CEVProcess(Process):
         regime_label = (
             "equity leverage (absorbing 0)"
             if self.gamma < 1.0
-            else ("GBM (constant vol)" if abs(self.gamma - 1.0) < 1e-7 else "commodity (inverse leverage)")
+            else (
+                "GBM (constant vol)"
+                if abs(self.gamma - 1.0) < 1e-7
+                else "commodity (inverse leverage)"
+            )
         )
 
         node = CompositionNode(
@@ -357,9 +361,13 @@ class CEVProcess(Process):
 
         # Case 1: Geometric Brownian Motion (gamma == 1)
         if abs(self.gamma - 1.0) < 1e-7:
-            d1 = (math.log(self.s0 / K) + (nu + 0.5 * self.sigma**2) * T) / (self.sigma * math.sqrt(T))
+            d1 = (math.log(self.s0 / K) + (nu + 0.5 * self.sigma**2) * T) / (
+                self.sigma * math.sqrt(T)
+            )
             d2 = d1 - self.sigma * math.sqrt(T)
-            call = self.s0 * math.exp(-val_q * T) * stats.norm.cdf(d1) - K * math.exp(-val_r * T) * stats.norm.cdf(d2)
+            call = self.s0 * math.exp(-val_q * T) * stats.norm.cdf(d1) - K * math.exp(
+                -val_r * T
+            ) * stats.norm.cdf(d2)
             return float(max(call, 0.0))
 
         # Case 2: Equity leverage regime (gamma < 1) - Schroder (1989)
@@ -423,9 +431,13 @@ class CEVProcess(Process):
         nu = val_r - val_q
 
         if abs(self.gamma - 1.0) < 1e-7:
-            d1 = (math.log(self.s0 / K) + (nu + 0.5 * self.sigma**2) * T) / (self.sigma * math.sqrt(T))
+            d1 = (math.log(self.s0 / K) + (nu + 0.5 * self.sigma**2) * T) / (
+                self.sigma * math.sqrt(T)
+            )
             d2 = d1 - self.sigma * math.sqrt(T)
-            put = K * math.exp(-val_r * T) * stats.norm.cdf(-d2) - self.s0 * math.exp(-val_q * T) * stats.norm.cdf(-d1)
+            put = K * math.exp(-val_r * T) * stats.norm.cdf(-d2) - self.s0 * math.exp(
+                -val_q * T
+            ) * stats.norm.cdf(-d1)
             return float(max(put, 0.0))
 
         if self.gamma < 1.0:
@@ -492,11 +504,19 @@ class CEVProcess(Process):
 
         try:
             self.s0 = orig_s0 + h
-            price_up = self.call_price(K, T, r=r, q=q) if option_type == "call" else self.put_price(K, T, r=r, q=q)
+            price_up = (
+                self.call_price(K, T, r=r, q=q)
+                if option_type == "call"
+                else self.put_price(K, T, r=r, q=q)
+            )
 
             self.s0 = max(orig_s0 - h, 1e-6)
             h_eff = (orig_s0 + h) - self.s0
-            price_down = self.call_price(K, T, r=r, q=q) if option_type == "call" else self.put_price(K, T, r=r, q=q)
+            price_down = (
+                self.call_price(K, T, r=r, q=q)
+                if option_type == "call"
+                else self.put_price(K, T, r=r, q=q)
+            )
         finally:
             self.s0 = orig_s0
 
@@ -702,7 +722,11 @@ class CEVProcess(Process):
         regime_desc = (
             f"equity leverage regime (γ={self.gamma} < 1), 0 is absorbing"
             if self.gamma < 1.0
-            else ("GBM regime (γ=1.0)" if abs(self.gamma - 1.0) < 1e-7 else f"commodity regime (γ={self.gamma} > 1)")
+            else (
+                "GBM regime (γ=1.0)"
+                if abs(self.gamma - 1.0) < 1e-7
+                else f"commodity regime (γ={self.gamma} > 1)"
+            )
         )
         return ProcessProperties(
             has_stationary_increments=False,
@@ -715,7 +739,7 @@ class CEVProcess(Process):
             is_subordinator=False,
             hurst_index=None,
             notes=[
-                f"Constant Elasticity of Variance (CEV) process: dS_t = μ S_t dt + σ S_t^γ dW_t.",
+                "Constant Elasticity of Variance (CEV) process: dS_t = μ S_t dt + σ S_t^γ dW_t.",
                 f"Parameters: μ={self.mu}, σ={self.sigma}, γ={self.gamma}, s0={self.s0}.",
                 f"Local volatility: σ(S) = {self.sigma} * S^{self.gamma - 1.0:.3f}.",
                 f"Regime: {regime_desc}.",

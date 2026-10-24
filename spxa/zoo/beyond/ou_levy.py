@@ -103,7 +103,7 @@ class OULevy(Process):
             name=f"OULevy(lam={lam}, subordinator={subordinator!r}, v0={v0})",
             math_note=(
                 f"dV_t = -λV_t dt + dL_{{λt}}; λ={lam}; "
-                f"Var(V_∞) = κ_2(L_1)/(2λ) = {self._sub_var/(2*lam):.4f}; "
+                f"Var(V_∞) = κ_2(L_1)/(2λ) = {self._sub_var / (2 * lam):.4f}; "
                 f"Cov(V_t, V_{{t+h}}) = e^{{-λh}}·Var(V_∞)"
             ),
             reference="Barndorff-Nielsen & Shephard (2001), eq. (17)",

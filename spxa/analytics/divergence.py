@@ -35,8 +35,6 @@ from __future__ import annotations
 
 import numpy as np
 
-from spxa.core.exactness import ExactnessLevel
-from spxa.core.exceptions import ExactnessError
 from spxa.core.process import Process
 
 
@@ -85,8 +83,6 @@ def l2_char_func_distance(
     Plancherel theorem. See e.g. Rudin (1987), Theorem 9.13.
     """
     u_grid = np.linspace(-u_max, u_max, n_points)
-    du = u_grid[1] - u_grid[0]
-
     cf_X = X.char_func(u=u_grid, t=t)
     cf_Y = Y.char_func(u=u_grid, t=t)
 
@@ -180,7 +176,6 @@ def wasserstein2_distance(
     Villani, C. (2003). *Topics in Optimal Transportation*. AMS. Chapter 2.
     Gil-Pelaez, J. (1951). Note on the inversion theorem. *Biometrika*, 38, 481–482.
     """
-    from scipy import integrate as sci_integrate  # type: ignore[import-untyped]
 
     def get_quantile_fn(proc: Process) -> tuple[np.ndarray, np.ndarray]:
         u_grid = np.linspace(1e-6, u_max, n_points // 2)
@@ -255,7 +250,6 @@ def kl_divergence_mc(
     samples = paths[:, -1]
 
     u_grid = np.linspace(-100.0, 100.0, 2000)
-    du = u_grid[1] - u_grid[0]
 
     def density_at(proc: Process, x_vals: np.ndarray) -> np.ndarray:
         cf = proc.char_func(u=u_grid, t=t)

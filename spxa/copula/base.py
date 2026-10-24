@@ -13,7 +13,6 @@ from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 from numpy.typing import ArrayLike
-from scipy import integrate
 
 
 class Copula(abc.ABC):
@@ -111,7 +110,9 @@ class Copula(abc.ABC):
             u_arr = u_arr.reshape(1, -1)
 
         if self.dim != 2:
-            raise NotImplementedError("Rosenblatt transform currently implemented for bivariate copulas.")
+            raise NotImplementedError(
+                "Rosenblatt transform currently implemented for bivariate copulas."
+            )
 
         w1 = u_arr[:, 0]
         w2 = np.asarray(self.conditional_cdf(u_arr[:, 1], u_arr[:, 0]), dtype=float)
@@ -134,7 +135,9 @@ class Copula(abc.ABC):
             w_arr = w_arr.reshape(1, -1)
 
         if self.dim != 2:
-            raise NotImplementedError("Inverse Rosenblatt transform currently implemented for bivariate copulas.")
+            raise NotImplementedError(
+                "Inverse Rosenblatt transform currently implemented for bivariate copulas."
+            )
 
         u1 = w_arr[:, 0]
         u2 = np.asarray(self.inverse_conditional_cdf(w_arr[:, 1], u1), dtype=float)
@@ -193,9 +196,7 @@ class Copula(abc.ABC):
             (lambda_L, lambda_U) in [0, 1]^2.
         """
 
-    def conditional_cdf(
-        self, u2: ArrayLike, u1: ArrayLike
-    ) -> Union[float, np.ndarray]:
+    def conditional_cdf(self, u2: ArrayLike, u1: ArrayLike) -> Union[float, np.ndarray]:
         r"""
         Compute the conditional distribution C_{2|1}(u_2 | u_1) = P(U_2 <= u_2 | U_1 = u_1) = ∂C(u_1, u_2) / ∂u_1.
 
@@ -331,7 +332,9 @@ class IndependenceCopula(Copula):
         u2_arr = np.asarray(u2, dtype=float)
         return float(u2_arr) if u2_arr.ndim == 0 else u2_arr
 
-    def inverse_conditional_cdf(self, p: ArrayLike, u1: ArrayLike, tol: float = 1e-7) -> Union[float, np.ndarray]:
+    def inverse_conditional_cdf(
+        self, p: ArrayLike, u1: ArrayLike, tol: float = 1e-7
+    ) -> Union[float, np.ndarray]:
         p_arr = np.asarray(p, dtype=float)
         return float(p_arr) if p_arr.ndim == 0 else p_arr
 

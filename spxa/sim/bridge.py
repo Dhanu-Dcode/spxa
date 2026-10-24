@@ -89,7 +89,6 @@ def brownian_bridge(
     Glasserman (2003), Section 3.2.1.
     """
     rng = rng or np.random.default_rng()
-    T_total = t_end - t_start
 
     time_grid = np.linspace(t_start, t_end, n_points + 2)
     paths = np.zeros((n_paths, n_points + 2))

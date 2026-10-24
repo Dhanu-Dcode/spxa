@@ -59,12 +59,14 @@ def _cgmy_levy_measure(C: float, G: float, M: float, Y: float) -> DensityLevyMea
         if Y >= 0:
             return np.inf
         from scipy import integrate  # type: ignore[import-untyped]
+
         pos_mass, _ = integrate.quad(lambda x: C * np.exp(-G * x) / x ** (1 + Y), 0, np.inf)
         neg_mass, _ = integrate.quad(lambda x: C * np.exp(-M * x) / x ** (1 + Y), 0, np.inf)
         return pos_mass + neg_mass
 
     def tail(xv: float) -> float:
         from scipy import integrate  # type: ignore[import-untyped]
+
         result, _ = integrate.quad(
             lambda t: C * np.exp(-G * t) / t ** (1 + Y), xv, np.inf, limit=200
         )
@@ -162,18 +164,21 @@ class CGMY(Process):
 
     def _triplet(self) -> LevyTriplet:
         from scipy import integrate  # type: ignore[import-untyped]
-        from scipy.special import gamma as gamma_fn  # type: ignore[import-untyped]
 
         nu = _cgmy_levy_measure(self.C, self.G, self.M, self.Y)
 
         if self.Y < 1:
             b_pos, _ = integrate.quad(
                 lambda x: self.C * np.exp(-self.G * x) / x**self.Y,
-                0.0, 1.0, limit=200,
+                0.0,
+                1.0,
+                limit=200,
             )
             b_neg, _ = integrate.quad(
                 lambda x: self.C * np.exp(-self.M * x) / x**self.Y,
-                0.0, 1.0, limit=200,
+                0.0,
+                1.0,
+                limit=200,
             )
             b_drift = b_pos - b_neg
         else:
@@ -213,11 +218,13 @@ class CGMY(Process):
 
         if n <= self.Y:
             raise ValueError(
-                f"Cumulant of order {n} does not exist for CGMY with Y={self.Y}. "
-                f"Requires n > Y."
+                f"Cumulant of order {n} does not exist for CGMY with Y={self.Y}. Requires n > Y."
             )
-        return t * self.C * float(gamma_fn(n - self.Y)) * (
-            self.M ** (self.Y - n) + ((-1) ** n) * self.G ** (self.Y - n)
+        return (
+            t
+            * self.C
+            * float(gamma_fn(n - self.Y))
+            * (self.M ** (self.Y - n) + ((-1) ** n) * self.G ** (self.Y - n))
         )
 
     def cumulants(self, order: int) -> dict[int, float]:
@@ -311,7 +318,9 @@ class CGMY(Process):
         x_grid = np.fft.fftfreq(N, d=du / (2 * np.pi))
         x_grid = np.fft.fftshift(x_grid)
 
-        pdf_fft = np.fft.fftshift(np.fft.ifft(np.fft.ifftshift(cf_vals))).real * du * N / (2 * np.pi)
+        pdf_fft = (
+            np.fft.fftshift(np.fft.ifft(np.fft.ifftshift(cf_vals))).real * du * N / (2 * np.pi)
+        )
         pdf_fft = np.maximum(pdf_fft, 0)
         cdf = np.cumsum(pdf_fft) * (x_grid[1] - x_grid[0])
         cdf /= cdf[-1]

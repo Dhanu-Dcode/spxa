@@ -239,8 +239,14 @@ def convergence_order_estimate(
     n_ref = max(step_sizes) * 8
     rng = np.random.default_rng(rng_seed)
     ref_paths = euler_maruyama(
-        driver, drift, diffusion, z0=z0, T=T,
-        n_steps=n_ref, n_paths=n_paths_ref, rng=rng,
+        driver,
+        drift,
+        diffusion,
+        z0=z0,
+        T=T,
+        n_steps=n_ref,
+        n_paths=n_paths_ref,
+        rng=rng,
     )
     z_ref = ref_paths[:, -1]
 
@@ -249,8 +255,14 @@ def convergence_order_estimate(
     for n in step_sizes:
         rng_n = np.random.default_rng(rng_seed)
         approx = euler_maruyama(
-            driver, drift, diffusion, z0=z0, T=T,
-            n_steps=n, n_paths=n_paths_ref, rng=rng_n,
+            driver,
+            drift,
+            diffusion,
+            z0=z0,
+            T=T,
+            n_steps=n,
+            n_paths=n_paths_ref,
+            rng=rng_n,
         )
         err = float(np.mean(np.abs(approx[:, -1] - z_ref)))
         errors.append(err)

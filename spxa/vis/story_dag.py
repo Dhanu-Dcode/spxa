@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 import textwrap
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Optional, Tuple
 
 from spxa.story.narrator import CompositionNode, NodeKind
 
@@ -236,9 +236,14 @@ def dag_to_dot(
     return "\n".join(lines)
 
 
-def _compute_hierarchy_layout(G: Any, root: int, width: float = 1.0, vert_gap: float = 0.25) -> dict[int, Tuple[float, float]]:
+def _compute_hierarchy_layout(
+    G: Any, root: int, width: float = 1.0, vert_gap: float = 0.25
+) -> dict[int, Tuple[float, float]]:
     """Compute hierarchical top-down tree coordinates for NetworkX graph."""
-    def _recurse(curr: int, left: float, right: float, vert_loc: float, pos: dict[int, Tuple[float, float]]) -> dict[int, Tuple[float, float]]:
+
+    def _recurse(
+        curr: int, left: float, right: float, vert_loc: float, pos: dict[int, Tuple[float, float]]
+    ) -> dict[int, Tuple[float, float]]:
         pos[curr] = ((left + right) / 2.0, vert_loc)
         children = list(G.successors(curr))
         if children:

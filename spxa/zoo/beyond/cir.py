@@ -247,10 +247,9 @@ class CIRProcess(Process):
 
         exp_k = np.exp(-self.kappa * t)
         exp_2k = np.exp(-2.0 * self.kappa * t)
-        var = (
-            val_r0 * (self.sigma**2 / self.kappa) * (exp_k - exp_2k)
-            + self.theta * (self.sigma**2 / (2.0 * self.kappa)) * ((1.0 - exp_k) ** 2)
-        )
+        var = val_r0 * (self.sigma**2 / self.kappa) * (exp_k - exp_2k) + self.theta * (
+            self.sigma**2 / (2.0 * self.kappa)
+        ) * ((1.0 - exp_k) ** 2)
         return float(max(var, 0.0))
 
     def conditional_std(self, t: float, r0: Optional[float] = None) -> float:
@@ -456,7 +455,9 @@ class CIRProcess(Process):
             if u <= 0.0:
                 # Boundary case u = 0 (e.g. r0 = 0): non-central chi-sq reduces to central Gamma(alpha=d/2, scale=1/c)
                 alpha = d / 2.0
-                out[pos] = (c**alpha / sp.gamma(alpha)) * (y_pos ** (alpha - 1.0)) * np.exp(-c * y_pos)
+                out[pos] = (
+                    (c**alpha / sp.gamma(alpha)) * (y_pos ** (alpha - 1.0)) * np.exp(-c * y_pos)
+                )
             else:
                 # Use exponentially-scaled Bessel function ive to prevent floating-point overflow:
                 # exp(-u - v) * iv(q, 2*sqrt(u*v)) = exp(-(sqrt(u) - sqrt(v))^2) * ive(q, 2*sqrt(u*v))
@@ -487,7 +488,9 @@ class CIRProcess(Process):
         pos = y_arr > 0.0
         if np.any(pos):
             y_pos = y_arr[pos]
-            out[pos] = (beta**alpha / sp.gamma(alpha)) * (y_pos ** (alpha - 1.0)) * np.exp(-beta * y_pos)
+            out[pos] = (
+                (beta**alpha / sp.gamma(alpha)) * (y_pos ** (alpha - 1.0)) * np.exp(-beta * y_pos)
+            )
 
         return float(out[0]) if is_scalar else out
 
@@ -537,7 +540,9 @@ class CIRProcess(Process):
             exp_neg_g = np.exp(-gamma * t_pos)
             denom = (gamma + self.kappa) + (gamma - self.kappa) * exp_neg_g
             b_val = 2.0 * (1.0 - exp_neg_g) / denom
-            ln_a = power * (math.log(2.0 * gamma) + 0.5 * (self.kappa - gamma) * t_pos - np.log(denom))
+            ln_a = power * (
+                math.log(2.0 * gamma) + 0.5 * (self.kappa - gamma) * t_pos - np.log(denom)
+            )
             ln_p = ln_a - b_val * val_r0
             out[pos] = np.exp(ln_p)
 
@@ -577,7 +582,9 @@ class CIRProcess(Process):
             exp_neg_g = np.exp(-gamma * t_pos)
             denom = (gamma + self.kappa) + (gamma - self.kappa) * exp_neg_g
             b_val = 2.0 * (1.0 - exp_neg_g) / denom
-            ln_a = power * (math.log(2.0 * gamma) + 0.5 * (self.kappa - gamma) * t_pos - np.log(denom))
+            ln_a = power * (
+                math.log(2.0 * gamma) + 0.5 * (self.kappa - gamma) * t_pos - np.log(denom)
+            )
             ln_p = ln_a - b_val * val_r0
             out[pos_mask] = -ln_p / t_pos
 
@@ -617,7 +624,7 @@ class CIRProcess(Process):
             is_subordinator=False,
             hurst_index=None,
             notes=[
-                f"Cox–Ingersoll–Ross (CIR) square-root diffusion: dr_t = κ(θ - r_t)dt + σ√r_t dW_t.",
+                "Cox–Ingersoll–Ross (CIR) square-root diffusion: dr_t = κ(θ - r_t)dt + σ√r_t dW_t.",
                 f"Parameters: κ={self.kappa}, θ={self.theta}, σ={self.sigma}, r0={self.r0}.",
                 f"Feller ratio 2κθ/σ² = {self.feller_ratio:.4f} ({feller_status}).",
                 f"Stationary distribution: Gamma(shape={self.stationary_shape:.4f}, scale={self.stationary_scale:.4f}).",
@@ -683,8 +690,7 @@ class CIRProcess(Process):
 
     def __repr__(self) -> str:
         return (
-            f"CIRProcess(kappa={self.kappa}, theta={self.theta}, "
-            f"sigma={self.sigma}, r0={self.r0})"
+            f"CIRProcess(kappa={self.kappa}, theta={self.theta}, sigma={self.sigma}, r0={self.r0})"
         )
 
 

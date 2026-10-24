@@ -20,7 +20,7 @@ Glasserman, P. (2004). Monte Carlo Methods in Financial Engineering. Springer.
 from __future__ import annotations
 
 import math
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 from scipy import stats  # type: ignore[import-untyped]

@@ -218,7 +218,7 @@ def predictor_corrector_milstein(
             b_minus = np.asarray(diffusion(t_k, curr_x - eps), dtype=float)
             bp_k = (b_plus - b_minus) / (2.0 * eps)
 
-        milstein_corr = 0.5 * b_k * bp_k * (dw ** 2 - dt)
+        milstein_corr = 0.5 * b_k * bp_k * (dw**2 - dt)
 
         if theta == 0.0:
             curr_x = curr_x + a_k * dt + b_k * dw + milstein_corr

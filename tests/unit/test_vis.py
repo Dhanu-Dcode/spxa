@@ -8,6 +8,7 @@ and smile comparison, and composition DAG ASCII, Mermaid, DOT, and Matplotlib pl
 import os
 import tempfile
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,11 +23,9 @@ from spxa import (
     KouJumpDiffusion,
     MertonJumpDiffusion,
     NormalJump,
-    SABRProcess,
     VarianceGamma,
 )
 from spxa.core.exceptions import ExactnessError
-from spxa.story.narrator import CompositionNode, NodeKind
 from spxa.vis import (
     compute_iv_surface,
     dag_to_ascii,
@@ -139,7 +138,9 @@ class TestLevyInspector:
             tmp_path = tmp.name
 
         try:
-            fig, axes = plot_levy_comparison({"Merton": m, "Kou": k}, n_points=80, save_path=tmp_path)
+            fig, axes = plot_levy_comparison(
+                {"Merton": m, "Kou": k}, n_points=80, save_path=tmp_path
+            )
             assert os.path.exists(tmp_path)
             assert os.path.getsize(tmp_path) > 1000
             assert len(axes) == 2
@@ -185,7 +186,9 @@ class TestSurface:
             tmp_path = tmp.name
 
         try:
-            fig, ax = plot_iv_surface(merton, strikes=strikes, maturities=maturities, save_path=tmp_path)
+            fig, ax = plot_iv_surface(
+                merton, strikes=strikes, maturities=maturities, save_path=tmp_path
+            )
             assert os.path.exists(tmp_path)
             assert os.path.getsize(tmp_path) > 1000
             plt.close(fig)
@@ -202,7 +205,9 @@ class TestSurface:
             tmp_path = tmp.name
 
         try:
-            fig, ax = plot_smile_comparison({"Merton": m, "Kou": k}, strikes=strikes, T=1.0, save_path=tmp_path)
+            fig, ax = plot_smile_comparison(
+                {"Merton": m, "Kou": k}, strikes=strikes, T=1.0, save_path=tmp_path
+            )
             assert os.path.exists(tmp_path)
             assert os.path.getsize(tmp_path) > 1000
             plt.close(fig)
@@ -218,7 +223,9 @@ class TestSurface:
             tmp_path = tmp.name
 
         try:
-            fig, ax = plot_term_structure(m, maturities=maturities, strike=100.0, save_path=tmp_path)
+            fig, ax = plot_term_structure(
+                m, maturities=maturities, strike=100.0, save_path=tmp_path
+            )
             assert os.path.exists(tmp_path)
             assert os.path.getsize(tmp_path) > 1000
             plt.close(fig)

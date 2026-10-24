@@ -13,7 +13,6 @@ from dataclasses import dataclass
 from typing import Any, Optional, Tuple, Union
 
 import numpy as np
-from numpy.typing import ArrayLike
 
 from spxa.core.exceptions import ExactnessError
 from spxa.core.process import Process
@@ -70,21 +69,25 @@ class LevyInspection:
             f"  • Drift b (truncation |x| ≤ 1) : {self.drift:+.6g}",
             f"  • Gaussian variance σ²        : {self.diffusion_variance:.6g}"
             + (" (Diffusion present)" if self.has_gaussian_component else " (Pure jump / drift)"),
-            f"  • Activity Classification     : "
+            "  • Activity Classification     : "
             + (
                 f"Finite Activity (λ = {self.total_jump_rate:.4f} jumps/yr)"
                 if self.is_finite_activity
                 else "Infinite Activity (ν(ℝ) = ∞)"
             ),
-            f"  • Variation Classification    : "
+            "  • Variation Classification    : "
             + (
                 "Finite Variation (bounded path variation)"
                 if self.is_finite_variation
                 else "Infinite Variation"
             ),
             f"  • Blumenthal-Getoor Index β  : {self.blumenthal_getoor_index:.4f}"
-            + (f" (Singularity order s = {self.singularity_order:.4f})" if self.singularity_order > 0 else ""),
-            f"  • Jump Component              : "
+            + (
+                f" (Singularity order s = {self.singularity_order:.4f})"
+                if self.singularity_order > 0
+                else ""
+            ),
+            "  • Jump Component              : "
             + ("Active" if self.has_jump_component else "None (Pure Diffusion)"),
         ]
         return "\n".join(lines)
@@ -142,10 +145,12 @@ def estimate_blumenthal_getoor_index(
         triplet = process_or_triplet.triplet
         # Check known analytical attributes
         if hasattr(process_or_triplet, "Y"):
-            y_val = float(getattr(process_or_triplet, "Y"))
+            y_val = float(process_or_triplet.Y)
             return float(np.clip(y_val, 0.0, 2.0)), float(1.0 + y_val)
-        if hasattr(process_or_triplet, "alpha") and type(process_or_triplet).__name__.lower().startswith("stable"):
-            alpha_val = float(getattr(process_or_triplet, "alpha"))
+        if hasattr(process_or_triplet, "alpha") and type(
+            process_or_triplet
+        ).__name__.lower().startswith("stable"):
+            alpha_val = float(process_or_triplet.alpha)
             return float(np.clip(alpha_val, 0.0, 2.0)), float(1.0 + alpha_val)
         pname = type(process_or_triplet).__name__
         if "VarianceGamma" in pname or "VG" in pname or "GammaProcess" in pname:
@@ -241,7 +246,9 @@ def inspect_levy_triplet(process: Union[Process, LevyTriplet]) -> LevyInspection
     # Check if jump measure is non-trivial
     test_pts = np.array([-1.0, -0.5, -0.1, 0.1, 0.5, 1.0])
     test_vals = _safe_eval_density(nu, test_pts)
-    has_jump = bool(is_fa and tot_mass > 1e-14) or bool(not is_fa) or bool(np.any(test_vals > 1e-14))
+    has_jump = (
+        bool(is_fa and tot_mass > 1e-14) or bool(not is_fa) or bool(np.any(test_vals > 1e-14))
+    )
 
     return LevyInspection(
         process_name=name,

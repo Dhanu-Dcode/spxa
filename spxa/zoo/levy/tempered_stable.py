@@ -61,9 +61,12 @@ def _ts_levy_measure(alpha: float, C: float, lam: float) -> DensityLevyMeasure:
 
     def tail(xv: float) -> float:
         from scipy import integrate  # type: ignore[import-untyped]
+
         result, _ = integrate.quad(
             lambda t: C * t ** (-1 - alpha) * np.exp(-lam * t),
-            xv, np.inf, limit=200,
+            xv,
+            np.inf,
+            limit=200,
         )
         return result
 
@@ -145,6 +148,7 @@ class TemperedStable(Process):
         self.lam = lam
 
         from scipy.special import gamma as gamma_fn  # type: ignore[import-untyped]
+
         kappa1 = C * float(gamma_fn(1 - alpha)) / lam ** (1 - alpha)
 
         node = CompositionNode(
@@ -169,7 +173,9 @@ class TemperedStable(Process):
         # at x=1. Split at a small epsilon to avoid x^{-α} near 0.
         b_drift, _ = integrate.quad(
             lambda x: self.C * x ** (-self.alpha) * np.exp(-self.lam * x),
-            0.0, 1.0, limit=200,
+            0.0,
+            1.0,
+            limit=200,
         )
         return LevyTriplet(b=b_drift, sigma_sq=0.0, nu=nu)
 
@@ -203,7 +209,7 @@ class TemperedStable(Process):
         s = np.atleast_1d(np.asarray(lam, dtype=float))
         coeff = self.C * float(gamma_fn(-self.alpha))
         # Γ(-α) < 0 for α∈(0,1); the Bernstein function is -C·Γ(-α)·(...) > 0
-        result = -coeff * ((self.lam + s) ** self.alpha - self.lam ** self.alpha)
+        result = -coeff * ((self.lam + s) ** self.alpha - self.lam**self.alpha)
         return result if result.shape != (1,) else result[0]
 
     def cumulant_exact(self, n: int, t: float = 1.0) -> float:
@@ -248,7 +254,7 @@ class TemperedStable(Process):
 
         u_arr = np.atleast_1d(np.asarray(u, dtype=complex))
         coeff = self.C * float(gamma_fn(-self.alpha))
-        exponent = t * coeff * ((self.lam - 1j * u_arr) ** self.alpha - self.lam ** self.alpha)
+        exponent = t * coeff * ((self.lam - 1j * u_arr) ** self.alpha - self.lam**self.alpha)
         result = np.exp(exponent)
         return result if result.shape != (1,) else result[0]
 

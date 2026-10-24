@@ -66,8 +66,13 @@ class TestChenExactness:
         # 2 * 0.8 * 0.05 = 0.08 >= 0.04^2 = 0.0016 (True)
         # 2 * 1.0 * 0.02 = 0.04 >= 0.05^2 = 0.0025 (True)
         model = ChenModel(
-            k=1.5, theta_bar=0.05, kappa=0.8, alpha=0.04,
-            zeta_bar=0.02, lambda_param=1.0, beta=0.05,
+            k=1.5,
+            theta_bar=0.05,
+            kappa=0.8,
+            alpha=0.04,
+            zeta_bar=0.02,
+            lambda_param=1.0,
+            beta=0.05,
         )
         assert model.feller_theta is True
         assert model.feller_zeta is True
@@ -78,9 +83,16 @@ class TestChenExactness:
     def test_chen_exact_conditional_means(self) -> None:
         """Exact conditional expectations of r_t, theta_t, and zeta_t."""
         model = ChenModel(
-            k=1.5, theta_bar=0.05, kappa=0.8, alpha=0.04,
-            zeta_bar=0.02, lambda_param=1.0, beta=0.05,
-            r0=0.03, theta0=0.06, zeta0=0.015,
+            k=1.5,
+            theta_bar=0.05,
+            kappa=0.8,
+            alpha=0.04,
+            zeta_bar=0.02,
+            lambda_param=1.0,
+            beta=0.05,
+            r0=0.03,
+            theta0=0.06,
+            zeta0=0.015,
         )
 
         # At t = 0
@@ -109,9 +121,16 @@ class TestChenExactness:
     def test_chen_matrix_exponential_moments_and_mc(self) -> None:
         """Matrix exponential moment system matches Monte Carlo."""
         model = ChenModel(
-            k=1.5, theta_bar=0.05, kappa=0.8, alpha=0.04,
-            zeta_bar=0.02, lambda_param=1.0, beta=0.05,
-            r0=0.04, theta0=0.05, zeta0=0.02,
+            k=1.5,
+            theta_bar=0.05,
+            kappa=0.8,
+            alpha=0.04,
+            zeta_bar=0.02,
+            lambda_param=1.0,
+            beta=0.05,
+            r0=0.04,
+            theta0=0.05,
+            zeta0=0.02,
         )
 
         moments = model.conditional_moments_system(t=1.0)
@@ -122,7 +141,7 @@ class TestChenExactness:
 
         assert moments["r"] == pytest.approx(mean_r)
         assert sec_mom == pytest.approx(moments["r2"])
-        assert var_r == pytest.approx(sec_mom - mean_r ** 2)
+        assert var_r == pytest.approx(sec_mom - mean_r**2)
         assert std_r == pytest.approx(math.sqrt(var_r))
 
         # Check Monte Carlo convergence
@@ -153,9 +172,7 @@ class TestChenExactness:
         model = ChenModel(r0=0.03, theta0=0.04, zeta0=0.015)
         rng = np.random.default_rng(77)
 
-        r_p, th_p, z_p = model.simulate_factors(
-            n_steps=20, time_horizon=0.5, n_paths=15, rng=rng
-        )
+        r_p, th_p, z_p = model.simulate_factors(n_steps=20, time_horizon=0.5, n_paths=15, rng=rng)
 
         assert r_p.shape == (15, 21)
         assert th_p.shape == (15, 21)

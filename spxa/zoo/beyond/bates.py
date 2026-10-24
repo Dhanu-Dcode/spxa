@@ -141,13 +141,17 @@ class BatesProcess(Process):
         if theta <= 0.0:
             raise ValueError(f"Long-term variance theta must be strictly positive, got {theta}")
         if sigma_v <= 0.0:
-            raise ValueError(f"Volatility of variance sigma_v must be strictly positive, got {sigma_v}")
+            raise ValueError(
+                f"Volatility of variance sigma_v must be strictly positive, got {sigma_v}"
+            )
         if not (-1.0 <= rho <= 1.0):
             raise ValueError(f"Correlation rho must lie in [-1, 1], got {rho}")
         if rate_val < 0.0:
             raise ValueError(f"Jump arrival rate lambda must be non-negative, got {rate_val}")
         if jump_std_val <= 0.0:
-            raise ValueError(f"Jump standard deviation sigma_j must be strictly positive, got {jump_std_val}")
+            raise ValueError(
+                f"Jump standard deviation sigma_j must be strictly positive, got {jump_std_val}"
+            )
         if s0 <= 0.0:
             raise ValueError(f"Spot price s0 must be strictly positive, got {s0}")
 
@@ -243,7 +247,7 @@ class BatesProcess(Process):
         r"""
         Expected relative price jump :math:`\bar{k} = \mathbb{E}[e^Y - 1] = \exp(\mu_J + \frac{1}{2}\sigma_J^2) - 1`.
         """
-        return float(math.exp(self._jump_mean + 0.5 * self._jump_std ** 2) - 1.0)
+        return float(math.exp(self._jump_mean + 0.5 * self._jump_std**2) - 1.0)
 
     @property
     def drift_compensator(self) -> float:
@@ -255,7 +259,7 @@ class BatesProcess(Process):
     @property
     def feller_ratio(self) -> float:
         r"""The Feller condition ratio :math:`\frac{2\kappa\theta}{\sigma_v^2}`."""
-        return (2.0 * self._kappa * self._theta) / (self._sigma_v ** 2)
+        return (2.0 * self._kappa * self._theta) / (self._sigma_v**2)
 
     @property
     def is_feller_satisfied(self) -> bool:
@@ -318,8 +322,8 @@ class BatesProcess(Process):
         if t < 0.0:
             raise ValueError(f"Time t must be non-negative, got {t}")
         exp_kt = np.exp(-self._kappa * t)
-        c1 = self._v0 * (self._sigma_v ** 2 / self._kappa) * (exp_kt - exp_kt ** 2)
-        c2 = self._theta * (self._sigma_v ** 2 / (2.0 * self._kappa)) * ((1.0 - exp_kt) ** 2)
+        c1 = self._v0 * (self._sigma_v**2 / self._kappa) * (exp_kt - exp_kt**2)
+        c2 = self._theta * (self._sigma_v**2 / (2.0 * self._kappa)) * ((1.0 - exp_kt) ** 2)
         return float(c1 + c2)
 
     @property
@@ -330,7 +334,7 @@ class BatesProcess(Process):
     @property
     def stationary_variance_var(self) -> float:
         r"""Stationary variance of variance :math:`\frac{\theta \sigma_v^2}{2\kappa}`."""
-        return float((self._theta * self._sigma_v ** 2) / (2.0 * self._kappa))
+        return float((self._theta * self._sigma_v**2) / (2.0 * self._kappa))
 
     def expected_integrated_variance(self, t: float) -> float:
         r"""
@@ -385,11 +389,11 @@ class BatesProcess(Process):
         th = self._theta
         sig = self._sigma_v
         rho = self._rho
-        sig2 = sig ** 2
+        sig2 = sig**2
 
         # 1. Heston component (Albrecher et al. 2007)
         term1 = k - i * rho * sig * u_arr
-        d = np.sqrt(term1 ** 2 + sig2 * (u_arr ** 2 + i * u_arr))
+        d = np.sqrt(term1**2 + sig2 * (u_arr**2 + i * u_arr))
         g = (term1 - d) / (term1 + d)
 
         exp_dt = np.exp(-d * t)
@@ -405,7 +409,9 @@ class BatesProcess(Process):
         # 2. Merton Jump component with compensator
         if self._rate > 0.0:
             k_bar = self.expected_relative_jump
-            jump_exp = np.exp(i * u_arr * self._jump_mean - 0.5 * (self._jump_std ** 2) * (u_arr ** 2)) - 1.0
+            jump_exp = (
+                np.exp(i * u_arr * self._jump_mean - 0.5 * (self._jump_std**2) * (u_arr**2)) - 1.0
+            )
             cf_jump = np.exp(self._rate * t * jump_exp - i * u_arr * self._rate * k_bar * t)
         else:
             cf_jump = 1.0
@@ -416,7 +422,9 @@ class BatesProcess(Process):
             return complex(cf_bates)
         return cf_bates
 
-    def asset_char_func(self, u: Union[float, np.ndarray], t: float = 1.0) -> Union[complex, np.ndarray]:
+    def asset_char_func(
+        self, u: Union[float, np.ndarray], t: float = 1.0
+    ) -> Union[complex, np.ndarray]:
         r"""
         Characteristic function of log-price :math:`\ln S_t = \ln S_0 + X_t`.
 
@@ -473,19 +481,27 @@ class BatesProcess(Process):
         if order >= 2:
             # kappa_2 = - d^2/du^2 log_cf(0) with h = 1e-4
             h2 = 1e-4
-            d2 = (log_cf(h2) - 2.0 * log_cf(0.0) + log_cf(-h2)) / (h2 ** 2)
+            d2 = (log_cf(h2) - 2.0 * log_cf(0.0) + log_cf(-h2)) / (h2**2)
             kappas[2] = float(np.real(-d2))
 
         if order >= 3:
             # kappa_3 = i * d^3/du^3 log_cf(0) with h = 5e-3
             h3 = 5e-3
-            d3 = (log_cf(2 * h3) - 2 * log_cf(h3) + 2 * log_cf(-h3) - log_cf(-2 * h3)) / (2.0 * h3 ** 3)
+            d3 = (log_cf(2 * h3) - 2 * log_cf(h3) + 2 * log_cf(-h3) - log_cf(-2 * h3)) / (
+                2.0 * h3**3
+            )
             kappas[3] = float(np.real(1j * d3))
 
         if order >= 4:
             # kappa_4 = d^4/du^4 log_cf(0) with h = 1.5e-2
             h4 = 1.5e-2
-            d4 = (log_cf(2 * h4) - 4 * log_cf(h4) + 6 * log_cf(0.0) - 4 * log_cf(-h4) + log_cf(-2 * h4)) / (h4 ** 4)
+            d4 = (
+                log_cf(2 * h4)
+                - 4 * log_cf(h4)
+                + 6 * log_cf(0.0)
+                - 4 * log_cf(-h4)
+                + log_cf(-2 * h4)
+            ) / (h4**4)
             kappas[4] = float(np.real(d4))
 
         for n in range(5, order + 1):
@@ -619,7 +635,7 @@ class BatesProcess(Process):
         def _bs_call(s: float, k: float, t: float, rate: float, div: float, vol: float) -> float:
             if vol <= 1e-8:
                 return float(max(0.0, s * np.exp(-div * t) - k * np.exp(-rate * t)))
-            d1 = (np.log(s / k) + (rate - div + 0.5 * vol ** 2) * t) / (vol * np.sqrt(t))
+            d1 = (np.log(s / k) + (rate - div + 0.5 * vol**2) * t) / (vol * np.sqrt(t))
             d2 = d1 - vol * np.sqrt(t)
             return float(s * np.exp(-div * t) * norm.cdf(d1) - k * np.exp(-rate * t) * norm.cdf(d2))
 

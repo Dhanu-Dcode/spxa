@@ -13,7 +13,7 @@ from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 from numpy.typing import ArrayLike
-from scipy import integrate, optimize, stats
+from scipy import integrate, stats
 
 from spxa.copula.base import Copula
 
@@ -349,7 +349,11 @@ class FrankCopula(ArchimedeanCopula):
         denom_safe = np.where(np.abs(denom) < 1e-15, np.sign(denom) * 1e-15, denom)
         arg = np.clip(1.0 + (p_arr * exp_mth) / denom_safe, 1e-15, 1.0)
         res = -1.0 / th * np.log(arg)
-        return float(np.clip(res, 0.0, 1.0)) if np.isscalar(p) and np.isscalar(u1) else np.clip(res, 0.0, 1.0)
+        return (
+            float(np.clip(res, 0.0, 1.0))
+            if np.isscalar(p) and np.isscalar(u1)
+            else np.clip(res, 0.0, 1.0)
+        )
 
     def sample(self, n: int, rng: Optional[np.random.Generator] = None) -> np.ndarray:
         if rng is None:
@@ -419,7 +423,9 @@ class JoeCopula(ArchimedeanCopula):
         # Universal Archimedean formula: \tau = 1 + 4 \int_0^1 \frac{\psi(t)}{\psi'(t)} dt
         def integrand(t: float) -> float:
             psi = -np.log(1.0 - (1.0 - t) ** self.theta)
-            psi_prime = -self.theta * (1.0 - t) ** (self.theta - 1.0) / (1.0 - (1.0 - t) ** self.theta)
+            psi_prime = (
+                -self.theta * (1.0 - t) ** (self.theta - 1.0) / (1.0 - (1.0 - t) ** self.theta)
+            )
             return float(psi / psi_prime)
 
         val, _ = integrate.quad(integrand, 1e-7, 1.0 - 1e-7)

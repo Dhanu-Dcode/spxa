@@ -39,7 +39,7 @@ def _extract_model_iv(
     out_iv = np.full(n_strikes, np.nan, dtype=float)
 
     # 1. Try implied_vol_smile
-    if hasattr(model, "implied_vol_smile") and callable(getattr(model, "implied_vol_smile")):
+    if hasattr(model, "implied_vol_smile") and callable(model.implied_vol_smile):
         sig = inspect.signature(model.implied_vol_smile)
         params = sig.parameters
         kwargs: dict[str, Any] = {}
@@ -61,13 +61,17 @@ def _extract_model_iv(
         try:
             res = model.implied_vol_smile(strikes, **kwargs)
             res_arr = np.asarray(res, dtype=float)
-            if res_arr.shape == strikes.shape and np.all(np.isfinite(res_arr)) and np.any(res_arr > 1e-4):
+            if (
+                res_arr.shape == strikes.shape
+                and np.all(np.isfinite(res_arr))
+                and np.any(res_arr > 1e-4)
+            ):
                 return res_arr
         except Exception:
             pass
 
     # 2. Try implied_volatility
-    if hasattr(model, "implied_volatility") and callable(getattr(model, "implied_volatility")):
+    if hasattr(model, "implied_volatility") and callable(model.implied_volatility):
         sig = inspect.signature(model.implied_volatility)
         params = sig.parameters
         kwargs = {}
@@ -90,7 +94,11 @@ def _extract_model_iv(
         try:
             res = model.implied_volatility(strikes, **kwargs)
             res_arr = np.asarray(res, dtype=float)
-            if res_arr.shape == strikes.shape and np.all(np.isfinite(res_arr)) and np.any(res_arr > 1e-4):
+            if (
+                res_arr.shape == strikes.shape
+                and np.all(np.isfinite(res_arr))
+                and np.any(res_arr > 1e-4)
+            ):
                 return res_arr
         except Exception:
             # Fall back to elementwise evaluation
@@ -105,7 +113,7 @@ def _extract_model_iv(
                 return out_iv
 
     # 3. Try call_price + Black-Scholes inversion
-    if hasattr(model, "call_price") and callable(getattr(model, "call_price")):
+    if hasattr(model, "call_price") and callable(model.call_price):
         sig = inspect.signature(model.call_price)
         params = sig.parameters
         kwargs = {}
@@ -185,6 +193,7 @@ def compute_iv_surface(
     # Interpolate any remaining isolated NaNs if boundary values are valid
     if np.any(np.isnan(iv_grid)):
         from scipy.interpolate import NearestNDInterpolator  # type: ignore[import-untyped]
+
         valid = np.isfinite(iv_grid)
         if np.any(valid):
             coords = np.column_stack((K_grid[valid], T_grid[valid]))
@@ -412,14 +421,16 @@ def plot_smile_comparison(
                     alpha=0.9,
                 )
         except Exception as exc:
-            warnings.warn(f"Could not compute smile for {label}: {exc}", UserWarning)
+            warnings.warn(f"Could not compute smile for {label}: {exc}", UserWarning, stacklevel=2)
 
     # Add vertical line at ATM strike
     ax.axvline(S0, color="#757575", linestyle="--", alpha=0.6, label=f"ATM ($S_0 = {S0}$)")
 
     ax.set_xlabel("Strike Price $K$", fontsize=11)
     ax.set_ylabel(r"Implied Volatility $\sigma_{\mathrm{IV}}(K)$", fontsize=11)
-    plot_title = title or f"Cross-Model Volatility Smile Comparison ($T = {T:.2f}\\,\\mathrm{{yr}}$)"
+    plot_title = (
+        title or f"Cross-Model Volatility Smile Comparison ($T = {T:.2f}\\,\\mathrm{{yr}}$)"
+    )
     ax.set_title(plot_title, fontsize=12, fontweight="bold")
     ax.grid(True, linestyle=":", alpha=0.6)
     ax.legend(loc="upper right", framealpha=0.92, fontsize=10)

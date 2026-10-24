@@ -54,14 +54,17 @@ def _ig_levy_measure(mu: float, lam: float) -> DensityLevyMeasure:
         out = np.zeros_like(x, dtype=float)
         pos = x > 0
         xp = x[pos]
-        out[pos] = prefactor * xp**(-1.5) * np.exp(-lam * (xp - mu)**2 / (2 * mu**2 * xp))
+        out[pos] = prefactor * xp ** (-1.5) * np.exp(-lam * (xp - mu) ** 2 / (2 * mu**2 * xp))
         return out
 
     def tail(xv: float) -> float:
         from scipy import integrate  # type: ignore[import-untyped]
+
         result, _ = integrate.quad(
-            lambda t: prefactor * t**(-1.5) * np.exp(-lam * (t - mu)**2 / (2 * mu**2 * t)),
-            xv, np.inf, limit=200
+            lambda t: prefactor * t ** (-1.5) * np.exp(-lam * (t - mu) ** 2 / (2 * mu**2 * t)),
+            xv,
+            np.inf,
+            limit=200,
         )
         return result
 
@@ -138,7 +141,7 @@ class InverseGaussianProcess(Process):
             math_note=(
                 f"Lévy density: sqrt(λ/2π)·x^{{-3/2}}·exp(-λ(x-μ)²/(2μ²x)); "
                 f"φ(s) = (λ/μ)(1-sqrt(1-2μ²s/λ)); "
-                f"κ₁={mu}, κ₂={mu**3/lam:.4f}"
+                f"κ₁={mu}, κ₂={mu**3 / lam:.4f}"
             ),
             reference="Tweedie (1957); Cont & Tankov (2004) Table 4.1; Schilling et al. (2012) Ex. 3.12",
         )
@@ -146,11 +149,18 @@ class InverseGaussianProcess(Process):
 
     def _triplet(self) -> LevyTriplet:
         from scipy import integrate  # type: ignore[import-untyped]
+
         nu = _ig_levy_measure(self.mu, self.lam)
         prefactor = np.sqrt(self.lam / (2 * np.pi))
         b_drift, _ = integrate.quad(
-            lambda x: prefactor * x**(-0.5) * np.exp(-self.lam * (x - self.mu)**2 / (2 * self.mu**2 * x)),
-            0.0, 1.0, limit=200,
+            lambda x: (
+                prefactor
+                * x ** (-0.5)
+                * np.exp(-self.lam * (x - self.mu) ** 2 / (2 * self.mu**2 * x))
+            ),
+            0.0,
+            1.0,
+            limit=200,
         )
         return LevyTriplet(b=b_drift, sigma_sq=0.0, nu=nu)
 
@@ -188,8 +198,9 @@ class InverseGaussianProcess(Process):
         Tweedie (1957), equation (2.5).
         """
         from math import prod
+
         double_factorial = prod(range(1, 2 * n, 2))
-        return t * double_factorial * self.mu**(2 * n - 1) / self.lam**(n - 1)
+        return t * double_factorial * self.mu ** (2 * n - 1) / self.lam ** (n - 1)
 
     def cumulants(self, order: int) -> dict[int, float]:
         return {n: self.cumulant_exact(n) for n in range(1, order + 1)}

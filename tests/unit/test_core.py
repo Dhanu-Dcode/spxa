@@ -1,13 +1,11 @@
 """Unit tests for core algebraic engine."""
 
-import warnings
-
 import numpy as np
 import pytest
 
 from spxa.core.exactness import ExactnessLevel
-from spxa.core.exceptions import ExactnessError, SpxaDegradationWarning
-from spxa.zoo.levy import BrownianMotion, GammaProcess, VarianceGamma
+from spxa.core.exceptions import ExactnessError
+from spxa.zoo.levy import BrownianMotion, GammaProcess
 
 
 class TestExactnessLevel:
@@ -17,17 +15,22 @@ class TestExactnessLevel:
         assert not (ExactnessLevel.EXACT > ExactnessLevel.MOMENT_PROPAGATION)
 
     def test_combine_returns_minimum(self) -> None:
-        assert ExactnessLevel.combine(
-            ExactnessLevel.EXACT, ExactnessLevel.MOMENT_PROPAGATION
-        ) == ExactnessLevel.MOMENT_PROPAGATION
+        assert (
+            ExactnessLevel.combine(ExactnessLevel.EXACT, ExactnessLevel.MOMENT_PROPAGATION)
+            == ExactnessLevel.MOMENT_PROPAGATION
+        )
 
-        assert ExactnessLevel.combine(
-            ExactnessLevel.EXACT, ExactnessLevel.EXACT
-        ) == ExactnessLevel.EXACT
+        assert (
+            ExactnessLevel.combine(ExactnessLevel.EXACT, ExactnessLevel.EXACT)
+            == ExactnessLevel.EXACT
+        )
 
-        assert ExactnessLevel.combine(
-            ExactnessLevel.SIMULATION_ONLY, ExactnessLevel.MOMENT_PROPAGATION
-        ) == ExactnessLevel.SIMULATION_ONLY
+        assert (
+            ExactnessLevel.combine(
+                ExactnessLevel.SIMULATION_ONLY, ExactnessLevel.MOMENT_PROPAGATION
+            )
+            == ExactnessLevel.SIMULATION_ONLY
+        )
 
 
 class TestLevyTripletArithmetic:
@@ -120,6 +123,7 @@ class TestPropertyPropagation:
 
     def test_tail_index_takes_minimum(self) -> None:
         from spxa.core.properties import ProcessProperties
+
         p1 = ProcessProperties(tail_index=1.5)
         p2 = ProcessProperties(tail_index=2.0)
         combined = ProcessProperties.combine_addition(p1, p2)

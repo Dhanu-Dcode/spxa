@@ -81,9 +81,9 @@ class TestBesselExactness:
 
         for t in [0.5, 1.0, 2.0]:
             exp_mean = x0 + dim * t
-            exp_var = 4.0 * x0 * t + 2.0 * dim * (t ** 2)
-            exp_k3 = 24.0 * x0 * (t ** 2) + 8.0 * dim * (t ** 3)
-            exp_k4 = 192.0 * x0 * (t ** 3) + 48.0 * dim * (t ** 4)
+            exp_var = 4.0 * x0 * t + 2.0 * dim * (t**2)
+            exp_k3 = 24.0 * x0 * (t**2) + 8.0 * dim * (t**3)
+            exp_k4 = 192.0 * x0 * (t**3) + 48.0 * dim * (t**4)
 
             assert besq.conditional_mean(t) == pytest.approx(exp_mean, rel=1e-12)
             assert besq.conditional_variance(t) == pytest.approx(exp_var, rel=1e-12)
@@ -104,7 +104,7 @@ class TestBesselExactness:
         # Laplace transform at lambda = 0.5
         lmbda = 0.5
         denom = 1.0 + 2.0 * lmbda * t
-        expected_lt = ((1.0 / denom) ** (dim / 2.0)) * math.exp(- (lmbda * x0) / denom)
+        expected_lt = ((1.0 / denom) ** (dim / 2.0)) * math.exp(-(lmbda * x0) / denom)
         assert besq.laplace_transform(lmbda, t=t) == pytest.approx(expected_lt, rel=1e-12)
 
         # Characteristic function at u = 0
@@ -137,13 +137,13 @@ class TestBesselExactness:
 
         for t in [0.5, 1.0, 2.0]:
             sec_moment = bes.conditional_second_moment(t)
-            assert sec_moment == pytest.approx(r0 ** 2 + dim * t, rel=1e-12)
+            assert sec_moment == pytest.approx(r0**2 + dim * t, rel=1e-12)
 
             mean_r = bes.conditional_mean(t)
             var_r = bes.conditional_variance(t)
             assert mean_r > 0.0
             assert var_r > 0.0
-            assert mean_r ** 2 < sec_moment
+            assert mean_r**2 < sec_moment
 
     def test_bessel_simulation_paths_and_mean(self) -> None:
         """Vectorized simulation produces non-negative paths converging to theoretical moments."""
@@ -162,7 +162,9 @@ class TestBesselExactness:
         assert mc_mean == pytest.approx(theo_mean, rel=0.015)
 
         bes = BesselProcess(dim=dim, r0=math.sqrt(x0))
-        paths_bes = bes.simulate(n_steps=20, time_horizon=1.0, n_paths=20_000, rng=np.random.default_rng(2026))
+        paths_bes = bes.simulate(
+            n_steps=20, time_horizon=1.0, n_paths=20_000, rng=np.random.default_rng(2026)
+        )
         assert paths_bes.shape == (20_000, 21)
         assert np.all(paths_bes[:, 0] == pytest.approx(math.sqrt(x0)))
         assert np.all(paths_bes >= 0.0)

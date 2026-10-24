@@ -9,10 +9,9 @@ Provides:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
-from numpy.typing import ArrayLike
 from scipy import stats
 
 from spxa.copula.base import Copula
@@ -89,7 +88,9 @@ def plot_copula_cdf(
     ax.set_zlabel(r"$C(u_1, u_2)$", fontsize=11, labelpad=6)
 
     cop_name = type(copula).__name__
-    ax.set_title(f"{cop_name} — Cumulative Distribution Surface", fontsize=12, fontweight="bold", pad=12)
+    ax.set_title(
+        f"{cop_name} — Cumulative Distribution Surface", fontsize=12, fontweight="bold", pad=12
+    )
 
     fig.tight_layout()
     if save_path:
@@ -152,7 +153,9 @@ def plot_copula_pdf(
     ax.set_zlabel(r"Density $c(u_1, u_2)$", fontsize=11, labelpad=6)
 
     cop_name = type(copula).__name__
-    ax.set_title(f"{cop_name} — Copula Probability Density Surface", fontsize=12, fontweight="bold", pad=12)
+    ax.set_title(
+        f"{cop_name} — Copula Probability Density Surface", fontsize=12, fontweight="bold", pad=12
+    )
 
     fig.tight_layout()
     if save_path:
@@ -199,7 +202,9 @@ def plot_copula_samples(
     ax_z.set_ylim(-3.5, 3.5)
     ax_z.set_xlabel(r"$Z_1 = \Phi^{-1}(U_1)$", fontsize=10)
     ax_z.set_ylabel(r"$Z_2 = \Phi^{-1}(U_2)$", fontsize=10)
-    ax_z.set_title("Transformed Marginal Space $\\mathcal{N}(0, 1)^2$", fontsize=11, fontweight="bold")
+    ax_z.set_title(
+        "Transformed Marginal Space $\\mathcal{N}(0, 1)^2$", fontsize=11, fontweight="bold"
+    )
     ax_z.grid(True, linestyle=":", alpha=0.6)
 
     fig.tight_layout()
@@ -252,7 +257,9 @@ def plot_tail_dependence_curves(
     ax_l.set_ylim(-0.05, 1.05)
     ax_l.set_xlabel(r"Quantile $u \to 0^+$ (log scale)", fontsize=10)
     ax_l.set_ylabel(r"$\lambda_L(u) = C(u, u) / u$", fontsize=10)
-    ax_l.set_title("Lower Tail Dependence $\\lambda_L$\n(Crash Co-Movement)", fontsize=11, fontweight="bold")
+    ax_l.set_title(
+        "Lower Tail Dependence $\\lambda_L$\n(Crash Co-Movement)", fontsize=11, fontweight="bold"
+    )
     ax_l.grid(True, linestyle=":", alpha=0.6, which="both")
     ax_l.legend(loc="upper left", fontsize=9, framealpha=0.9)
 
@@ -262,7 +269,9 @@ def plot_tail_dependence_curves(
     ax_u.set_ylim(-0.05, 1.05)
     ax_u.set_xlabel(r"Distance from Boundary $1 - u \to 0^+$ (log scale)", fontsize=10)
     ax_u.set_ylabel(r"$\lambda_U(u) = (1 - 2u + C(u, u))/(1 - u)$", fontsize=10)
-    ax_u.set_title("Upper Tail Dependence $\\lambda_U$\n(Boom Co-Movement)", fontsize=11, fontweight="bold")
+    ax_u.set_title(
+        "Upper Tail Dependence $\\lambda_U$\n(Boom Co-Movement)", fontsize=11, fontweight="bold"
+    )
     ax_u.grid(True, linestyle=":", alpha=0.6, which="both")
     ax_u.legend(loc="upper left", fontsize=9, framealpha=0.9)
 

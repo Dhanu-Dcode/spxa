@@ -9,8 +9,7 @@ pricing of multi-asset exotic derivatives (basket, worst-of, spread options).
 
 from __future__ import annotations
 
-import inspect
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import Optional, Sequence, Tuple
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -34,7 +33,9 @@ class CoupledProcess:
 
     def __init__(self, processes: Sequence[Process], copula: Copula) -> None:
         if len(processes) < 2:
-            raise ValueError(f"CoupledProcess requires at least 2 marginal processes, got {len(processes)}")
+            raise ValueError(
+                f"CoupledProcess requires at least 2 marginal processes, got {len(processes)}"
+            )
         if len(processes) != copula.dim:
             raise ValueError(
                 f"Number of marginal processes ({len(processes)}) must equal "
@@ -110,8 +111,6 @@ class CoupledProcess:
 
         # Time stepping simulation
         for step in range(n_steps):
-            t_curr = step * dt
-
             # Draw joint copula innovations: U ~ C in [0, 1]^d
             u_innov = self._copula.sample(n=n_paths, rng=rng)
             # Transform to standard normal drivers: Z_j = \Phi^{-1}(U_j)
@@ -138,7 +137,6 @@ class CoupledProcess:
 
                 elif "Heston" in p_name or "Bates" in p_name:
                     # Marginal asset price driven by primary Brownian motion
-                    s0 = getattr(p, "s0", 100.0)
                     mu = getattr(p, "mu", 0.05)
                     v0 = getattr(p, "v0", 0.04)
                     sig = np.sqrt(v0)
@@ -216,7 +214,9 @@ class CoupledProcess:
         else:
             w_arr = np.asarray(weights, dtype=float)
             if len(w_arr) != self.dim:
-                raise ValueError(f"Length of weights ({len(w_arr)}) must equal dimension ({self.dim})")
+                raise ValueError(
+                    f"Length of weights ({len(w_arr)}) must equal dimension ({self.dim})"
+                )
 
         paths = self.simulate(n_steps=20, n_paths=n_paths, T=T, rng=rng)
         terminal_prices = paths[:, -1, :]  # shape (n_paths, d)

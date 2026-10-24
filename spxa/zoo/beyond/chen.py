@@ -34,7 +34,7 @@ Chen, L. (1996). A Three-Factor Model of Interest Rates.
 from __future__ import annotations
 
 import math
-from typing import Optional, Union, Tuple, Dict, Any, Sequence
+from typing import Optional, Tuple, Dict, Sequence
 
 import numpy as np
 from scipy import linalg as la  # type: ignore[import-untyped]
@@ -195,12 +195,12 @@ class ChenModel(Process):
     @property
     def feller_theta(self) -> bool:
         r"""Whether Feller condition :math:`2 \kappa \bar{\theta} \ge \alpha^2` holds."""
-        return (2.0 * self._kappa * self._theta_bar) >= (self._alpha ** 2)
+        return (2.0 * self._kappa * self._theta_bar) >= (self._alpha**2)
 
     @property
     def feller_zeta(self) -> bool:
         r"""Whether Feller condition :math:`2 \lambda \bar{\zeta} \ge \beta^2` holds."""
-        return (2.0 * self._lambda * self._zeta_bar) >= (self._beta ** 2)
+        return (2.0 * self._lambda * self._zeta_bar) >= (self._beta**2)
 
     @property
     def stationary_mean_short_rate(self) -> float:
@@ -257,7 +257,9 @@ class ChenModel(Process):
         r"""Exact conditional expectation :math:`\mathbb{E}[\theta_t \mid \theta_0]`."""
         if t < 0.0:
             raise ValueError(f"Time t must be non-negative, got {t}")
-        return float(self._theta_bar + (self._theta0 - self._theta_bar) * math.exp(-self._kappa * t))
+        return float(
+            self._theta_bar + (self._theta0 - self._theta_bar) * math.exp(-self._kappa * t)
+        )
 
     def conditional_mean_volatility(self, t: float = 1.0) -> float:
         r"""Exact conditional expectation :math:`\mathbb{E}[\zeta_t \mid \zeta_0]`."""
@@ -286,7 +288,9 @@ class ChenModel(Process):
             correction = self._k * (self._theta0 - self._theta_bar) * t * exp_kt
         else:
             exp_kapt = math.exp(-self._kappa * t)
-            correction = (self._k * (self._theta0 - self._theta_bar) / (self._kappa - self._k)) * (exp_kt - exp_kapt)
+            correction = (self._k * (self._theta0 - self._theta_bar) / (self._kappa - self._k)) * (
+                exp_kt - exp_kapt
+            )
 
         return float(base + correction)
 
@@ -317,7 +321,7 @@ class ChenModel(Process):
 
         # 2: E[th^2]
         a_mat[2, 2] = -2.0 * self._kappa
-        a_mat[2, 7] = 2.0 * self._kappa * self._theta_bar + (self._alpha ** 2)
+        a_mat[2, 7] = 2.0 * self._kappa * self._theta_bar + (self._alpha**2)
 
         # 3: E[r*zeta]
         a_mat[3, 3] = -(self._k + self._lambda)
@@ -331,7 +335,7 @@ class ChenModel(Process):
 
         # 5: E[zeta^2]
         a_mat[5, 5] = -2.0 * self._lambda
-        a_mat[5, 8] = 2.0 * self._lambda * self._zeta_bar + (self._beta ** 2)
+        a_mat[5, 8] = 2.0 * self._lambda * self._zeta_bar + (self._beta**2)
 
         # 6: E[r]
         a_mat[6, 6] = -self._k
@@ -345,18 +349,21 @@ class ChenModel(Process):
         a_mat[8, 8] = -self._lambda
         a_mat[8, 9] = self._lambda * self._zeta_bar
 
-        m0 = np.array([
-            self._r0 ** 2,
-            self._r0 * self._theta0,
-            self._theta0 ** 2,
-            self._r0 * self._zeta0,
-            self._theta0 * self._zeta0,
-            self._zeta0 ** 2,
-            self._r0,
-            self._theta0,
-            self._zeta0,
-            1.0,
-        ], dtype=float)
+        m0 = np.array(
+            [
+                self._r0**2,
+                self._r0 * self._theta0,
+                self._theta0**2,
+                self._r0 * self._zeta0,
+                self._theta0 * self._zeta0,
+                self._zeta0**2,
+                self._r0,
+                self._theta0,
+                self._zeta0,
+                1.0,
+            ],
+            dtype=float,
+        )
 
         m_t = la.expm(a_mat * t) @ m0
 
@@ -443,6 +450,7 @@ class ChenModel(Process):
     ) -> np.ndarray:
         """Simulate sample paths of the short rate :math:`r_t`."""
         from spxa.sim.exact import sample_chen
+
         return sample_chen(
             k=self._k,
             theta_bar=self._theta_bar,
@@ -472,6 +480,7 @@ class ChenModel(Process):
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Simulate coupled paths of :math:`(r_t, \\theta_t, \\zeta_t)`."""
         from spxa.sim.exact import sample_chen
+
         return sample_chen(
             k=self._k,
             theta_bar=self._theta_bar,

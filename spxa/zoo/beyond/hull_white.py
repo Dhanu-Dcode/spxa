@@ -59,7 +59,7 @@ Vasicek, O. (1977). An equilibrium characterization of the term structure.
 from __future__ import annotations
 
 import math
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 from scipy.stats import norm
@@ -237,7 +237,7 @@ class HullWhiteProcess(Process):
             raise ValueError(f"Time t must be non-negative, got {t}")
         if t == 0.0:
             return 0.0
-        return float((self._sigma ** 2 / (2.0 * self._a)) * (1.0 - math.exp(-2.0 * self._a * t)))
+        return float((self._sigma**2 / (2.0 * self._a)) * (1.0 - math.exp(-2.0 * self._a * t)))
 
     def conditional_std(self, t: float = 1.0) -> float:
         r"""Standard deviation :math:`\sqrt{\mathrm{Var}(r_t \mid r_0)}`."""
@@ -251,7 +251,7 @@ class HullWhiteProcess(Process):
     @property
     def stationary_variance(self) -> float:
         r"""Long-term stationary variance :math:`\frac{\sigma^2}{2a}`."""
-        return float(self._sigma ** 2 / (2.0 * self._a))
+        return float(self._sigma**2 / (2.0 * self._a))
 
     def integrated_mean(self, t: float, r_init: Optional[float] = None) -> float:
         r"""
@@ -283,7 +283,7 @@ class HullWhiteProcess(Process):
         term1 = t
         term2 = -2.0 * (1.0 - math.exp(-self._a * t)) / self._a
         term3 = (1.0 - math.exp(-2.0 * self._a * t)) / (2.0 * self._a)
-        return float((self._sigma ** 2 / (self._a ** 2)) * (term1 + term2 + term3))
+        return float((self._sigma**2 / (self._a**2)) * (term1 + term2 + term3))
 
     def autocovariance(self, t: float, s: float) -> float:
         r"""
@@ -295,11 +295,14 @@ class HullWhiteProcess(Process):
         """
         if t < 0.0 or s < 0.0:
             raise ValueError("Evaluation times t and s must be non-negative")
-        return float((self._sigma ** 2 / (2.0 * self._a)) * (math.exp(-self._a * abs(t - s)) - math.exp(-self._a * (t + s))))
+        return float(
+            (self._sigma**2 / (2.0 * self._a))
+            * (math.exp(-self._a * abs(t - s)) - math.exp(-self._a * (t + s)))
+        )
 
     def stationary_autocovariance(self, tau: float) -> float:
         r"""Stationary autocovariance :math:`\frac{\sigma^2}{2a} e^{-a |\tau|}`."""
-        return float((self._sigma ** 2 / (2.0 * self._a)) * math.exp(-self._a * abs(tau)))
+        return float((self._sigma**2 / (2.0 * self._a)) * math.exp(-self._a * abs(tau)))
 
     def char_func(self, u: Union[float, np.ndarray], t: float = 1.0) -> Union[complex, np.ndarray]:
         r"""
@@ -315,7 +318,7 @@ class HullWhiteProcess(Process):
         v = self.conditional_variance(t)
         u_arr = np.asarray(u)
         is_scalar = u_arr.ndim == 0
-        cf_val = np.exp(1j * u_arr * m - 0.5 * (u_arr ** 2) * v)
+        cf_val = np.exp(1j * u_arr * m - 0.5 * (u_arr**2) * v)
         if is_scalar:
             return complex(cf_val)
         return cf_val
@@ -369,8 +372,8 @@ class HullWhiteProcess(Process):
             return 1.0
         tau = T - t
         B_val = self.B(t, T)
-        term1 = (self._b - (self._sigma ** 2) / (2.0 * self._a ** 2)) * (B_val - tau)
-        term2 = -(self._sigma ** 2 / (4.0 * self._a)) * (B_val ** 2)
+        term1 = (self._b - (self._sigma**2) / (2.0 * self._a**2)) * (B_val - tau)
+        term2 = -(self._sigma**2 / (4.0 * self._a)) * (B_val**2)
         return float(math.exp(term1 + term2))
 
     def bond_price(
@@ -470,7 +473,7 @@ class HullWhiteProcess(Process):
             tau = mat - t
             exp_atau = math.exp(-self._a * tau)
             drift_part = self._b + (r_val - self._b) * exp_atau
-            convexity_part = (self._sigma ** 2 / (2.0 * self._a ** 2)) * ((1.0 - exp_atau) ** 2)
+            convexity_part = (self._sigma**2 / (2.0 * self._a**2)) * ((1.0 - exp_atau) ** 2)
             return float(drift_part - convexity_part)
 
         T_arr = np.asarray(T)
@@ -514,12 +517,16 @@ class HullWhiteProcess(Process):
         p_t_T = float(self.bond_price(T, r=r_val, t=t))
 
         tau = T - t
-        sigma_P = self._sigma * self.B(T, S) * math.sqrt((1.0 - math.exp(-2.0 * self._a * tau)) / (2.0 * self._a))
+        sigma_P = (
+            self._sigma
+            * self.B(T, S)
+            * math.sqrt((1.0 - math.exp(-2.0 * self._a * tau)) / (2.0 * self._a))
+        )
 
         if sigma_P < 1e-12:
             return float(max(0.0, p_t_S - K * p_t_T))
 
-        d1 = (math.log(p_t_S / (K * p_t_T)) + 0.5 * sigma_P ** 2) / sigma_P
+        d1 = (math.log(p_t_S / (K * p_t_T)) + 0.5 * sigma_P**2) / sigma_P
         d2 = d1 - sigma_P
         call_val = p_t_S * norm.cdf(d1) - K * p_t_T * norm.cdf(d2)
         return float(max(0.0, call_val))
@@ -549,12 +556,16 @@ class HullWhiteProcess(Process):
         p_t_T = float(self.bond_price(T, r=r_val, t=t))
 
         tau = T - t
-        sigma_P = self._sigma * self.B(T, S) * math.sqrt((1.0 - math.exp(-2.0 * self._a * tau)) / (2.0 * self._a))
+        sigma_P = (
+            self._sigma
+            * self.B(T, S)
+            * math.sqrt((1.0 - math.exp(-2.0 * self._a * tau)) / (2.0 * self._a))
+        )
 
         if sigma_P < 1e-12:
             return float(max(0.0, K * p_t_T - p_t_S))
 
-        d1 = (math.log(p_t_S / (K * p_t_T)) + 0.5 * sigma_P ** 2) / sigma_P
+        d1 = (math.log(p_t_S / (K * p_t_T)) + 0.5 * sigma_P**2) / sigma_P
         d2 = d1 - sigma_P
         put_val = K * p_t_T * norm.cdf(-d2) - p_t_S * norm.cdf(-d1)
         return float(max(0.0, put_val))

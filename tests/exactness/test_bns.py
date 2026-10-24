@@ -21,7 +21,15 @@ class TestBNSExactness:
 
     def test_bns_exactness_level_and_aliases(self) -> None:
         """BNSModel is MOMENT_PROPAGATION and aliased properly."""
-        bns = BNSModel(lambda_param=1.5, alpha=2.0, beta_bdlp=25.0, rho=-0.5, beta=-0.5, sigma0_sq=0.04, s0=100.0)
+        bns = BNSModel(
+            lambda_param=1.5,
+            alpha=2.0,
+            beta_bdlp=25.0,
+            rho=-0.5,
+            beta=-0.5,
+            sigma0_sq=0.04,
+            s0=100.0,
+        )
         assert bns.exactness == ExactnessLevel.MOMENT_PROPAGATION
         assert BNS is BNSModel
         assert BNSProcess is BNSModel
@@ -61,7 +69,7 @@ class TestBNSExactness:
 
         # Stationary moments
         stat_mean = alpha / beta_bdlp
-        stat_var = alpha / (beta_bdlp ** 2)
+        stat_var = alpha / (beta_bdlp**2)
         assert bns.stationary_variance_mean == pytest.approx(stat_mean, rel=1e-12)
         assert bns.stationary_variance_variance == pytest.approx(stat_var, rel=1e-12)
         assert bns.stationary_variance_std == pytest.approx(math.sqrt(stat_var), rel=1e-12)
@@ -82,7 +90,15 @@ class TestBNSExactness:
 
     def test_bns_risk_neutral_martingale_condition(self) -> None:
         """Discounted asset price is a martingale: phi(-i; t) == exp((r - q)*t)."""
-        bns = BNSModel(lambda_param=1.5, alpha=2.0, beta_bdlp=25.0, rho=-0.5, beta=-0.5, rate=0.04, dividend=0.01)
+        bns = BNSModel(
+            lambda_param=1.5,
+            alpha=2.0,
+            beta_bdlp=25.0,
+            rho=-0.5,
+            beta=-0.5,
+            rate=0.04,
+            dividend=0.01,
+        )
         for t in [0.25, 0.5, 1.0]:
             cf_val = bns.char_func(-1j, t=t)
             expected_val = math.exp((0.04 - 0.01) * t)
@@ -174,7 +190,9 @@ class TestBNSExactness:
         # Monte Carlo
         dt = 0.002
         n_steps = int(T / dt)
-        s_paths = bns.simulate(n_steps=n_steps, time_horizon=T, n_paths=40_000, rng=np.random.default_rng(2026))
+        s_paths = bns.simulate(
+            n_steps=n_steps, time_horizon=T, n_paths=40_000, rng=np.random.default_rng(2026)
+        )
         s_T = s_paths[:, -1]
         mc_call = math.exp(-rate * T) * float(np.mean(np.maximum(s_T - K, 0.0)))
 
@@ -194,7 +212,9 @@ class TestBNSExactness:
         )
 
         t = 1.0
-        s_paths, v_paths = bns.simulate_joint(n_steps=25, time_horizon=t, n_paths=25_000, rng=np.random.default_rng(2026))
+        s_paths, v_paths = bns.simulate_joint(
+            n_steps=25, time_horizon=t, n_paths=25_000, rng=np.random.default_rng(2026)
+        )
         assert s_paths.shape == (25_000, 26)
         assert v_paths.shape == (25_000, 26)
         assert np.all(s_paths[:, 0] == 100.0)

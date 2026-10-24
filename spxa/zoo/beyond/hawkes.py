@@ -20,7 +20,7 @@ Ogata, Y. (1981). On Lewis' simulation method for point processes.
 
 from __future__ import annotations
 
-from typing import Callable, Optional
+from typing import Optional
 
 import numpy as np
 
@@ -83,7 +83,7 @@ class HawkesProcess(Process):
         if alpha >= beta:
             raise ValueError(
                 f"Process is supercritical: requires alpha < beta (α/β < 1), "
-                f"got alpha={alpha}, beta={beta}, ratio={alpha/beta:.3f}"
+                f"got alpha={alpha}, beta={beta}, ratio={alpha / beta:.3f}"
             )
 
         self.mu = mu
@@ -159,7 +159,7 @@ class HawkesProcess(Process):
             notes=[
                 f"Hawkes process: branching ratio α/β={self._branching_ratio:.4f} < 1 (subcritical).",
                 "Increments are positively correlated — not a Lévy process.",
-                f"Fano factor F={(1+self._branching_ratio)/(1-self._branching_ratio)**2:.4f} > 1 (overdispersed).",
+                f"Fano factor F={(1 + self._branching_ratio) / (1 - self._branching_ratio) ** 2:.4f} > 1 (overdispersed).",
             ],
         )
 

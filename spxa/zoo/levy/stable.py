@@ -162,6 +162,7 @@ class AlphaStable(Process):
     def _triplet(self) -> LevyTriplet:
         if self.alpha == 2.0:
             from spxa.zoo.levy.brownian import _ZeroLevyMeasure
+
             return LevyTriplet(b=self.mu, sigma_sq=2 * self.sigma**2, nu=_ZeroLevyMeasure())
 
         nu = _stable_levy_measure(self.alpha, self.beta, self.sigma)
@@ -202,15 +203,15 @@ class AlphaStable(Process):
 
         if abs(self.alpha - 1.0) > 1e-12:
             exponent = (
-                -(self.sigma**self.alpha) * (abs_u**self.alpha)
+                -(self.sigma**self.alpha)
+                * (abs_u**self.alpha)
                 * (1 - 1j * self.beta * sign_u * np.tan(np.pi * self.alpha / 2))
                 + 1j * self.mu * u_arr
             )
         else:
             log_abs_u = np.where(abs_u > 0, np.log(abs_u), 0.0)
             exponent = (
-                -self.sigma * abs_u
-                * (1 + 1j * self.beta * (2 / np.pi) * sign_u * log_abs_u)
+                -self.sigma * abs_u * (1 + 1j * self.beta * (2 / np.pi) * sign_u * log_abs_u)
                 + 1j * self.mu * u_arr
             )
 
@@ -267,10 +268,9 @@ class AlphaStable(Process):
                 * (np.cos(U - self.alpha * (U + B)) / E) ** ((1 - self.alpha) / self.alpha)
             )
         else:
-            increments = (
-                (2 / np.pi)
-                * ((np.pi / 2 + self.beta * U) * np.tan(U)
-                   - self.beta * np.log(np.pi / 2 * E * np.cos(U) / (np.pi / 2 + self.beta * U)))
+            increments = (2 / np.pi) * (
+                (np.pi / 2 + self.beta * U) * np.tan(U)
+                - self.beta * np.log(np.pi / 2 * E * np.cos(U) / (np.pi / 2 + self.beta * U))
             )
 
         increments = self.sigma * (dt ** (1 / self.alpha)) * increments + self.mu * dt
@@ -281,6 +281,5 @@ class AlphaStable(Process):
 
     def __repr__(self) -> str:
         return (
-            f"AlphaStable(alpha={self.alpha}, beta={self.beta}, "
-            f"sigma={self.sigma}, mu={self.mu})"
+            f"AlphaStable(alpha={self.alpha}, beta={self.beta}, sigma={self.sigma}, mu={self.mu})"
         )

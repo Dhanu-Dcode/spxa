@@ -33,7 +33,7 @@ Revuz, D., & Yor, M. (1999). Continuous Martingales and Brownian Motion.
 from __future__ import annotations
 
 import math
-from typing import Optional, Union, Tuple, Dict, Any
+from typing import Optional, Union, Dict
 
 import numpy as np
 from scipy import special, stats  # type: ignore[import-untyped]
@@ -146,7 +146,9 @@ class SquaredBesselProcess(Process):
         )
 
     def _properties(self) -> ProcessProperties:
-        is_subord = math.isclose(self._dim, 0.0, abs_tol=1e-10) and math.isclose(self._x0, 0.0, abs_tol=1e-10)
+        is_subord = math.isclose(self._dim, 0.0, abs_tol=1e-10) and math.isclose(
+            self._x0, 0.0, abs_tol=1e-10
+        )
         return ProcessProperties(
             has_stationary_increments=False,
             has_independent_increments=False,
@@ -178,7 +180,7 @@ class SquaredBesselProcess(Process):
         """
         if t < 0.0:
             raise ValueError(f"Time t must be non-negative, got {t}")
-        return float(4.0 * self._x0 * t + 2.0 * self._dim * (t ** 2))
+        return float(4.0 * self._x0 * t + 2.0 * self._dim * (t**2))
 
     def conditional_std(self, t: float = 1.0) -> float:
         """Exact conditional standard deviation."""
@@ -205,14 +207,14 @@ class SquaredBesselProcess(Process):
         if order >= 1:
             cums[1] = float(x0 + d * t)
         if order >= 2:
-            cums[2] = float(4.0 * x0 * t + 2.0 * d * (t ** 2))
+            cums[2] = float(4.0 * x0 * t + 2.0 * d * (t**2))
         if order >= 3:
-            cums[3] = float(24.0 * x0 * (t ** 2) + 8.0 * d * (t ** 3))
+            cums[3] = float(24.0 * x0 * (t**2) + 8.0 * d * (t**3))
         if order >= 4:
-            cums[4] = float(192.0 * x0 * (t ** 3) + 48.0 * d * (t ** 4))
+            cums[4] = float(192.0 * x0 * (t**3) + 48.0 * d * (t**4))
         for n in range(5, order + 1):
             cums[n] = float(
-                math.factorial(n - 1) * (2 ** (n - 1)) * (n * x0 * (t ** (n - 1)) + d * (t ** n))
+                math.factorial(n - 1) * (2 ** (n - 1)) * (n * x0 * (t ** (n - 1)) + d * (t**n))
             )
         return cums
 
@@ -235,7 +237,7 @@ class SquaredBesselProcess(Process):
 
         denom = 1.0 + 2.0 * lmbda * t
         prefactor = (1.0 / denom) ** (self._dim / 2.0)
-        exponent = - (lmbda * self._x0) / denom
+        exponent = -(lmbda * self._x0) / denom
         return float(prefactor * math.exp(exponent))
 
     def char_func(self, u: Union[float, complex, np.ndarray], t: float = 1.0) -> np.ndarray:
@@ -258,7 +260,9 @@ class SquaredBesselProcess(Process):
         res = prefactor * np.exp(exponent)
         return res if res.ndim > 0 else res.item()
 
-    def transition_density(self, y: Union[float, np.ndarray], t: float = 1.0) -> Union[float, np.ndarray]:
+    def transition_density(
+        self, y: Union[float, np.ndarray], t: float = 1.0
+    ) -> Union[float, np.ndarray]:
         r"""
         Exact transition probability density function :math:`p(t, x_0, y)`.
         """
@@ -271,7 +275,9 @@ class SquaredBesselProcess(Process):
             return float(dens)
         return dens
 
-    def transition_cdf(self, y: Union[float, np.ndarray], t: float = 1.0) -> Union[float, np.ndarray]:
+    def transition_cdf(
+        self, y: Union[float, np.ndarray], t: float = 1.0
+    ) -> Union[float, np.ndarray]:
         r"""
         Exact transition cumulative distribution function :math:`\mathbb{P}(X_t \le y \mid X_0)`.
         """
@@ -300,6 +306,7 @@ class SquaredBesselProcess(Process):
         Simulate exact sample paths of :math:`\mathrm{BESQ}^\delta(x_0)`.
         """
         from spxa.sim.exact import sample_besq
+
         return sample_besq(
             dim=self._dim,
             x0=self._x0,
@@ -345,7 +352,7 @@ class BesselProcess(Process):
 
         self._dim = float(dim_val)
         self._r0 = float(r0)
-        self._besq = SquaredBesselProcess(dim=self._dim, x0=self._r0 ** 2)
+        self._besq = SquaredBesselProcess(dim=self._dim, x0=self._r0**2)
 
         node = CompositionNode(
             kind=NodeKind.PRIMITIVE,
@@ -416,7 +423,7 @@ class BesselProcess(Process):
         if t == 0.0:
             return self._r0
 
-        nc = (self._r0 ** 2) / t
+        nc = (self._r0**2) / t
         term1 = math.sqrt(2.0 * t)
         gamma_ratio = special.gamma((self._dim + 1.0) / 2.0) / special.gamma(self._dim / 2.0)
         hyper = special.hyp1f1(-0.5, self._dim / 2.0, -0.5 * nc)
@@ -433,7 +440,7 @@ class BesselProcess(Process):
         Exact conditional variance :math:`\mathrm{Var}(R_t \mid R_0) = \mathbb{E}[R_t^2] - (\mathbb{E}[R_t])^2`.
         """
         m = self.conditional_mean(t)
-        return float(self.conditional_second_moment(t) - m ** 2)
+        return float(self.conditional_second_moment(t) - m**2)
 
     def simulate(
         self,
@@ -447,6 +454,7 @@ class BesselProcess(Process):
         Simulate exact sample paths of :math:`\mathrm{BES}^\delta(r_0)`.
         """
         from spxa.sim.exact import sample_bessel
+
         return sample_bessel(
             dim=self._dim,
             r0=self._r0,

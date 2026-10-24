@@ -266,18 +266,26 @@ class SABRProcess(Process):
                 if abs(z) < 1e-8:
                     z_over_chi = 1.0
                 else:
-                    arg = (math.sqrt(max(0.0, 1.0 - 2.0 * rho * z + z ** 2)) + z - rho) / (1.0 - rho)
+                    arg = (math.sqrt(max(0.0, 1.0 - 2.0 * rho * z + z**2)) + z - rho) / (1.0 - rho)
                     chi = math.log(max(1e-15, arg))
                     z_over_chi = z / chi
 
-            denom = f_k_mid * (1.0 + (one_minus_beta ** 2 / 24.0) * (log_fk ** 2) + (one_minus_beta ** 4 / 1920.0) * (log_fk ** 4))
+            denom = f_k_mid * (
+                1.0
+                + (one_minus_beta**2 / 24.0) * (log_fk**2)
+                + (one_minus_beta**4 / 1920.0) * (log_fk**4)
+            )
             num = alpha * z_over_chi
 
-            corr_factor = 1.0 + (
-                ((one_minus_beta ** 2 / 24.0) * (alpha ** 2 / ((f0 * strike) ** one_minus_beta)))
-                + (0.25 * rho * beta * nu * alpha / f_k_mid)
-                + ((2.0 - 3.0 * rho ** 2) / 24.0) * (nu ** 2)
-            ) * T
+            corr_factor = (
+                1.0
+                + (
+                    ((one_minus_beta**2 / 24.0) * (alpha**2 / ((f0 * strike) ** one_minus_beta)))
+                    + (0.25 * rho * beta * nu * alpha / f_k_mid)
+                    + ((2.0 - 3.0 * rho**2) / 24.0) * (nu**2)
+                )
+                * T
+            )
 
             vol = (num / denom) * corr_factor
             return float(max(1e-6, vol))
@@ -304,12 +312,16 @@ class SABRProcess(Process):
         rho = self._rho
         one_minus_beta = 1.0 - beta
 
-        term1 = alpha / (f0 ** one_minus_beta)
-        term2 = 1.0 + (
-            ((one_minus_beta ** 2 / 24.0) * (alpha ** 2 / (f0 ** (2.0 * one_minus_beta))))
-            + (0.25 * rho * beta * nu * alpha / (f0 ** one_minus_beta))
-            + ((2.0 - 3.0 * rho ** 2) / 24.0) * (nu ** 2)
-        ) * T
+        term1 = alpha / (f0**one_minus_beta)
+        term2 = (
+            1.0
+            + (
+                ((one_minus_beta**2 / 24.0) * (alpha**2 / (f0 ** (2.0 * one_minus_beta))))
+                + (0.25 * rho * beta * nu * alpha / (f0**one_minus_beta))
+                + ((2.0 - 3.0 * rho**2) / 24.0) * (nu**2)
+            )
+            * T
+        )
         return float(term1 * term2)
 
     def implied_vol_smile(
@@ -346,7 +358,7 @@ class SABRProcess(Process):
             if vol <= 1e-8:
                 return float(df * max(0.0, self._f0 - k))
             sqrt_t = math.sqrt(T)
-            d1 = (math.log(self._f0 / k) + 0.5 * (vol ** 2) * T) / (vol * sqrt_t)
+            d1 = (math.log(self._f0 / k) + 0.5 * (vol**2) * T) / (vol * sqrt_t)
             d2 = d1 - vol * sqrt_t
             price = df * (self._f0 * norm.cdf(d1) - k * norm.cdf(d2))
             return float(max(price, df * max(0.0, self._f0 - k)))
@@ -354,7 +366,9 @@ class SABRProcess(Process):
         K_arr = np.asarray(K)
         if K_arr.ndim == 0:
             return _call_single(float(K_arr), float(sigma))
-        return np.array([_call_single(float(k), float(v)) for k, v in zip(K_arr, sigma)], dtype=float)
+        return np.array(
+            [_call_single(float(k), float(v)) for k, v in zip(K_arr, sigma)], dtype=float
+        )
 
     def put_price(
         self,
@@ -396,19 +410,19 @@ class SABRProcess(Process):
         """Variance of volatility :math:`\\mathrm{Var}(\\alpha_t) = \\alpha^2 (e^{\\nu^2 t} - 1)`."""
         if t < 0.0:
             raise ValueError(f"Time t must be non-negative, got {t}")
-        return float((self._alpha ** 2) * (math.exp(self._nu ** 2 * t) - 1.0))
+        return float((self._alpha**2) * (math.exp(self._nu**2 * t) - 1.0))
 
     def log_volatility_mean(self, t: float = 1.0) -> float:
         """Expected log-volatility :math:`\\mathbb{E}[\\ln \\alpha_t] = \\ln \\alpha - \\frac{1}{2} \\nu^2 t`."""
         if t < 0.0:
             raise ValueError(f"Time t must be non-negative, got {t}")
-        return float(math.log(self._alpha) - 0.5 * (self._nu ** 2) * t)
+        return float(math.log(self._alpha) - 0.5 * (self._nu**2) * t)
 
     def log_volatility_variance(self, t: float = 1.0) -> float:
         """Variance of log-volatility :math:`\\mathrm{Var}(\\ln \\alpha_t) = \\nu^2 t`."""
         if t < 0.0:
             raise ValueError(f"Time t must be non-negative, got {t}")
-        return float((self._nu ** 2) * t)
+        return float((self._nu**2) * t)
 
     def conditional_mean(self, t: float = 1.0) -> float:
         """Conditional mean of forward price :math:`F_t`."""

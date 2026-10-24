@@ -94,9 +94,11 @@ class ProcessProperties:
         notes: list[str] = []
 
         self_sim: Optional[float] = None
-        if (p.self_similarity_index is not None
-                and q.self_similarity_index is not None
-                and p.self_similarity_index == q.self_similarity_index):
+        if (
+            p.self_similarity_index is not None
+            and q.self_similarity_index is not None
+            and p.self_similarity_index == q.self_similarity_index
+        ):
             self_sim = p.self_similarity_index
         elif p.self_similarity_index is not None or q.self_similarity_index is not None:
             notes.append(
@@ -121,9 +123,7 @@ class ProcessProperties:
             notes.append("Martingale property lost: only one operand is a martingale.")
 
         return ProcessProperties(
-            has_stationary_increments=(
-                p.has_stationary_increments and q.has_stationary_increments
-            ),
+            has_stationary_increments=(p.has_stationary_increments and q.has_stationary_increments),
             has_independent_increments=(
                 p.has_independent_increments and q.has_independent_increments
             ),
@@ -184,8 +184,7 @@ class ProcessProperties:
 
         if not subordinator.is_subordinator:
             raise ValueError(
-                "The right operand of @ must be a subordinator "
-                "(non-decreasing Lévy process)."
+                "The right operand of @ must be a subordinator (non-decreasing Lévy process)."
             )
 
         if parent.is_martingale:

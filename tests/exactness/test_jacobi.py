@@ -83,8 +83,8 @@ class TestJacobiExactness:
 
         # Stationary moments
         expected_stat_mean = theta
-        norm_stat_var = (theta_norm * (1.0 - theta_norm)) / (1.0 + 2.0 * kappa / (sigma ** 2))
-        expected_stat_var = (scale ** 2) * norm_stat_var
+        norm_stat_var = (theta_norm * (1.0 - theta_norm)) / (1.0 + 2.0 * kappa / (sigma**2))
+        expected_stat_var = (scale**2) * norm_stat_var
 
         assert jp.stationary_mean == pytest.approx(expected_stat_mean, rel=1e-12)
         assert jp.stationary_variance == pytest.approx(expected_stat_var, rel=1e-12)
@@ -96,14 +96,14 @@ class TestJacobiExactness:
             m1_norm = x0 * exp_kt + theta_norm * (1.0 - exp_kt)
             expected_m1 = y_min + scale * m1_norm
 
-            lam2 = 2.0 * kappa + sigma ** 2
+            lam2 = 2.0 * kappa + sigma**2
             exp_l2t = math.exp(-lam2 * t)
-            m2_norm = (x0 ** 2) * exp_l2t + (2.0 * kappa * theta_norm + sigma ** 2) * (
+            m2_norm = (x0**2) * exp_l2t + (2.0 * kappa * theta_norm + sigma**2) * (
                 (x0 - theta_norm) * (exp_kt - exp_l2t) / (lam2 - kappa)
                 + theta_norm * (1.0 - exp_l2t) / lam2
             )
-            expected_m2 = y_min ** 2 + 2.0 * y_min * scale * m1_norm + (scale ** 2) * m2_norm
-            expected_var = expected_m2 - expected_m1 ** 2
+            expected_m2 = y_min**2 + 2.0 * y_min * scale * m1_norm + (scale**2) * m2_norm
+            expected_var = expected_m2 - expected_m1**2
 
             assert jp.conditional_mean(t) == pytest.approx(expected_m1, rel=1e-12)
             assert jp.conditional_second_moment(t) == pytest.approx(expected_m2, rel=1e-12)
@@ -151,7 +151,9 @@ class TestJacobiExactness:
             y0=y0,
         )
 
-        paths = jp.simulate(n_steps=40, time_horizon=t, n_paths=30_000, rng=np.random.default_rng(2026))
+        paths = jp.simulate(
+            n_steps=40, time_horizon=t, n_paths=30_000, rng=np.random.default_rng(2026)
+        )
         assert paths.shape == (30_000, 41)
         assert np.all(paths[:, 0] == y0)
         assert np.all(paths >= y_min)

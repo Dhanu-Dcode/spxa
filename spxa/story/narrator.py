@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Optional
 
 
 class NodeKind(Enum):
@@ -72,10 +71,7 @@ def narrate(node: CompositionNode, depth: int = 0) -> str:
     elif node.kind == NodeKind.ADDITION:
         left, right = node.children[0], node.children[1]
         lines.append(f"{indent}[Addition] {node.name}")
-        lines.append(
-            f"{indent}  Rule: (b_X+b_Y, σ²_X+σ²_Y, ν_X+ν_Y) "
-            f"[Sato 1999, Prop. 11.10]"
-        )
+        lines.append(f"{indent}  Rule: (b_X+b_Y, σ²_X+σ²_Y, ν_X+ν_Y) [Sato 1999, Prop. 11.10]")
         if node.math_note:
             lines.append(f"{indent}  {node.math_note}")
         lines.append(f"{indent}  Left operand:")
@@ -87,8 +83,7 @@ def narrate(node: CompositionNode, depth: int = 0) -> str:
         child = node.children[0]
         lines.append(f"{indent}[Scaling] {node.name}")
         lines.append(
-            f"{indent}  Rule: (cb + drift_correction, c²σ², ν(·/c)) "
-            f"[Sato 1999, Prop. 11.10]"
+            f"{indent}  Rule: (cb + drift_correction, c²σ², ν(·/c)) [Sato 1999, Prop. 11.10]"
         )
         if node.math_note:
             lines.append(f"{indent}  {node.math_note}")

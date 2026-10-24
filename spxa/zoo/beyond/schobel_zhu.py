@@ -42,7 +42,7 @@ Lord, R., & Kahl, C. (2007). Complex logarithm and implementation of the
 from __future__ import annotations
 
 import math
-from typing import Optional, Union, Tuple, Dict, Any
+from typing import Optional, Union, Tuple
 
 import numpy as np
 from scipy import integrate, optimize  # type: ignore[import-untyped]
@@ -210,7 +210,9 @@ class SchobelZhuProcess(Process):
         """
         if t < 0.0:
             raise ValueError(f"Time t must be non-negative, got {t}")
-        return float((self._tau ** 2 / (2.0 * self._kappa)) * (1.0 - math.exp(-2.0 * self._kappa * t)))
+        return float(
+            (self._tau**2 / (2.0 * self._kappa)) * (1.0 - math.exp(-2.0 * self._kappa * t))
+        )
 
     def variance_mean(self, t: float = 1.0) -> float:
         r"""
@@ -218,7 +220,7 @@ class SchobelZhuProcess(Process):
         """
         m = self.volatility_mean(t)
         v = self.volatility_variance(t)
-        return float(v + m ** 2)
+        return float(v + m**2)
 
     def variance_variance(self, t: float = 1.0) -> float:
         r"""
@@ -226,7 +228,7 @@ class SchobelZhuProcess(Process):
         """
         m = self.volatility_mean(t)
         v = self.volatility_variance(t)
-        return float(2.0 * (v ** 2) + 4.0 * (m ** 2) * v)
+        return float(2.0 * (v**2) + 4.0 * (m**2) * v)
 
     @property
     def stationary_volatility_mean(self) -> float:
@@ -236,12 +238,12 @@ class SchobelZhuProcess(Process):
     @property
     def stationary_volatility_var(self) -> float:
         r"""Asymptotic variance of volatility :math:`\frac{\tau^2}{2\kappa}`."""
-        return self._tau ** 2 / (2.0 * self._kappa)
+        return self._tau**2 / (2.0 * self._kappa)
 
     @property
     def stationary_variance_mean(self) -> float:
         r"""Asymptotic mean of instantaneous variance :math:`\theta^2 + \frac{\tau^2}{2\kappa}`."""
-        return self._theta ** 2 + self.stationary_volatility_var
+        return self._theta**2 + self.stationary_volatility_var
 
     # ------------------------------------------------------------------
     # Characteristic Function
@@ -262,21 +264,25 @@ class SchobelZhuProcess(Process):
             if abs(u_val) < 1e-12:
                 return 1.0 + 0.0j
 
-            a_E = 2.0 * (self._tau ** 2)
+            a_E = 2.0 * (self._tau**2)
             b_E = 2.0 * (self._rho * self._tau * 1j * u_val - self._kappa)
-            c_E = -0.5 * (u_val ** 2 + 1j * u_val)
+            c_E = -0.5 * (u_val**2 + 1j * u_val)
 
             def odes(s: float, y: np.ndarray) -> list[complex]:
-                E_val, D_val, C_val = y[0], y[1], y[2]
-                dE = a_E * (E_val ** 2) + b_E * E_val + c_E
+                E_val, D_val = y[0], y[1]
+                dE = a_E * (E_val**2) + b_E * E_val + c_E
                 dD = (a_E * E_val + 0.5 * b_E) * D_val + 2.0 * self._kappa * self._theta * E_val
-                dC = self._kappa * self._theta * D_val + (self._tau ** 2) * E_val + 0.5 * (self._tau ** 2) * (D_val ** 2)
+                dC = (
+                    self._kappa * self._theta * D_val
+                    + (self._tau**2) * E_val
+                    + 0.5 * (self._tau**2) * (D_val**2)
+                )
                 return [dE, dD, dC]
 
             sol = solve_ivp(odes, [0.0, t], [0j, 0j, 0j], t_eval=[t], rtol=1e-8, atol=1e-8)
             E, D, C = sol.y[:, 0]
             drift = 1j * u_val * (self._rate - self._dividend) * t
-            return complex(np.exp(drift + C + D * self._sigma0 + E * (self._sigma0 ** 2)))
+            return complex(np.exp(drift + C + D * self._sigma0 + E * (self._sigma0**2)))
 
         u_arr = np.asarray(u, dtype=complex)
         if u_arr.ndim == 0:
@@ -307,7 +313,9 @@ class SchobelZhuProcess(Process):
             def integrand1(u: float) -> float:
                 if u == 0.0:
                     return 0.0
-                val = (self.char_func(u - 1j, t=T) * np.exp(-1j * u * k_log)) / (1j * u * phi_minus_i)
+                val = (self.char_func(u - 1j, t=T) * np.exp(-1j * u * k_log)) / (
+                    1j * u * phi_minus_i
+                )
                 return float(val.real)
 
             def integrand2(u: float) -> float:
@@ -370,10 +378,13 @@ class SchobelZhuProcess(Process):
         def _bs_call(s: float, k: float, t: float, sig: float) -> float:
             if sig <= 1e-8:
                 return max(0.0, s * math.exp(-div * t) - k * math.exp(-rate * t))
-            d1 = (math.log(s / k) + (rate - div + 0.5 * sig ** 2) * t) / (sig * math.sqrt(t))
+            d1 = (math.log(s / k) + (rate - div + 0.5 * sig**2) * t) / (sig * math.sqrt(t))
             d2 = d1 - sig * math.sqrt(t)
             from scipy.stats import norm  # type: ignore[import-untyped]
-            return s * math.exp(-div * t) * float(norm.cdf(d1)) - k * math.exp(-rate * t) * float(norm.cdf(d2))
+
+            return s * math.exp(-div * t) * float(norm.cdf(d1)) - k * math.exp(-rate * t) * float(
+                norm.cdf(d2)
+            )
 
         def _iv_single(k: float, target: float) -> float:
             intrinsic = max(0.0, self._s0 * math.exp(-div * T) - k * math.exp(-rate * T))
@@ -391,7 +402,9 @@ class SchobelZhuProcess(Process):
         K_arr = np.asarray(K)
         if K_arr.ndim == 0:
             return _iv_single(float(K_arr), float(calls))
-        return np.array([_iv_single(float(k), float(c)) for k, c in zip(K_arr, np.asarray(calls))], dtype=float)
+        return np.array(
+            [_iv_single(float(k), float(c)) for k, c in zip(K_arr, np.asarray(calls))], dtype=float
+        )
 
     # ------------------------------------------------------------------
     # Simulation
@@ -409,6 +422,7 @@ class SchobelZhuProcess(Process):
         Simulate sample paths of asset price :math:`S_t`.
         """
         from spxa.sim.exact import sample_schobel_zhu
+
         return sample_schobel_zhu(
             sigma0=self._sigma0,
             kappa=self._kappa,
@@ -438,6 +452,7 @@ class SchobelZhuProcess(Process):
         Simulate coupled paths of asset price :math:`S_t` and volatility :math:`\sigma_t`.
         """
         from spxa.sim.exact import sample_schobel_zhu
+
         return sample_schobel_zhu(
             sigma0=self._sigma0,
             kappa=self._kappa,

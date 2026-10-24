@@ -141,21 +141,55 @@ class TestTopLevelImports:
     def test_all_processes_importable_from_spxa(self) -> None:
         """All main process classes are importable directly from spxa."""
         import spxa
-        for name in ["BrownianMotion", "GammaProcess", "VarianceGamma", "NIG",
-                     "AlphaStable", "CGMY", "PoissonProcess", "CompoundPoisson",
-                     "FractionalBrownianMotion", "HawkesProcess", "OULevy",
-                     "CIRProcess", "CoxIngersollRoss", "OrnsteinUhlenbeck", "Vasicek",
-                     "HullWhite", "HullWhiteProcess", "HW1F", "ExtendedVasicek",
-                     "Heston", "HestonProcess",
-                     "BatesProcess", "BatesModel", "Bates96", "SVJ",
-                     "CEV", "CEVProcess", "ConstantElasticityOfVariance",
-                     "KouJumpDiffusion", "KouProcess", "Kou72", "Kou02",
-                     "MertonJumpDiffusion", "MertonProcess", "Merton76"]:
+
+        for name in [
+            "BrownianMotion",
+            "GammaProcess",
+            "VarianceGamma",
+            "NIG",
+            "AlphaStable",
+            "CGMY",
+            "PoissonProcess",
+            "CompoundPoisson",
+            "FractionalBrownianMotion",
+            "HawkesProcess",
+            "OULevy",
+            "CIRProcess",
+            "CoxIngersollRoss",
+            "OrnsteinUhlenbeck",
+            "Vasicek",
+            "HullWhite",
+            "HullWhiteProcess",
+            "HW1F",
+            "ExtendedVasicek",
+            "Heston",
+            "HestonProcess",
+            "BatesProcess",
+            "BatesModel",
+            "Bates96",
+            "SVJ",
+            "CEV",
+            "CEVProcess",
+            "ConstantElasticityOfVariance",
+            "KouJumpDiffusion",
+            "KouProcess",
+            "Kou72",
+            "Kou02",
+            "MertonJumpDiffusion",
+            "MertonProcess",
+            "Merton76",
+        ]:
             assert hasattr(spxa, name), f"spxa.{name} not found"
 
     def test_core_types_importable(self) -> None:
         """Core types importable directly from spxa."""
         import spxa
-        for name in ["ExactnessLevel", "ExactnessError", "LevyTriplet",
-                     "ProcessProperties", "Process"]:
+
+        for name in [
+            "ExactnessLevel",
+            "ExactnessError",
+            "LevyTriplet",
+            "ProcessProperties",
+            "Process",
+        ]:
             assert hasattr(spxa, name), f"spxa.{name} not found"

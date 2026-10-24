@@ -37,7 +37,6 @@ volatility models. *Finance and Stochastics*, 11(1), 29–53.
 
 from __future__ import annotations
 
-import warnings
 from typing import Optional, Tuple, Union
 
 import numpy as np
@@ -126,7 +125,9 @@ class HestonProcess(Process):
         if theta_f <= 0.0:
             raise ValueError(f"Long-term variance theta must be strictly positive, got {theta_f}")
         if sigma_v_f <= 0.0:
-            raise ValueError(f"Volatility of variance sigma_v must be strictly positive, got {sigma_v_f}")
+            raise ValueError(
+                f"Volatility of variance sigma_v must be strictly positive, got {sigma_v_f}"
+            )
         if not (-1.0 <= rho_f <= 1.0):
             raise ValueError(f"Correlation rho must be in [-1, 1], got {rho_f}")
         if s0_f <= 0.0:
@@ -140,7 +141,7 @@ class HestonProcess(Process):
         self._mu = mu_f
         self._s0 = s0_f
 
-        feller_ratio = (2.0 * kappa_f * theta_f) / (sigma_v_f ** 2)
+        feller_ratio = (2.0 * kappa_f * theta_f) / (sigma_v_f**2)
         node = CompositionNode(
             kind=NodeKind.PRIMITIVE,
             name=f"Heston(v0={v0_f}, kappa={kappa_f}, theta={theta_f}, sigma_v={sigma_v_f}, rho={rho_f}, mu={mu_f}, s0={s0_f})",
@@ -198,7 +199,7 @@ class HestonProcess(Process):
     @property
     def feller_ratio(self) -> float:
         r"""The Feller condition ratio :math:`\frac{2\kappa\theta}{\sigma_v^2}`."""
-        return (2.0 * self._kappa * self._theta) / (self._sigma_v ** 2)
+        return (2.0 * self._kappa * self._theta) / (self._sigma_v**2)
 
     @property
     def is_feller_satisfied(self) -> bool:
@@ -220,8 +221,8 @@ class HestonProcess(Process):
         if t < 0.0:
             raise ValueError(f"Time t must be non-negative, got {t}")
         exp_kt = np.exp(-self._kappa * t)
-        c1 = self._v0 * (self._sigma_v ** 2 / self._kappa) * (exp_kt - exp_kt ** 2)
-        c2 = self._theta * (self._sigma_v ** 2 / (2.0 * self._kappa)) * ((1.0 - exp_kt) ** 2)
+        c1 = self._v0 * (self._sigma_v**2 / self._kappa) * (exp_kt - exp_kt**2)
+        c2 = self._theta * (self._sigma_v**2 / (2.0 * self._kappa)) * ((1.0 - exp_kt) ** 2)
         return float(c1 + c2)
 
     @property
@@ -232,7 +233,7 @@ class HestonProcess(Process):
     @property
     def stationary_variance_var(self) -> float:
         r"""Stationary variance of variance :math:`\frac{\theta \sigma_v^2}{2\kappa}`."""
-        return float((self._theta * self._sigma_v ** 2) / (2.0 * self._kappa))
+        return float((self._theta * self._sigma_v**2) / (2.0 * self._kappa))
 
     def expected_integrated_variance(self, t: float) -> float:
         r"""
@@ -294,10 +295,10 @@ class HestonProcess(Process):
         th = self._theta
         sig = self._sigma_v
         rho = self._rho
-        sig2 = sig ** 2
+        sig2 = sig**2
 
         term1 = k - i * rho * sig * u_arr
-        d = np.sqrt(term1 ** 2 + sig2 * (u_arr ** 2 + i * u_arr))
+        d = np.sqrt(term1**2 + sig2 * (u_arr**2 + i * u_arr))
         g = (term1 - d) / (term1 + d)
 
         exp_dt = np.exp(-d * t)
@@ -314,7 +315,9 @@ class HestonProcess(Process):
             return complex(cf_val)
         return cf_val
 
-    def asset_char_func(self, u: Union[float, np.ndarray], t: float = 1.0) -> Union[complex, np.ndarray]:
+    def asset_char_func(
+        self, u: Union[float, np.ndarray], t: float = 1.0
+    ) -> Union[complex, np.ndarray]:
         r"""
         Characteristic function of log-price :math:`\ln S_t = \ln S_0 + X_t`.
 
@@ -364,19 +367,27 @@ class HestonProcess(Process):
         if order >= 2:
             # kappa_2 = - d^2/du^2 log_cf(0) with h = 1e-4
             h2 = 1e-4
-            d2 = (log_cf(h2) - 2.0 * log_cf(0.0) + log_cf(-h2)) / (h2 ** 2)
+            d2 = (log_cf(h2) - 2.0 * log_cf(0.0) + log_cf(-h2)) / (h2**2)
             kappas[2] = float(np.real(-d2))
 
         if order >= 3:
             # kappa_3 = i * d^3/du^3 log_cf(0) with h = 5e-3
             h3 = 5e-3
-            d3 = (log_cf(2 * h3) - 2 * log_cf(h3) + 2 * log_cf(-h3) - log_cf(-2 * h3)) / (2.0 * h3 ** 3)
+            d3 = (log_cf(2 * h3) - 2 * log_cf(h3) + 2 * log_cf(-h3) - log_cf(-2 * h3)) / (
+                2.0 * h3**3
+            )
             kappas[3] = float(np.real(1j * d3))
 
         if order >= 4:
             # kappa_4 = d^4/du^4 log_cf(0) with h = 1.5e-2
             h4 = 1.5e-2
-            d4 = (log_cf(2 * h4) - 4 * log_cf(h4) + 6 * log_cf(0.0) - 4 * log_cf(-h4) + log_cf(-2 * h4)) / (h4 ** 4)
+            d4 = (
+                log_cf(2 * h4)
+                - 4 * log_cf(h4)
+                + 6 * log_cf(0.0)
+                - 4 * log_cf(-h4)
+                + log_cf(-2 * h4)
+            ) / (h4**4)
             kappas[4] = float(np.real(d4))
 
         for n in range(5, order + 1):
@@ -510,7 +521,7 @@ class HestonProcess(Process):
         def _bs_call(s: float, k: float, t: float, rate: float, div: float, vol: float) -> float:
             if vol <= 1e-8:
                 return float(max(0.0, s * np.exp(-div * t) - k * np.exp(-rate * t)))
-            d1 = (np.log(s / k) + (rate - div + 0.5 * vol ** 2) * t) / (vol * np.sqrt(t))
+            d1 = (np.log(s / k) + (rate - div + 0.5 * vol**2) * t) / (vol * np.sqrt(t))
             d2 = d1 - vol * np.sqrt(t)
             return float(s * np.exp(-div * t) * norm.cdf(d1) - k * np.exp(-rate * t) * norm.cdf(d2))
 

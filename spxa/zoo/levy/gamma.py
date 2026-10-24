@@ -42,7 +42,6 @@ def _gamma_levy_measure(a: float, b: float) -> DensityLevyMeasure:
 
     Moments: ∫_0^∞ x^n ν(dx) = a·Γ(n)/b^n  (Cont & Tankov 2004, Table 4.2).
     """
-    from scipy.special import expi  # type: ignore[import-untyped]
     from scipy import integrate  # type: ignore[import-untyped]
 
     def density(x: np.ndarray) -> np.ndarray:
@@ -57,10 +56,7 @@ def _gamma_levy_measure(a: float, b: float) -> DensityLevyMeasure:
         result, _ = integrate.quad(lambda t: a * np.exp(-b * t) / t, xv, np.inf)
         return result
 
-    moment_fns = {
-        n: (lambda n=n: a * float(gamma_fn(n)) / b**n)
-        for n in range(1, 9)
-    }
+    moment_fns = {n: (lambda n=n: a * float(gamma_fn(n)) / b**n) for n in range(1, 9)}
 
     return DensityLevyMeasure(
         _density_fn=density,
@@ -121,7 +117,6 @@ class GammaProcess(Process):
         super().__init__(exactness=ExactnessLevel.EXACT, _node=node)
 
     def _triplet(self) -> LevyTriplet:
-        from scipy import integrate  # type: ignore[import-untyped]
         from scipy.special import expi  # type: ignore[import-untyped]
 
         nu = _gamma_levy_measure(self.a, self.b)
@@ -179,6 +174,7 @@ class GammaProcess(Process):
             Time. Default 1.
         """
         import math
+
         return self.a * t * math.factorial(n - 1) / self.b**n
 
     def simulate(

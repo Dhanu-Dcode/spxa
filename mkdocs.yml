@@ -65,7 +65,7 @@ nav:
       - First composition: tutorials/01_first_composition.ipynb
       - Finance models: tutorials/02_finance_models.ipynb
       - Physics applications: tutorials/03_physics_applications.ipynb
-  - API reference: api/
+  - API reference: api.md
   - Process registry: process_registry.md
   - Contributing: contributing.md
   - Changelog: changelog.md

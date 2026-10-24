@@ -120,7 +120,7 @@ def stochastic_runge_kutta(
         upsilon = curr_x + a_val * dt + b_val * sq_dt
         b_upsilon = np.asarray(diffusion(t_k, upsilon), dtype=float)
 
-        srk_milstein = (0.5 / sq_dt) * (b_upsilon - b_val) * (dw ** 2 - dt)
+        srk_milstein = (0.5 / sq_dt) * (b_upsilon - b_val) * (dw**2 - dt)
         curr_x = curr_x + a_val * dt + b_val * dw + srk_milstein
         paths[:, k + 1] = curr_x
 
@@ -224,7 +224,7 @@ def srk_weak2(
             curr_x
             + 0.5 * (a_val + a_bar) * dt
             + 0.25 * (b_bar + b_under + 2.0 * b_val) * dw
-            + 0.25 * (b_bar - b_under) * (dw ** 2 - dt) / sq_dt
+            + 0.25 * (b_bar - b_under) * (dw**2 - dt) / sq_dt
         )
         paths[:, k + 1] = curr_x
 

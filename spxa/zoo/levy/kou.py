@@ -44,7 +44,6 @@ from scipy.integrate import quad
 from scipy.optimize import brentq
 
 from spxa.core.exactness import ExactnessLevel
-from spxa.core.levy_measure import LevyMeasure
 from spxa.core.process import Process
 from spxa.core.properties import ProcessProperties
 from spxa.core.triplet import LevyTriplet
@@ -111,7 +110,9 @@ class KouJumpDiffusion(Process):
         if not (0.0 <= p_val <= 1.0):
             raise ValueError(f"p must be in [0, 1], got {p_val}")
         if eta1_val <= 1.0:
-            raise ValueError(f"eta1 must be strictly greater than 1.0 for finite expectation, got {eta1_val}")
+            raise ValueError(
+                f"eta1 must be strictly greater than 1.0 for finite expectation, got {eta1_val}"
+            )
         if eta2_val <= 0:
             raise ValueError(f"eta2 must be strictly positive, got {eta2_val}")
 
@@ -234,7 +235,11 @@ class KouJumpDiffusion(Process):
 
         ψ(u) = i μ u - ½ σ² u² + λ [ p η_1 / (η_1 - i u) + (1-p) η_2 / (η_2 + i u) - 1 ]
         """
-        jump_part = (self.p * self.eta1) / (self.eta1 - 1j * u) + (self.q * self.eta2) / (self.eta2 + 1j * u) - 1.0
+        jump_part = (
+            (self.p * self.eta1) / (self.eta1 - 1j * u)
+            + (self.q * self.eta2) / (self.eta2 + 1j * u)
+            - 1.0
+        )
         return 1j * self.drift * u - 0.5 * (self.sigma**2) * (u**2) + self.rate * jump_part
 
     def characteristic_function(self, u: complex, t: float = 1.0) -> complex:
@@ -312,7 +317,11 @@ class KouJumpDiffusion(Process):
         mu_rn = r - q - 0.5 * (self.sigma**2) - self.rate * kappa
 
         def rn_char_func(u: complex) -> complex:
-            jump_part = (self.p * self.eta1) / (self.eta1 - 1j * u) + (self.q * self.eta2) / (self.eta2 + 1j * u) - 1.0
+            jump_part = (
+                (self.p * self.eta1) / (self.eta1 - 1j * u)
+                + (self.q * self.eta2) / (self.eta2 + 1j * u)
+                - 1.0
+            )
             psi = 1j * mu_rn * u - 0.5 * (self.sigma**2) * (u**2) + self.rate * jump_part
             return cmath.exp(T * psi)
 
@@ -384,7 +393,9 @@ class KouJumpDiffusion(Process):
             def obj(sig: float) -> float:
                 d1 = (math.log(S0 / K) + (r - q + 0.5 * sig**2) * T) / (sig * math.sqrt(T))
                 d2 = d1 - sig * math.sqrt(T)
-                bs = S0 * math.exp(-q * T) * stats.norm.cdf(d1) - K * math.exp(-r * T) * stats.norm.cdf(d2)
+                bs = S0 * math.exp(-q * T) * stats.norm.cdf(d1) - K * math.exp(
+                    -r * T
+                ) * stats.norm.cdf(d2)
                 return bs - C
 
             try:

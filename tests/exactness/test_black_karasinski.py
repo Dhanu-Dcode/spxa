@@ -74,7 +74,7 @@ class TestBlackKarasinskiExactness:
 
         for t in [0.5, 1.0, 2.0]:
             expected_mean = b + (x0 - b) * math.exp(-a * t)
-            expected_var = (sigma ** 2 / (2.0 * a)) * (1.0 - math.exp(-2.0 * a * t))
+            expected_var = (sigma**2 / (2.0 * a)) * (1.0 - math.exp(-2.0 * a * t))
 
             assert bk.log_rate_mean(t) == pytest.approx(expected_mean, rel=1e-12)
             assert bk.log_rate_variance(t) == pytest.approx(expected_var, rel=1e-12)
@@ -110,8 +110,8 @@ class TestBlackKarasinskiExactness:
         b = -3.5
         bk = BlackKarasinskiProcess(a=a, sigma=sigma, b=b, r0=0.03)
 
-        var_inf_x = sigma ** 2 / (2.0 * a)
-        expected_r_inf = math.exp(b + sigma ** 2 / (4.0 * a))
+        var_inf_x = sigma**2 / (2.0 * a)
+        expected_r_inf = math.exp(b + sigma**2 / (4.0 * a))
         expected_var_inf = math.exp(2.0 * b + var_inf_x) * (math.exp(var_inf_x) - 1.0)
 
         assert bk.stationary_log_mean == pytest.approx(b, rel=1e-12)

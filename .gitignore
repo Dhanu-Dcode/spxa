@@ -14,3 +14,4 @@ coverage.xml
 *.so
 benchmarks/results/*.json
 examples_output/
+.cache/

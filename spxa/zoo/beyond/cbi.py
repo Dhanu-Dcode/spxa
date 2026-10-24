@@ -43,7 +43,7 @@ Duffie, D., Filipović, D., & Schachermayer, W. (2003). Affine processes and
 from __future__ import annotations
 
 import math
-from typing import Optional, Union, Tuple, Dict, Any, Sequence
+from typing import Optional, Union
 
 import numpy as np
 from scipy import integrate  # type: ignore[import-untyped]
@@ -175,8 +175,10 @@ class CBISubordinator(Process):
         if self._b == 0.0:
             return float("inf")
         mu_j = self._lambda_j / self._eta
-        sigma_j_sq = 2.0 * self._lambda_j / (self._eta ** 2)
-        return float(((self._a + mu_j) * self._c) / (2.0 * (self._b ** 2)) + sigma_j_sq / (2.0 * self._b))
+        sigma_j_sq = 2.0 * self._lambda_j / (self._eta**2)
+        return float(
+            ((self._a + mu_j) * self._c) / (2.0 * (self._b**2)) + sigma_j_sq / (2.0 * self._b)
+        )
 
     # ------------------------------------------------------------------
     # Exactness & Triplet
@@ -256,14 +258,18 @@ class CBISubordinator(Process):
             int_cont = (2.0 * self._a / self._c) * math.log(1.0 + 0.5 * self._c * lam * t)
         else:
             exp_bt = math.exp(-self._b * t)
-            int_cont = (2.0 * self._a / self._c) * math.log(1.0 + (self._c * lam / (2.0 * self._b)) * (1.0 - exp_bt))
+            int_cont = (2.0 * self._a / self._c) * math.log(
+                1.0 + (self._c * lam / (2.0 * self._b)) * (1.0 - exp_bt)
+            )
 
         # Jump immigration component: ∫_0^t (λ_J v(s)) / (η + v(s)) ds
         int_jump = 0.0
         if self._lambda_j > 0.0:
+
             def _jump_integrand(s: float) -> float:
                 v_s = float(self.riccati_v(lam, s))
                 return float((self._lambda_j * v_s) / (self._eta + v_s))
+
             int_jump, _ = integrate.quad(_jump_integrand, 0.0, t, limit=100)
 
         exponent = -v_t * self._x0 - int_cont - int_jump
@@ -322,10 +328,10 @@ class CBISubordinator(Process):
         if t < 0.0:
             raise ValueError(f"Time t must be non-negative, got {t}")
         mu_j = self._lambda_j / self._eta if self._lambda_j > 0.0 else 0.0
-        sigma_j_sq = 2.0 * self._lambda_j / (self._eta ** 2) if self._lambda_j > 0.0 else 0.0
+        sigma_j_sq = 2.0 * self._lambda_j / (self._eta**2) if self._lambda_j > 0.0 else 0.0
 
         if self._b == 0.0:
-            var_branch = self._x0 * self._c * t + 0.5 * (self._a + mu_j) * self._c * (t ** 2)
+            var_branch = self._x0 * self._c * t + 0.5 * (self._a + mu_j) * self._c * (t**2)
             var_jump = sigma_j_sq * t
             return float(var_branch + var_jump)
 
@@ -333,7 +339,7 @@ class CBISubordinator(Process):
         exp_2bt = math.exp(-2.0 * self._b * t)
 
         term1 = self._x0 * (self._c / self._b) * (exp_bt - exp_2bt)
-        term2 = ((self._a + mu_j) * self._c / (2.0 * (self._b ** 2))) * ((1.0 - exp_bt) ** 2)
+        term2 = ((self._a + mu_j) * self._c / (2.0 * (self._b**2))) * ((1.0 - exp_bt) ** 2)
         term3 = (sigma_j_sq / (2.0 * self._b)) * (1.0 - exp_2bt)
 
         return float(max(0.0, term1 + term2 + term3))
@@ -360,10 +366,13 @@ class CBISubordinator(Process):
                 int_cont = (2.0 * self._a / self._c) * np.log(1.0 + 0.5 * self._c * lam_comp * t)
             else:
                 exp_bt = math.exp(-self._b * t)
-                int_cont = (2.0 * self._a / self._c) * np.log(1.0 + (self._c * lam_comp / (2.0 * self._b)) * (1.0 - exp_bt))
+                int_cont = (2.0 * self._a / self._c) * np.log(
+                    1.0 + (self._c * lam_comp / (2.0 * self._b)) * (1.0 - exp_bt)
+                )
 
             int_jump = 0.0
             if self._lambda_j > 0.0:
+
                 def _jump_real(s: float) -> float:
                     v_s = self.riccati_v(lam_comp, s)
                     return float(((self._lambda_j * v_s) / (self._eta + v_s)).real)
@@ -397,6 +406,7 @@ class CBISubordinator(Process):
     ) -> np.ndarray:
         """Simulate sample paths of the CBI process :math:`X_t`."""
         from spxa.sim.exact import sample_cbi
+
         return sample_cbi(
             a=self._a,
             b=self._b,

@@ -122,7 +122,9 @@ class TestHestonExactness:
 
         # Integrated variance formula check
         t_eval = 2.5
-        th_int_v = h.theta * t_eval + (h.v0 - h.theta) * (1.0 - math.exp(-h.kappa * t_eval)) / h.kappa
+        th_int_v = (
+            h.theta * t_eval + (h.v0 - h.theta) * (1.0 - math.exp(-h.kappa * t_eval)) / h.kappa
+        )
         assert np.isclose(h.expected_integrated_variance(t_eval), th_int_v)
 
         with pytest.raises(ValueError, match="Time t must be non-negative"):
@@ -229,15 +231,15 @@ class TestHestonExactness:
         q = 0.0
         vol = 0.20
 
-        d1 = (math.log(S0 / K) + (r - q + 0.5 * vol ** 2) * T) / (vol * math.sqrt(T))
+        d1 = (math.log(S0 / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
         d2 = d1 - vol * math.sqrt(T)
         bs_call = S0 * math.exp(-q * T) * norm.cdf(d1) - K * math.exp(-r * T) * norm.cdf(d2)
 
         # Heston model with tiny sigma_v = 1e-4
         h_bs = Heston(
-            v0=vol ** 2,
+            v0=vol**2,
             kappa=2.0,
-            theta=vol ** 2,
+            theta=vol**2,
             sigma_v=1e-4,
             rho=0.0,
             mu=r,

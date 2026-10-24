@@ -18,6 +18,7 @@ from spxa.zoo.levy import BrownianMotion, GammaProcess, VarianceGamma
 class TestMultivariateLevyTriplet:
     def test_construction(self) -> None:
         from spxa.zoo.levy.brownian import _ZeroLevyMeasure
+
         b = np.array([1.0, 2.0])
         sigma = np.eye(2)
         t = MultivariateLevyTriplet(b=b, sigma=sigma, nu=_ZeroLevyMeasure(), dim=2)
@@ -25,22 +26,29 @@ class TestMultivariateLevyTriplet:
 
     def test_non_symmetric_sigma_raises(self) -> None:
         from spxa.zoo.levy.brownian import _ZeroLevyMeasure
+
         with pytest.raises(ValueError, match="symmetric"):
             MultivariateLevyTriplet(
-                b=np.zeros(2), sigma=np.array([[1.0, 0.5], [0.0, 1.0]]),
-                nu=_ZeroLevyMeasure(), dim=2
+                b=np.zeros(2),
+                sigma=np.array([[1.0, 0.5], [0.0, 1.0]]),
+                nu=_ZeroLevyMeasure(),
+                dim=2,
             )
 
     def test_non_psd_sigma_raises(self) -> None:
         from spxa.zoo.levy.brownian import _ZeroLevyMeasure
+
         with pytest.raises(ValueError, match="positive semidefinite"):
             MultivariateLevyTriplet(
-                b=np.zeros(2), sigma=np.array([[-1.0, 0.0], [0.0, 1.0]]),
-                nu=_ZeroLevyMeasure(), dim=2
+                b=np.zeros(2),
+                sigma=np.array([[-1.0, 0.0], [0.0, 1.0]]),
+                nu=_ZeroLevyMeasure(),
+                dim=2,
             )
 
     def test_addition(self) -> None:
         from spxa.zoo.levy.brownian import _ZeroLevyMeasure
+
         nu = _ZeroLevyMeasure()
         t1 = MultivariateLevyTriplet(b=np.array([1.0, 0.0]), sigma=np.eye(2), nu=nu, dim=2)
         t2 = MultivariateLevyTriplet(b=np.array([0.0, 2.0]), sigma=np.eye(2), nu=nu, dim=2)

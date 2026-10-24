@@ -20,7 +20,7 @@ Kloeden, P. E., & Platen, E. (1992). Numerical Solution of Stochastic Differenti
 from __future__ import annotations
 
 import math
-from typing import Callable, Optional, Sequence, Tuple, Union
+from typing import Callable, Optional, Sequence, Union
 
 import numpy as np
 
@@ -122,7 +122,7 @@ def milstein(
             b_minus = np.asarray(diffusion(t_k, curr_x - eps), dtype=float)
             bp_val = (b_plus - b_minus) / (2.0 * eps)
 
-        milstein_term = 0.5 * b_val * bp_val * (dw ** 2 - dt)
+        milstein_term = 0.5 * b_val * bp_val * (dw**2 - dt)
         curr_x = curr_x + a_val * dt + b_val * dw + milstein_term
         paths[:, k + 1] = curr_x
 

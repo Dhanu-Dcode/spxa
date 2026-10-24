@@ -28,7 +28,7 @@ Brigo, D., & Mercurio, F. (2006). Interest Rate Models — Theory and Practice.
 from __future__ import annotations
 
 import math
-from typing import Optional, Union, Tuple, Dict, Any
+from typing import Optional, Union, Tuple, Dict
 
 import numpy as np
 
@@ -92,7 +92,7 @@ class BlackKarasinskiProcess(Process):
             name=f"BlackKarasinski(a={self._a}, sigma={self._sigma}, b={self._b:.4f}, r0={self._r0})",
             math_note=(
                 f"d(ln r_t) = {self._a:.3f}({self._b:.4f} - ln r_t)dt + {self._sigma:.3f}dW_t, "
-                f"E[r_∞]={self.stationary_mean*100:.2f}%"
+                f"E[r_∞]={self.stationary_mean * 100:.2f}%"
             ),
             reference="Black & Karasinski (1991); Brigo & Mercurio (2006) §3.7",
         )
@@ -163,7 +163,7 @@ class BlackKarasinskiProcess(Process):
                     f"Black-Karasinski lognormal short-rate process: "
                     f"d(ln r_t) = {self._a:.3f}({self._b:.4f} - ln r_t)dt + {self._sigma:.3f}dW_t, r_0={self._r0}."
                 ),
-                f"Strictly positive rates r_t > 0 a.s. Stationary mean E[r_∞]={self.stationary_mean*100:.2f}%.",
+                f"Strictly positive rates r_t > 0 a.s. Stationary mean E[r_∞]={self.stationary_mean * 100:.2f}%.",
             ],
         )
 
@@ -196,7 +196,7 @@ class BlackKarasinskiProcess(Process):
         """
         if t < 0.0:
             raise ValueError(f"Time t must be non-negative, got {t}")
-        return float((self._sigma ** 2 / (2.0 * self._a)) * (1.0 - math.exp(-2.0 * self._a * t)))
+        return float((self._sigma**2 / (2.0 * self._a)) * (1.0 - math.exp(-2.0 * self._a * t)))
 
     def log_rate_std(self, t: float = 1.0) -> float:
         """Conditional standard deviation of log-rate :math:`x_t`."""
@@ -261,7 +261,7 @@ class BlackKarasinskiProcess(Process):
     @property
     def stationary_log_variance(self) -> float:
         r"""Asymptotic variance of log-rate :math:`\frac{\sigma^2}{2a}`."""
-        return self._sigma ** 2 / (2.0 * self._a)
+        return self._sigma**2 / (2.0 * self._a)
 
     @property
     def stationary_median(self) -> float:
@@ -273,7 +273,7 @@ class BlackKarasinskiProcess(Process):
         r"""
         Asymptotic stationary mean of short rate :math:`\mathbb{E}[r_\infty] = \exp\left(b + \frac{\sigma^2}{4a}\right)`.
         """
-        return float(math.exp(self._b + self._sigma ** 2 / (4.0 * self._a)))
+        return float(math.exp(self._b + self._sigma**2 / (4.0 * self._a)))
 
     @property
     def stationary_variance(self) -> float:
@@ -321,7 +321,9 @@ class BlackKarasinskiProcess(Process):
             dt = t_mat / n_steps
 
             exp_adt = math.exp(-self._a * dt)
-            std_step = math.sqrt((self._sigma ** 2 / (2.0 * self._a)) * (1.0 - math.exp(-2.0 * self._a * dt)))
+            std_step = math.sqrt(
+                (self._sigma**2 / (2.0 * self._a)) * (1.0 - math.exp(-2.0 * self._a * dt))
+            )
 
             curr_x = np.full(n_paths, self._x0, dtype=float)
             # Running trapezoidal sum
@@ -382,6 +384,7 @@ class BlackKarasinskiProcess(Process):
             Paths array of shape ``(n_paths, n_steps + 1)`` with :math:`r_t > 0`.
         """
         from spxa.sim.exact import sample_black_karasinski
+
         return sample_black_karasinski(
             a=self._a,
             sigma=self._sigma,
@@ -412,6 +415,7 @@ class BlackKarasinskiProcess(Process):
             Tuple ``(r_paths, x_paths)``, each of shape ``(n_paths, n_steps + 1)``.
         """
         from spxa.sim.exact import sample_black_karasinski
+
         return sample_black_karasinski(
             a=self._a,
             sigma=self._sigma,

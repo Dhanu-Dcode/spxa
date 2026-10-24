@@ -81,9 +81,7 @@ class TestCBIExactness:
     def test_cbi_conditional_moments_and_mc(self) -> None:
         """Exact conditional mean and variance match Monte Carlo."""
         # Test subcritical with jump immigration
-        proc = CBISubordinator(
-            a=0.05, b=0.8, c=0.1, lambda_j=0.4, eta=20.0, x0=0.1
-        )
+        proc = CBISubordinator(a=0.05, b=0.8, c=0.1, lambda_j=0.4, eta=20.0, x0=0.1)
         assert proc.is_subcritical is True
         assert proc.is_critical is False
 
@@ -115,7 +113,7 @@ class TestCBIExactness:
 
         # Theoretical b = 0 formulas
         assert m1 == pytest.approx(0.05 + 0.04 * 1.0)
-        expected_var = 0.05 * 0.1 * 1.0 + 0.5 * 0.04 * 0.1 * (1.0 ** 2)
+        expected_var = 0.05 * 0.1 * 1.0 + 0.5 * 0.04 * 0.1 * (1.0**2)
         assert var == pytest.approx(expected_var)
 
     def test_cbi_extinction_probability_pure_csbp(self) -> None:

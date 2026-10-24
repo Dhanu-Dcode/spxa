@@ -8,13 +8,12 @@ multi-asset derivatives pricing.
 
 from __future__ import annotations
 
-import math
 from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 from numpy.typing import ArrayLike
 from scipy import stats
-from scipy.special import gamma, gammaln
+from scipy.special import gammaln
 
 from spxa.copula.base import Copula
 
@@ -104,15 +103,17 @@ class GaussianCopula(Copula):
         z = stats.norm.ppf(u_clipped)
 
         if self.dim == 2:
-            res = stats.multivariate_normal.cdf(
-                z, mean=np.zeros(2), cov=self._corr_matrix
-            )
+            res = stats.multivariate_normal.cdf(z, mean=np.zeros(2), cov=self._corr_matrix)
         else:
             # For d > 2, evaluate row by row
-            res = np.array([
-                stats.multivariate_normal.cdf(row, mean=np.zeros(self.dim), cov=self._corr_matrix)
-                for row in z
-            ])
+            res = np.array(
+                [
+                    stats.multivariate_normal.cdf(
+                        row, mean=np.zeros(self.dim), cov=self._corr_matrix
+                    )
+                    for row in z
+                ]
+            )
 
         return float(res) if is_1d else np.asarray(res, dtype=float)
 
@@ -254,10 +255,14 @@ class StudentTCopula(Copula):
         if self.dim == 2:
             res = stats.multivariate_t.cdf(z, loc=np.zeros(2), shape=self._corr_matrix, df=self.df)
         else:
-            res = np.array([
-                stats.multivariate_t.cdf(row, loc=np.zeros(self.dim), shape=self._corr_matrix, df=self.df)
-                for row in z
-            ])
+            res = np.array(
+                [
+                    stats.multivariate_t.cdf(
+                        row, loc=np.zeros(self.dim), shape=self._corr_matrix, df=self.df
+                    )
+                    for row in z
+                ]
+            )
 
         return float(res) if is_1d else np.asarray(res, dtype=float)
 

@@ -17,8 +17,16 @@ class TestBatesExactness:
     def test_bates_exactness_level_and_aliases(self) -> None:
         """BatesProcess is MOMENT_PROPAGATION and identical to BatesModel, Bates96, and SVJ."""
         bates = BatesProcess(
-            v0=0.04, kappa=2.0, theta=0.04, sigma_v=0.3, rho=-0.6,
-            rate=1.0, jump_mean=-0.05, jump_std=0.1, mu=0.05, s0=100.0,
+            v0=0.04,
+            kappa=2.0,
+            theta=0.04,
+            sigma_v=0.3,
+            rho=-0.6,
+            rate=1.0,
+            jump_mean=-0.05,
+            jump_std=0.1,
+            mu=0.05,
+            s0=100.0,
         )
         assert bates.exactness == ExactnessLevel.MOMENT_PROPAGATION
         assert BatesModel is BatesProcess
@@ -86,7 +94,9 @@ class TestBatesExactness:
 
         # As t -> inf, approaches stationary values
         t_large = 100.0
-        assert bates.variance_mean(t_large) == pytest.approx(bates.stationary_variance_mean, rel=1e-6)
+        assert bates.variance_mean(t_large) == pytest.approx(
+            bates.stationary_variance_mean, rel=1e-6
+        )
         assert bates.variance_var(t_large) == pytest.approx(bates.stationary_variance_var, rel=1e-6)
 
         # Expected integrated variance formula
@@ -101,8 +111,16 @@ class TestBatesExactness:
         mu_j = -0.06
         sigma_j = 0.12
         bates = BatesProcess(
-            v0=0.04, kappa=2.0, theta=0.04, sigma_v=0.3, rho=-0.6,
-            rate=rate, jump_mean=mu_j, jump_std=sigma_j, mu=mu, s0=100.0,
+            v0=0.04,
+            kappa=2.0,
+            theta=0.04,
+            sigma_v=0.3,
+            rho=-0.6,
+            rate=rate,
+            jump_mean=mu_j,
+            jump_std=sigma_j,
+            mu=mu,
+            s0=100.0,
         )
 
         t = 0.75
@@ -124,7 +142,9 @@ class TestBatesExactness:
         # 4. Asset characteristic function: E[exp(i u ln S_t)] = S_0^(i u) * phi(u, t)
         u = 2.5
         phase = np.exp(1j * u * np.log(bates.s0))
-        assert bates.asset_char_func(u, t=t) == pytest.approx(phase * bates.char_func(u, t=t), rel=1e-12)
+        assert bates.asset_char_func(u, t=t) == pytest.approx(
+            phase * bates.char_func(u, t=t), rel=1e-12
+        )
 
     def test_bates_reduces_to_heston_when_rate_is_zero(self) -> None:
         """When jump arrival rate is zero, Bates is identical to Heston."""
@@ -137,12 +157,23 @@ class TestBatesExactness:
         s0 = 100.0
 
         bates = BatesProcess(
-            v0=v0, kappa=kappa, theta=theta, sigma_v=sigma_v, rho=rho,
-            rate=0.0, mu=mu, s0=s0,
+            v0=v0,
+            kappa=kappa,
+            theta=theta,
+            sigma_v=sigma_v,
+            rho=rho,
+            rate=0.0,
+            mu=mu,
+            s0=s0,
         )
         heston = HestonProcess(
-            v0=v0, kappa=kappa, theta=theta, sigma_v=sigma_v, rho=rho,
-            mu=mu, s0=s0,
+            v0=v0,
+            kappa=kappa,
+            theta=theta,
+            sigma_v=sigma_v,
+            rho=rho,
+            mu=mu,
+            s0=s0,
         )
 
         T = 0.5
@@ -162,8 +193,16 @@ class TestBatesExactness:
         mu_j = -0.04
         sigma_j = 0.10
         bates = BatesProcess(
-            v0=0.04, kappa=2.0, theta=0.04, sigma_v=0.3, rho=-0.6,
-            rate=rate, jump_mean=mu_j, jump_std=sigma_j, mu=mu, s0=100.0,
+            v0=0.04,
+            kappa=2.0,
+            theta=0.04,
+            sigma_v=0.3,
+            rho=-0.6,
+            rate=rate,
+            jump_mean=mu_j,
+            jump_std=sigma_j,
+            mu=mu,
+            s0=100.0,
         )
 
         T = 1.0
@@ -184,8 +223,16 @@ class TestBatesExactness:
         T = 0.75
 
         bates = BatesProcess(
-            v0=0.04, kappa=2.5, theta=0.04, sigma_v=0.35, rho=-0.7,
-            rate=1.2, jump_mean=-0.08, jump_std=0.15, mu=r - q, s0=S0,
+            v0=0.04,
+            kappa=2.5,
+            theta=0.04,
+            sigma_v=0.35,
+            rho=-0.7,
+            rate=1.2,
+            jump_mean=-0.08,
+            jump_std=0.15,
+            mu=r - q,
+            s0=S0,
         )
 
         strikes = np.array([80.0, 90.0, 100.0, 110.0, 120.0])
@@ -194,7 +241,7 @@ class TestBatesExactness:
 
         # Monotonicity
         assert np.all(np.diff(calls) < 0)  # Calls decrease with strike
-        assert np.all(np.diff(puts) > 0)   # Puts increase with strike
+        assert np.all(np.diff(puts) > 0)  # Puts increase with strike
 
         # Put-Call parity: C - P = S0 * exp(-q * T) - K * exp(-r * T)
         theor_diff = S0 * np.exp(-q * T) - strikes * np.exp(-r * T)
@@ -209,8 +256,16 @@ class TestBatesExactness:
         T = 0.5
 
         bates = BatesProcess(
-            v0=0.04, kappa=2.0, theta=0.04, sigma_v=0.3, rho=-0.5,
-            rate=1.0, jump_mean=-0.05, jump_std=0.10, mu=r - q, s0=S0,
+            v0=0.04,
+            kappa=2.0,
+            theta=0.04,
+            sigma_v=0.3,
+            rho=-0.5,
+            rate=1.0,
+            jump_mean=-0.05,
+            jump_std=0.10,
+            mu=r - q,
+            s0=S0,
         )
 
         analytical_call = float(bates.call_price(K, T=T, r=r, q=q))
@@ -232,8 +287,16 @@ class TestBatesExactness:
         r = 0.04
         T = 0.5
         bates = BatesProcess(
-            v0=0.04, kappa=2.0, theta=0.04, sigma_v=0.3, rho=-0.6,
-            rate=1.5, jump_mean=-0.08, jump_std=0.12, mu=r, s0=S0,
+            v0=0.04,
+            kappa=2.0,
+            theta=0.04,
+            sigma_v=0.3,
+            rho=-0.6,
+            rate=1.5,
+            jump_mean=-0.08,
+            jump_std=0.12,
+            mu=r,
+            s0=S0,
         )
 
         strikes = [85.0, 95.0, 100.0, 105.0, 115.0]
@@ -247,8 +310,15 @@ class TestBatesExactness:
     def test_bates_simulation_paths_and_joint_simulation(self) -> None:
         """Simulation produces correct shapes, initial values, and non-negative variance."""
         bates = BatesProcess(
-            v0=0.04, kappa=2.0, theta=0.04, sigma_v=0.3, rho=-0.5,
-            rate=1.0, jump_mean=-0.05, jump_std=0.10, s0=100.0,
+            v0=0.04,
+            kappa=2.0,
+            theta=0.04,
+            sigma_v=0.3,
+            rho=-0.5,
+            rate=1.0,
+            jump_mean=-0.05,
+            jump_std=0.10,
+            s0=100.0,
         )
 
         n_paths = 20

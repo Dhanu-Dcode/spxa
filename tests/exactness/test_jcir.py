@@ -54,7 +54,7 @@ class TestJCIRExactness:
     def test_jcir_feller_properties(self) -> None:
         """Feller ratio 2*kappa*theta / sigma^2."""
         jcir_satisfied = JCIRProcess(kappa=2.0, theta=0.05, sigma=0.1)
-        assert jcir_satisfied.feller_ratio == pytest.approx(2.0 * 2.0 * 0.05 / (0.1 ** 2))
+        assert jcir_satisfied.feller_ratio == pytest.approx(2.0 * 2.0 * 0.05 / (0.1**2))
         assert jcir_satisfied.feller_satisfied is True
 
         jcir_violated = JCIRProcess(kappa=1.0, theta=0.02, sigma=0.3)
@@ -69,11 +69,15 @@ class TestJCIRExactness:
         lambda_j = 0.8
         mu_j = 0.03
         r0 = 0.02
-        jcir = JCIRProcess(kappa=kappa, theta=theta, sigma=sigma, lambda_j=lambda_j, mu_j=mu_j, r0=r0)
+        jcir = JCIRProcess(
+            kappa=kappa, theta=theta, sigma=sigma, lambda_j=lambda_j, mu_j=mu_j, r0=r0
+        )
 
         # Stationary moments
         expected_stat_mean = theta + (lambda_j * mu_j) / kappa
-        expected_stat_var = ((sigma ** 2) * expected_stat_mean + 2.0 * lambda_j * (mu_j ** 2)) / (2.0 * kappa)
+        expected_stat_var = ((sigma**2) * expected_stat_mean + 2.0 * lambda_j * (mu_j**2)) / (
+            2.0 * kappa
+        )
 
         assert jcir.stationary_mean == pytest.approx(expected_stat_mean, rel=1e-12)
         assert jcir.stationary_variance == pytest.approx(expected_stat_var, rel=1e-12)
@@ -84,10 +88,9 @@ class TestJCIRExactness:
             exp_kt = math.exp(-kappa * t)
             exp_2kt = math.exp(-2.0 * kappa * t)
             cond_mean = r0 * exp_kt + expected_stat_mean * (1.0 - exp_kt)
-            cond_var = (
-                (sigma ** 2 * (r0 - expected_stat_mean) / kappa) * (exp_kt - exp_2kt)
-                + expected_stat_var * (1.0 - exp_2kt)
-            )
+            cond_var = (sigma**2 * (r0 - expected_stat_mean) / kappa) * (
+                exp_kt - exp_2kt
+            ) + expected_stat_var * (1.0 - exp_2kt)
 
             assert jcir.conditional_mean(t) == pytest.approx(cond_mean, rel=1e-12)
             assert jcir.conditional_variance(t) == pytest.approx(cond_var, rel=1e-12)
@@ -99,17 +102,20 @@ class TestJCIRExactness:
         theta = 0.04
         sigma = 0.12
         r0 = 0.03
-        jcir_zero_jump = JCIRProcess(kappa=kappa, theta=theta, sigma=sigma, lambda_j=0.0, mu_j=0.02, r0=r0)
+        jcir_zero_jump = JCIRProcess(
+            kappa=kappa, theta=theta, sigma=sigma, lambda_j=0.0, mu_j=0.02, r0=r0
+        )
 
         assert jcir_zero_jump.stationary_mean == pytest.approx(theta, rel=1e-12)
-        assert jcir_zero_jump.stationary_variance == pytest.approx((sigma ** 2 * theta) / (2.0 * kappa), rel=1e-12)
+        assert jcir_zero_jump.stationary_variance == pytest.approx(
+            (sigma**2 * theta) / (2.0 * kappa), rel=1e-12
+        )
 
         t = 1.0
         exp_kt = math.exp(-kappa * t)
-        cir_cond_var = (
-            r0 * (sigma ** 2 / kappa) * (exp_kt - math.exp(-2.0 * kappa * t))
-            + theta * (sigma ** 2 / (2.0 * kappa)) * ((1.0 - exp_kt) ** 2)
-        )
+        cir_cond_var = r0 * (sigma**2 / kappa) * (exp_kt - math.exp(-2.0 * kappa * t)) + theta * (
+            sigma**2 / (2.0 * kappa)
+        ) * ((1.0 - exp_kt) ** 2)
         assert jcir_zero_jump.conditional_variance(t) == pytest.approx(cir_cond_var, rel=1e-12)
 
     def test_jcir_zero_coupon_bond_pricing_properties(self) -> None:
@@ -149,13 +155,17 @@ class TestJCIRExactness:
         r0 = 0.04
         tau = 1.0
 
-        jcir = JCIRProcess(kappa=kappa, theta=theta, sigma=sigma, lambda_j=lambda_j, mu_j=mu_j, r0=r0)
+        jcir = JCIRProcess(
+            kappa=kappa, theta=theta, sigma=sigma, lambda_j=lambda_j, mu_j=mu_j, r0=r0
+        )
         ana_price = jcir.bond_price(tau)
 
         # Monte Carlo discount expectation
         dt = 0.005
         n_steps = int(tau / dt)
-        paths = jcir.simulate(n_steps=n_steps, time_horizon=tau, n_paths=40_000, rng=np.random.default_rng(2026))
+        paths = jcir.simulate(
+            n_steps=n_steps, time_horizon=tau, n_paths=40_000, rng=np.random.default_rng(2026)
+        )
         int_r = np.sum(paths[:, :-1], axis=1) * dt
         mc_price = float(np.mean(np.exp(-int_r)))
 
@@ -189,9 +199,13 @@ class TestJCIRExactness:
         mu_j = 0.03
         r0 = 0.04
         t = 1.0
-        jcir = JCIRProcess(kappa=kappa, theta=theta, sigma=sigma, lambda_j=lambda_j, mu_j=mu_j, r0=r0)
+        jcir = JCIRProcess(
+            kappa=kappa, theta=theta, sigma=sigma, lambda_j=lambda_j, mu_j=mu_j, r0=r0
+        )
 
-        paths = jcir.simulate(n_steps=25, time_horizon=t, n_paths=25_000, rng=np.random.default_rng(2026))
+        paths = jcir.simulate(
+            n_steps=25, time_horizon=t, n_paths=25_000, rng=np.random.default_rng(2026)
+        )
         assert paths.shape == (25_000, 26)
         assert np.all(paths[:, 0] == r0)
         assert np.all(paths >= 0.0)

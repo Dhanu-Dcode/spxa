@@ -46,7 +46,7 @@ class TestFractionalBrownianMotion:
         H, sigma = 0.7, 1.0
         fbm = FractionalBrownianMotion(H=H, sigma=sigma)
         s, t = 0.3, 0.8
-        expected = 0.5 * (s**(2*H) + t**(2*H) - abs(s - t)**(2*H))
+        expected = 0.5 * (s ** (2 * H) + t ** (2 * H) - abs(s - t) ** (2 * H))
         assert fbm.covariance(s, t) == pytest.approx(expected, rel=1e-10)
 
     @pytest.mark.exactness
@@ -89,7 +89,7 @@ class TestFractionalBrownianMotion:
         fbm = FractionalBrownianMotion(H=H, sigma=sigma)
         paths = fbm.simulate(n_steps=200, n_paths=2000, T=t, rng=rng)
         empirical_var = paths[:, -1].var()
-        expected_var = sigma**2 * t**(2 * H)
+        expected_var = sigma**2 * t ** (2 * H)
         assert empirical_var == pytest.approx(expected_var, rel=0.1)
 
     @pytest.mark.exactness
@@ -207,6 +207,7 @@ class TestOULevy:
         Barndorff-Nielsen & Shephard (2001): L must be a subordinator.
         """
         from spxa.zoo.levy import BrownianMotion
+
         with pytest.raises(ValueError, match="subordinator"):
             OULevy(lam=1.0, subordinator=BrownianMotion())
 

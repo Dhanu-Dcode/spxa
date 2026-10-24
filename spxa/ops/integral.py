@@ -142,7 +142,6 @@ def stochastic_convolution_char_func(
 
     u_arr = np.atleast_1d(np.asarray(u, dtype=complex))
     s_grid = np.linspace(0, t, n_quad)
-    ds = s_grid[1] - s_grid[0]
 
     results = np.zeros(len(u_arr), dtype=complex)
     for j, uj in enumerate(u_arr):
@@ -154,8 +153,9 @@ def stochastic_convolution_char_func(
             else:
                 cf_val = integrator.char_func(u=uj * fs, t=1.0)
                 exponents[i] = np.log(complex(cf_val) + 1e-300)
-        integral_psi = float(np.trapezoid(exponents.real, s_grid)) + \
-                       1j * float(np.trapezoid(exponents.imag, s_grid))
+        integral_psi = float(np.trapezoid(exponents.real, s_grid)) + 1j * float(
+            np.trapezoid(exponents.imag, s_grid)
+        )
         results[j] = np.exp(integral_psi)
 
     return results if results.shape != (1,) else results[0]
@@ -230,8 +230,7 @@ class StochasticIntegral(Process):
             has_independent_increments=False,
             is_martingale=self._Y.properties.is_martingale,
             has_finite_variance=(
-                self._X.properties.has_finite_variance
-                and self._Y.properties.has_finite_variance
+                self._X.properties.has_finite_variance and self._Y.properties.has_finite_variance
             ),
             has_finite_mean=True,
             self_similarity_index=None,

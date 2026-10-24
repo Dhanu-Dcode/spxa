@@ -39,7 +39,7 @@ Brigo, D., & Mercurio, F. (2006). Interest Rate Models - Theory and Practice.
 from __future__ import annotations
 
 import math
-from typing import Optional, Union, Tuple, Dict, Any
+from typing import Optional, Union
 
 import numpy as np
 from scipy import integrate  # type: ignore[import-untyped]
@@ -96,7 +96,7 @@ class JCIRProcess(Process):
             raise ValueError(f"Long-term mean 'theta' must be strictly positive, got {theta}")
         if sigma <= 0.0:
             raise ValueError(f"Volatility 'sigma' must be strictly positive, got {sigma}")
-        
+
         lam = jump_intensity if jump_intensity is not None else lambda_j
         if lam < 0.0:
             raise ValueError(f"Jump intensity 'lambda_j' must be non-negative, got {lam}")
@@ -116,10 +116,10 @@ class JCIRProcess(Process):
         self._r0 = float(r0)
 
         # Derived parameters
-        self._gamma = math.sqrt(self._kappa ** 2 + 2.0 * self._sigma ** 2)
+        self._gamma = math.sqrt(self._kappa**2 + 2.0 * self._sigma**2)
         self._stationary_mean = self._theta + (self._lambda_j * self._mu_j) / self._kappa
         self._stationary_variance = (
-            (self._sigma ** 2) * self._stationary_mean + 2.0 * self._lambda_j * (self._mu_j ** 2)
+            (self._sigma**2) * self._stationary_mean + 2.0 * self._lambda_j * (self._mu_j**2)
         ) / (2.0 * self._kappa)
 
         node = CompositionNode(
@@ -175,7 +175,7 @@ class JCIRProcess(Process):
     @property
     def feller_ratio(self) -> float:
         r"""Feller ratio :math:`\frac{2\kappa\theta}{\sigma^2}` for the baseline CIR diffusion."""
-        return (2.0 * self._kappa * self._theta) / (self._sigma ** 2)
+        return (2.0 * self._kappa * self._theta) / (self._sigma**2)
 
     @property
     def feller_satisfied(self) -> bool:
@@ -261,7 +261,9 @@ class JCIRProcess(Process):
 
         exp_1 = math.exp(-self._kappa * t)
         exp_2 = math.exp(-2.0 * self._kappa * t)
-        term1 = (self._sigma ** 2 * (self._r0 - self._stationary_mean) / self._kappa) * (exp_1 - exp_2)
+        term1 = (self._sigma**2 * (self._r0 - self._stationary_mean) / self._kappa) * (
+            exp_1 - exp_2
+        )
         term2 = self._stationary_variance * (1.0 - exp_2)
         return float(max(0.0, term1 + term2))
 
@@ -288,7 +290,7 @@ class JCIRProcess(Process):
         u = math.exp(self._gamma * tau) - 1.0
         denom = (self._gamma + self._kappa) * u + 2.0 * self._gamma
         numer = 2.0 * self._gamma * math.exp((self._kappa + self._gamma) * tau / 2.0)
-        return (2.0 * self._kappa * self._theta / (self._sigma ** 2)) * math.log(numer / denom)
+        return (2.0 * self._kappa * self._theta / (self._sigma**2)) * math.log(numer / denom)
 
     def _jump_a(self, tau: float) -> float:
         r"""Jump component :math:`A_{\mathrm{jump}}(\tau)` to Riccati coefficient."""
@@ -299,16 +301,22 @@ class JCIRProcess(Process):
         d = self._gamma - self._kappa - 2.0 * self._mu_j
 
         if abs(d) < 1e-12:
-            integral_val = (2.0 * self._mu_j / c1) * (tau - (1.0 - math.exp(-self._gamma * tau)) / self._gamma)
+            integral_val = (2.0 * self._mu_j / c1) * (
+                tau - (1.0 - math.exp(-self._gamma * tau)) / self._gamma
+            )
         else:
             z_tau = math.exp(self._gamma * tau)
-            f_tau = (-self._gamma * tau / d) + (2.0 * self._gamma / (d * c1)) * math.log(c1 * z_tau + d)
+            f_tau = (-self._gamma * tau / d) + (2.0 * self._gamma / (d * c1)) * math.log(
+                c1 * z_tau + d
+            )
             f_0 = (2.0 * self._gamma / (d * c1)) * math.log(c1 + d)
             integral_val = (2.0 * self._mu_j / self._gamma) * (f_tau - f_0)
 
         return -self._lambda_j * integral_val
 
-    def bond_price(self, tau: Union[float, np.ndarray], r: Optional[Union[float, np.ndarray]] = None) -> Union[float, np.ndarray]:
+    def bond_price(
+        self, tau: Union[float, np.ndarray], r: Optional[Union[float, np.ndarray]] = None
+    ) -> Union[float, np.ndarray]:
         r"""
         Exact Zero-Coupon Bond price :math:`P(t, t+\tau) = \mathbb{E}\left[\exp\left(-\int_t^{t+\tau} r_s ds\right) \mid r_t = r\right]`.
 
@@ -335,13 +343,15 @@ class JCIRProcess(Process):
             return float(res)
         return res
 
-    def yield_curve(self, tau: Union[float, np.ndarray], r: Optional[Union[float, np.ndarray]] = None) -> Union[float, np.ndarray]:
+    def yield_curve(
+        self, tau: Union[float, np.ndarray], r: Optional[Union[float, np.ndarray]] = None
+    ) -> Union[float, np.ndarray]:
         r"""
         Zero-coupon yield :math:`y(t, t+\tau) = -\frac{\ln P(t, t+\tau)}{\tau}`.
         """
         tau_arr = np.asarray(tau, dtype=float)
         p = self.bond_price(tau=tau_arr, r=r)
-        
+
         # Avoid division by zero at tau = 0
         with np.errstate(divide="ignore", invalid="ignore"):
             y = np.where(tau_arr > 0.0, -np.log(p) / tau_arr, self._r0 if r is None else r)
@@ -349,7 +359,9 @@ class JCIRProcess(Process):
             return float(y)
         return y
 
-    def forward_rate(self, tau: Union[float, np.ndarray], r: Optional[Union[float, np.ndarray]] = None) -> Union[float, np.ndarray]:
+    def forward_rate(
+        self, tau: Union[float, np.ndarray], r: Optional[Union[float, np.ndarray]] = None
+    ) -> Union[float, np.ndarray]:
         r"""
         Instantaneous forward rate :math:`f(t, t+\tau) = -\frac{\partial \ln P(t, t+\tau)}{\partial \tau}`.
 
@@ -365,7 +377,7 @@ class JCIRProcess(Process):
             if t_val <= 0.0:
                 return float(rate_val)
             b = self._cir_b(t_val)
-            b_prime = 1.0 - self._kappa * b - 0.5 * (self._sigma ** 2) * (b ** 2)
+            b_prime = 1.0 - self._kappa * b - 0.5 * (self._sigma**2) * (b**2)
             jump_term = (self._lambda_j * self._mu_j * b) / (1.0 + self._mu_j * b)
             return float(b_prime * rate_val + self._kappa * self._theta * b + jump_term)
 
@@ -390,8 +402,8 @@ class JCIRProcess(Process):
             res = np.exp(1j * u_arr * self._r0)
             return res if res.ndim > 0 else res.item()
 
-        c = 2.0 * self._kappa / (self._sigma ** 2 * (1.0 - math.exp(-self._kappa * t)))
-        df = 4.0 * self._kappa * self._theta / (self._sigma ** 2)
+        c = 2.0 * self._kappa / (self._sigma**2 * (1.0 - math.exp(-self._kappa * t)))
+        df = 4.0 * self._kappa * self._theta / (self._sigma**2)
         exp_kt = math.exp(-self._kappa * t)
 
         def _eval_single(u_val: complex) -> complex:
@@ -403,13 +415,13 @@ class JCIRProcess(Process):
 
             # Jump contribution integration
             def int_r(s: float) -> float:
-                c_s = 2.0 * self._kappa / (self._sigma ** 2 * (1.0 - math.exp(-self._kappa * s)))
+                c_s = 2.0 * self._kappa / (self._sigma**2 * (1.0 - math.exp(-self._kappa * s)))
                 beta_s = 1j * u_val * math.exp(-self._kappa * s) / (1.0 - 1j * u_val / c_s)
                 val = self._mu_j * beta_s / (1.0 - self._mu_j * beta_s)
                 return float(val.real)
 
             def int_i(s: float) -> float:
-                c_s = 2.0 * self._kappa / (self._sigma ** 2 * (1.0 - math.exp(-self._kappa * s)))
+                c_s = 2.0 * self._kappa / (self._sigma**2 * (1.0 - math.exp(-self._kappa * s)))
                 beta_s = 1j * u_val * math.exp(-self._kappa * s) / (1.0 - 1j * u_val / c_s)
                 val = self._mu_j * beta_s / (1.0 - self._mu_j * beta_s)
                 return float(val.imag)
@@ -440,6 +452,7 @@ class JCIRProcess(Process):
         coupled with compound Poisson exponential jump arrivals.
         """
         from spxa.sim.exact import sample_jcir
+
         return sample_jcir(
             kappa=self._kappa,
             theta=self._theta,

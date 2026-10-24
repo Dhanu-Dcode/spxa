@@ -163,9 +163,7 @@ class TestOrnsteinUhlenbeckExactness:
             assert ou.conditional_std(t=t) == pytest.approx(math.sqrt(expected), rel=1e-12)
 
         # As t -> inf converges to stationary variance σ² / (2θ)
-        assert ou.conditional_variance(t=100.0) == pytest.approx(
-            ou.stationary_variance, rel=1e-10
-        )
+        assert ou.conditional_variance(t=100.0) == pytest.approx(ou.stationary_variance, rel=1e-10)
 
     @pytest.mark.exactness
     def test_ou_conditional_cumulants(self) -> None:
@@ -244,7 +242,9 @@ class TestOrnsteinUhlenbeckExactness:
         # Two-time covariance at s = t matches conditional variance
         t = 0.8
         assert ou.two_time_covariance(t, t) == pytest.approx(ou.conditional_variance(t), rel=1e-12)
-        assert ou.two_time_covariance(0.3, 0.8) == pytest.approx(ou.two_time_covariance(0.8, 0.3), rel=1e-12)
+        assert ou.two_time_covariance(0.3, 0.8) == pytest.approx(
+            ou.two_time_covariance(0.8, 0.3), rel=1e-12
+        )
 
         # Spectral density: S(0) = σ² / (π θ²); S(θ) = 0.5 * S(0) (half-power at cutoff)
         s0 = ou.spectral_density(0.0)

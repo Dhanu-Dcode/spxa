@@ -43,7 +43,7 @@ Schoutens, W. (2003). Lévy Processes in Finance: Pricing Financial Derivatives.
 from __future__ import annotations
 
 import math
-from typing import Optional, Union, Tuple, Dict, Any
+from typing import Optional, Union, Tuple
 
 import numpy as np
 from scipy import integrate, optimize, stats  # type: ignore[import-untyped]
@@ -107,7 +107,9 @@ class BNSModel(Process):
     ) -> None:
         l_val = lam if lam is not None else lambda_param
         if l_val <= 0.0:
-            raise ValueError(f"Mean-reversion rate 'lambda_param' must be strictly positive, got {l_val}")
+            raise ValueError(
+                f"Mean-reversion rate 'lambda_param' must be strictly positive, got {l_val}"
+            )
 
         a_val = a if a is not None else alpha
         if a_val <= 0.0:
@@ -119,7 +121,9 @@ class BNSModel(Process):
 
         v0_val = v0 if v0 is not None else sigma0_sq
         if v0_val <= 0.0:
-            raise ValueError(f"Initial variance 'sigma0_sq' must be strictly positive, got {v0_val}")
+            raise ValueError(
+                f"Initial variance 'sigma0_sq' must be strictly positive, got {v0_val}"
+            )
 
         if s0 <= 0.0:
             raise ValueError(f"Initial asset price 's0' must be strictly positive, got {s0}")
@@ -151,7 +155,7 @@ class BNSModel(Process):
             name=f"BNS(λ={self._lambda:.2f}, α={self._alpha:.2f}, β_bdlp={self._beta_bdlp:.2f}, ρ={self._rho:.2f})",
             math_note=(
                 f"dX_t = (μ + β σ_t²)dt + σ_t dW_t + ρ dZ_{{λt}}, dσ_t² = -λ σ_t² dt + dZ_{{λt}}, "
-                f"E[σ_∞²]={self._alpha/self._beta_bdlp:.4f}"
+                f"E[σ_∞²]={self._alpha / self._beta_bdlp:.4f}"
             ),
             reference="Barndorff-Nielsen & Shephard (2001) JRSS-B 63(2)",
         )
@@ -239,7 +243,7 @@ class BNSModel(Process):
     @property
     def stationary_variance_variance(self) -> float:
         r"""Stationary variance of variance :math:`\mathrm{Var}(\sigma_\infty^2) = \frac{\alpha}{\beta_{bdlp}^2}`."""
-        return self._alpha / (self._beta_bdlp ** 2)
+        return self._alpha / (self._beta_bdlp**2)
 
     @property
     def stationary_variance_std(self) -> float:
@@ -347,16 +351,20 @@ class BNSModel(Process):
             return res if res.ndim > 0 else res.item()
 
         def _eval_single(u_val: complex) -> complex:
-            k_u = 1j * u_val * self._beta - 0.5 * (u_val ** 2)
+            k_u = 1j * u_val * self._beta - 0.5 * (u_val**2)
             f_t = (k_u / self._lambda) * (1.0 - math.exp(-self._lambda * t))
 
             def _int_real(s: float) -> float:
-                theta_s = (k_u / self._lambda) * (1.0 - math.exp(-self._lambda * s)) + 1j * u_val * self._rho
+                theta_s = (k_u / self._lambda) * (
+                    1.0 - math.exp(-self._lambda * s)
+                ) + 1j * u_val * self._rho
                 val = (self._alpha * theta_s) / (self._beta_bdlp - theta_s)
                 return float(val.real)
 
             def _int_imag(s: float) -> float:
-                theta_s = (k_u / self._lambda) * (1.0 - math.exp(-self._lambda * s)) + 1j * u_val * self._rho
+                theta_s = (k_u / self._lambda) * (
+                    1.0 - math.exp(-self._lambda * s)
+                ) + 1j * u_val * self._rho
                 val = (self._alpha * theta_s) / (self._beta_bdlp - theta_s)
                 return float(val.imag)
 
@@ -364,7 +372,9 @@ class BNSModel(Process):
             ii, _ = integrate.quad(_int_imag, 0.0, t, limit=100)
             jump_integral = ir + 1j * ii
 
-            exponent = 1j * u_val * self._mu * t + f_t * self._sigma0_sq + self._lambda * jump_integral
+            exponent = (
+                1j * u_val * self._mu * t + f_t * self._sigma0_sq + self._lambda * jump_integral
+            )
             return complex(np.exp(exponent))
 
         vec_func = np.vectorize(_eval_single)
@@ -437,7 +447,9 @@ class BNSModel(Process):
             return 0.0
 
         def _bs_err(vol: float) -> float:
-            d1 = (math.log(forward / strike) + 0.5 * (vol ** 2) * time_to_maturity) / (vol * math.sqrt(time_to_maturity))
+            d1 = (math.log(forward / strike) + 0.5 * (vol**2) * time_to_maturity) / (
+                vol * math.sqrt(time_to_maturity)
+            )
             d2 = d1 - vol * math.sqrt(time_to_maturity)
             bs_call = disc_r * (forward * stats.norm.cdf(d1) - strike * stats.norm.cdf(d2))
             return bs_call - call
@@ -461,6 +473,7 @@ class BNSModel(Process):
     ) -> np.ndarray:
         """Simulate sample paths of asset price :math:`S_t`."""
         from spxa.sim.exact import sample_bns
+
         return sample_bns(
             lambda_param=self._lambda,
             alpha=self._alpha,
@@ -489,6 +502,7 @@ class BNSModel(Process):
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Simulate joint sample paths of asset price :math:`S_t` and variance :math:`\\sigma_t^2`."""
         from spxa.sim.exact import sample_bns
+
         return sample_bns(
             lambda_param=self._lambda,
             alpha=self._alpha,

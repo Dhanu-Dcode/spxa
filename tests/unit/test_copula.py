@@ -14,6 +14,7 @@ Tests:
 import os
 import tempfile
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,7 +26,6 @@ from spxa import (
     BrownianMotion,
     ClaytonCopula,
     ComonotonicityCopula,
-    Copula,
     CountermonotonicityCopula,
     CoupledProcess,
     FrankCopula,
@@ -166,11 +166,13 @@ class TestEllipticalCopulas:
         assert np.isclose(u2_recovered, u2, atol=1e-6)
 
     def test_gaussian_multivariate(self):
-        r_mat = np.array([
-            [1.0, 0.5, 0.2],
-            [0.5, 1.0, 0.4],
-            [0.2, 0.4, 1.0],
-        ])
+        r_mat = np.array(
+            [
+                [1.0, 0.5, 0.2],
+                [0.5, 1.0, 0.4],
+                [0.2, 0.4, 1.0],
+            ]
+        )
         cop = GaussianCopula(corr=r_mat, dim=3)
         assert cop.dim == 3
 
@@ -405,11 +407,13 @@ class TestCopulaFitting:
     """Test calibration, pseudo-observations, and model selection."""
 
     def test_pseudo_observations(self):
-        data = np.array([
-            [10.0, 50.0],
-            [12.0, 45.0],
-            [15.0, 60.0],
-        ])
+        data = np.array(
+            [
+                [10.0, 50.0],
+                [12.0, 45.0],
+                [15.0, 60.0],
+            ]
+        )
         u = pseudo_observations(data)
         assert u.shape == (3, 2)
         assert np.all(u > 0.0) and np.all(u < 1.0)
@@ -442,7 +446,9 @@ class TestCopulaFitting:
         clay = ClaytonCopula(theta=3.0)
         samples = clay.sample(1000, rng=np.random.default_rng(99))
 
-        best, report = select_best_copula(samples, candidate_families=[GaussianCopula, ClaytonCopula, FrankCopula])
+        best, report = select_best_copula(
+            samples, candidate_families=[GaussianCopula, ClaytonCopula, FrankCopula]
+        )
         assert isinstance(best, ClaytonCopula)
         assert report["best_model"] == "ClaytonCopula"
 

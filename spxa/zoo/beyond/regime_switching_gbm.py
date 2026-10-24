@@ -40,10 +40,10 @@ Elliott, R. J., Aggoun, L., & Moore, J. B. (1994). Hidden Markov Models:
 from __future__ import annotations
 
 import math
-from typing import Optional, Union, Tuple, Dict, Any, Sequence
+from typing import Optional, Union, Tuple, Sequence
 
 import numpy as np
-from scipy import linalg as la, integrate, optimize, stats  # type: ignore[import-untyped]
+from scipy import linalg as la, integrate  # type: ignore[import-untyped]
 
 from spxa.core.exactness import ExactnessLevel
 from spxa.core.exceptions import ExactnessError
@@ -94,7 +94,9 @@ class RegimeSwitchingGBM(Process):
         if sigma_arr.ndim != 1:
             raise ValueError(f"Volatility 'sigma' must be 1D, got shape {sigma_arr.shape}")
         if len(mu_arr) != len(sigma_arr):
-            raise ValueError(f"Length of 'mu' ({len(mu_arr)}) must match 'sigma' ({len(sigma_arr)})")
+            raise ValueError(
+                f"Length of 'mu' ({len(mu_arr)}) must match 'sigma' ({len(sigma_arr)})"
+            )
         if len(mu_arr) < 2:
             raise ValueError(f"Number of regimes must be >= 2, got {len(mu_arr)}")
         if np.any(sigma_arr <= 0.0):
@@ -113,7 +115,9 @@ class RegimeSwitchingGBM(Process):
         else:
             q_mat = np.asarray(transition_rates, dtype=float)
             if q_mat.shape != (k_states, k_states):
-                raise ValueError(f"transition_rates matrix must be ({k_states}, {k_states}), got {q_mat.shape}")
+                raise ValueError(
+                    f"transition_rates matrix must be ({k_states}, {k_states}), got {q_mat.shape}"
+                )
             # Verify generator rows sum to 0
             if not np.allclose(np.sum(q_mat, axis=1), 0.0, atol=1e-8):
                 raise ValueError("Generator matrix Q rows must sum to zero")
@@ -231,7 +235,9 @@ class RegimeSwitchingGBM(Process):
             raise ValueError(f"Time t must be non-negative, got {t}")
         return la.expm(self._q * t)
 
-    def conditional_moment(self, n: int = 1, t: float = 1.0, initial_regime: Optional[int] = None) -> float:
+    def conditional_moment(
+        self, n: int = 1, t: float = 1.0, initial_regime: Optional[int] = None
+    ) -> float:
         r"""
         Exact :math:`n`-th moment :math:`\mathbb{E}[S_t^n \mid S_0, Y_0]`.
 
@@ -249,16 +255,18 @@ class RegimeSwitchingGBM(Process):
         if not (0 <= reg < self._n_regimes):
             raise ValueError(f"Invalid regime {reg}")
 
-        diag_terms = float(n) * self._mu + 0.5 * float(n * (n - 1)) * (self._sigma ** 2)
+        diag_terms = float(n) * self._mu + 0.5 * float(n * (n - 1)) * (self._sigma**2)
         m_n = self._q + np.diag(diag_terms)
         exp_m = la.expm(m_n * t)
-        return float((self._s0 ** n) * np.sum(exp_m[reg, :]))
+        return float((self._s0**n) * np.sum(exp_m[reg, :]))
 
     def conditional_mean(self, t: float = 1.0, initial_regime: Optional[int] = None) -> float:
         """Exact conditional expectation :math:`\\mathbb{E}[S_t \\mid S_0, Y_0]`."""
         return self.conditional_moment(n=1, t=t, initial_regime=initial_regime)
 
-    def conditional_second_moment(self, t: float = 1.0, initial_regime: Optional[int] = None) -> float:
+    def conditional_second_moment(
+        self, t: float = 1.0, initial_regime: Optional[int] = None
+    ) -> float:
         """Exact conditional second moment :math:`\\mathbb{E}[S_t^2 \\mid S_0, Y_0]`."""
         return self.conditional_moment(n=2, t=t, initial_regime=initial_regime)
 
@@ -268,7 +276,7 @@ class RegimeSwitchingGBM(Process):
         """
         m1 = self.conditional_mean(t=t, initial_regime=initial_regime)
         m2 = self.conditional_second_moment(t=t, initial_regime=initial_regime)
-        return float(max(0.0, m2 - m1 ** 2))
+        return float(max(0.0, m2 - m1**2))
 
     def conditional_std(self, t: float = 1.0, initial_regime: Optional[int] = None) -> float:
         """Exact conditional standard deviation."""
@@ -278,7 +286,12 @@ class RegimeSwitchingGBM(Process):
     # Characteristic Function
     # ------------------------------------------------------------------
 
-    def char_func(self, u: Union[float, complex, np.ndarray], t: float = 1.0, initial_regime: Optional[int] = None) -> np.ndarray:
+    def char_func(
+        self,
+        u: Union[float, complex, np.ndarray],
+        t: float = 1.0,
+        initial_regime: Optional[int] = None,
+    ) -> np.ndarray:
         r"""
         Exact characteristic function :math:`\phi(u; t \mid Y_0) = \mathbb{E}[e^{i u \ln(S_t / S_0)} \mid Y_0]`.
 
@@ -299,7 +312,9 @@ class RegimeSwitchingGBM(Process):
             return res if res.ndim > 0 else res.item()
 
         def _eval_single(u_val: complex) -> complex:
-            psi = 1j * u_val * (self._mu - 0.5 * (self._sigma ** 2)) - 0.5 * (u_val ** 2) * (self._sigma ** 2)
+            psi = 1j * u_val * (self._mu - 0.5 * (self._sigma**2)) - 0.5 * (u_val**2) * (
+                self._sigma**2
+            )
             m_char = self._q + np.diag(psi)
             exp_m = la.expm(m_char * t)
             return complex(np.sum(exp_m[reg, :]))
@@ -336,7 +351,9 @@ class RegimeSwitchingGBM(Process):
         def _p1_integrand(u: float) -> float:
             if u == 0.0:
                 return 0.0
-            num = np.exp(-1j * u * k_log) * self.char_func(u - 1j, t=tau, initial_regime=initial_regime)
+            num = np.exp(-1j * u * k_log) * self.char_func(
+                u - 1j, t=tau, initial_regime=initial_regime
+            )
             denom = 1j * u * cf_minus_i
             return float((num / denom).real)
 
@@ -370,7 +387,12 @@ class RegimeSwitchingGBM(Process):
         European put option price via Put-Call parity.
         """
         r_rate = self._mu[0] if discount_rate is None else discount_rate
-        call = self.call_price(strike=strike, time_to_maturity=time_to_maturity, discount_rate=r_rate, initial_regime=initial_regime)
+        call = self.call_price(
+            strike=strike,
+            time_to_maturity=time_to_maturity,
+            discount_rate=r_rate,
+            initial_regime=initial_regime,
+        )
         forward = float(self.conditional_mean(t=time_to_maturity, initial_regime=initial_regime))
         disc = math.exp(-r_rate * time_to_maturity)
         put_val = call - disc * (forward - strike)
@@ -390,6 +412,7 @@ class RegimeSwitchingGBM(Process):
     ) -> np.ndarray:
         """Simulate sample paths of asset price :math:`S_t`."""
         from spxa.sim.exact import sample_regime_switching_gbm
+
         return sample_regime_switching_gbm(
             mu=self._mu,
             sigma=self._sigma,
@@ -414,6 +437,7 @@ class RegimeSwitchingGBM(Process):
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Simulate coupled paths of asset price :math:`S_t` and regime states :math:`Y_t`."""
         from spxa.sim.exact import sample_regime_switching_gbm
+
         return sample_regime_switching_gbm(
             mu=self._mu,
             sigma=self._sigma,

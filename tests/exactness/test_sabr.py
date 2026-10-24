@@ -85,14 +85,14 @@ class TestSABRExactness:
         # E[\alpha_t] = \alpha_0
         assert sabr.volatility_mean(t) == pytest.approx(alpha0, rel=1e-12)
         # Var(\alpha_t) = \alpha_0^2 (exp(\nu^2 t) - 1)
-        expected_var = (alpha0 ** 2) * (math.exp(nu ** 2 * t) - 1.0)
+        expected_var = (alpha0**2) * (math.exp(nu**2 * t) - 1.0)
         assert sabr.volatility_variance(t) == pytest.approx(expected_var, rel=1e-10)
 
         # Log-volatility moments: E[ln \alpha_t] = ln \alpha_0 - 0.5 \nu^2 t
         assert sabr.log_volatility_mean(t) == pytest.approx(
-            math.log(alpha0) - 0.5 * (nu ** 2) * t, rel=1e-12
+            math.log(alpha0) - 0.5 * (nu**2) * t, rel=1e-12
         )
-        assert sabr.log_volatility_variance(t) == pytest.approx((nu ** 2) * t, rel=1e-12)
+        assert sabr.log_volatility_variance(t) == pytest.approx((nu**2) * t, rel=1e-12)
 
     def test_sabr_atm_implied_volatility_consistency(self) -> None:
         """implied_volatility(K=f0) matches atm_volatility within asymptotic tolerances."""

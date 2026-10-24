@@ -43,16 +43,10 @@ Chapman & Hall/CRC. Proposition 4.4.
 
 from __future__ import annotations
 
-from typing import Optional
 
 import numpy as np
 
-from spxa.core.exactness import ExactnessLevel
-from spxa.core.exceptions import ExactnessError
 from spxa.core.process import Process
-from spxa.core.properties import ProcessProperties
-from spxa.core.triplet import LevyTriplet
-from spxa.story.narrator import CompositionNode, NodeKind
 
 
 def subordinate(parent: Process, subordinator: Process) -> Process:
@@ -130,9 +124,7 @@ def char_exp_subordinated(
     Sato (1999), Theorem 30.1, equation (30.2).
     """
     if not subordinator.properties.is_subordinator:
-        raise ValueError(
-            f"{type(subordinator).__name__} is not a subordinator."
-        )
+        raise ValueError(f"{type(subordinator).__name__} is not a subordinator.")
 
     u_arr = np.atleast_1d(np.asarray(u, dtype=complex))
 
@@ -152,7 +144,7 @@ def char_exp_subordinated(
     cf_T_laplace = subordinator.char_func(u=u_T, t=1.0)
 
     # φ_Z(u; t) = exp(-t · φ_T(-ψ_X(u))) = (E[e^{ψ_X(u) T_1}])^t
-    result = cf_T_laplace ** t
+    result = cf_T_laplace**t
     return result if result.shape != (1,) else result[0]
 
 

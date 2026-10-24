@@ -71,9 +71,15 @@ def _nig_levy_measure(alpha: float, beta: float, delta: float) -> DensityLevyMea
 
     def tail(xv: float) -> float:
         result, _ = integrate.quad(
-            lambda t: prefactor * float(bessel_k1(alpha * np.sqrt(delta**2 + t**2)))
-            / np.sqrt(delta**2 + t**2) * np.exp(beta * t),
-            xv, np.inf, limit=200
+            lambda t: (
+                prefactor
+                * float(bessel_k1(alpha * np.sqrt(delta**2 + t**2)))
+                / np.sqrt(delta**2 + t**2)
+                * np.exp(beta * t)
+            ),
+            xv,
+            np.inf,
+            limit=200,
         )
         return result
 
@@ -159,14 +165,28 @@ class NIG(Process):
         prefactor = self.alpha * self.delta / np.pi
 
         b_pos, _ = integrate.quad(
-            lambda x: prefactor * float(bessel_k1(self.alpha * np.sqrt(self.delta**2 + x**2)))
-            / np.sqrt(self.delta**2 + x**2) * np.exp(self.beta * x) * x,
-            0.0, 1.0, limit=200
+            lambda x: (
+                prefactor
+                * float(bessel_k1(self.alpha * np.sqrt(self.delta**2 + x**2)))
+                / np.sqrt(self.delta**2 + x**2)
+                * np.exp(self.beta * x)
+                * x
+            ),
+            0.0,
+            1.0,
+            limit=200,
         )
         b_neg, _ = integrate.quad(
-            lambda x: prefactor * float(bessel_k1(self.alpha * np.sqrt(self.delta**2 + x**2)))
-            / np.sqrt(self.delta**2 + x**2) * np.exp(self.beta * x) * x,
-            -1.0, 0.0, limit=200
+            lambda x: (
+                prefactor
+                * float(bessel_k1(self.alpha * np.sqrt(self.delta**2 + x**2)))
+                / np.sqrt(self.delta**2 + x**2)
+                * np.exp(self.beta * x)
+                * x
+            ),
+            -1.0,
+            0.0,
+            limit=200,
         )
         b_drift = self.mu + b_pos + b_neg
 
@@ -200,9 +220,8 @@ class NIG(Process):
             Time.
         """
         u_arr = np.atleast_1d(np.asarray(u, dtype=complex))
-        exponent = (
-            1j * self.mu * u_arr
-            + self.delta * (self._gamma - np.sqrt(self.alpha**2 - (self.beta + 1j * u_arr)**2))
+        exponent = 1j * self.mu * u_arr + self.delta * (
+            self._gamma - np.sqrt(self.alpha**2 - (self.beta + 1j * u_arr) ** 2)
         )
         result = np.exp(t * exponent)
         return result if result.shape != (1,) else result[0]

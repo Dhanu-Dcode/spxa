@@ -16,7 +16,6 @@ from spxa.ops.integral import (
     stochastic_convolution_char_func,
 )
 from spxa.ops.product import (
-    ProductProcess,
     cumulants_to_raw_moments,
     multiply,
     raw_moments_to_cumulants,
@@ -28,7 +27,7 @@ from spxa.ops.subordination import (
     is_valid_subordination,
     subordinate,
 )
-from spxa.zoo.levy import BrownianMotion, GammaProcess, NIG, VarianceGamma
+from spxa.zoo.levy import BrownianMotion, GammaProcess, VarianceGamma
 
 
 class TestAddition:
@@ -69,6 +68,7 @@ class TestAddition:
 
     def test_exactness_for_addition_degrades(self) -> None:
         from spxa.zoo.beyond import FractionalBrownianMotion
+
         fbm = FractionalBrownianMotion(H=0.7)
         bm = BrownianMotion(sigma=1.0)
         level, reason = exactness_for_addition(fbm, bm)
@@ -181,8 +181,10 @@ class TestSubordination:
         cf_vg = vg.char_func_exact(u=u_vals, t=1.0)
 
         np.testing.assert_allclose(
-            np.abs(cf_sub), np.abs(cf_vg), rtol=0.15,
-            err_msg="BM@Gamma char func should approximately match VG"
+            np.abs(cf_sub),
+            np.abs(cf_vg),
+            rtol=0.15,
+            err_msg="BM@Gamma char func should approximately match VG",
         )
 
 

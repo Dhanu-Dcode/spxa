@@ -21,7 +21,9 @@ class TestSchwartzTwoFactorExactness:
 
     def test_s2f_exactness_level_and_aliases(self) -> None:
         """SchwartzTwoFactor is MOMENT_PROPAGATION and aliased properly."""
-        s2f = SchwartzTwoFactor(s0=20.0, delta0=0.05, kappa=1.2, alpha=0.08, sigma1=0.3, sigma2=0.2, rho=0.6, rate=0.05)
+        s2f = SchwartzTwoFactor(
+            s0=20.0, delta0=0.05, kappa=1.2, alpha=0.08, sigma1=0.3, sigma2=0.2, rho=0.6, rate=0.05
+        )
         assert s2f.exactness == ExactnessLevel.MOMENT_PROPAGATION
         assert Schwartz97 is SchwartzTwoFactor
         assert Schwartz2F is SchwartzTwoFactor
@@ -58,7 +60,7 @@ class TestSchwartzTwoFactorExactness:
         s2f = SchwartzTwoFactor(kappa=kappa, alpha=alpha, sigma2=sigma2, delta0=delta0)
 
         # Stationary variance
-        stat_var = (sigma2 ** 2) / (2.0 * kappa)
+        stat_var = (sigma2**2) / (2.0 * kappa)
         assert s2f.stationary_yield_variance == pytest.approx(stat_var, rel=1e-12)
         assert s2f.stationary_yield_std == pytest.approx(math.sqrt(stat_var), rel=1e-12)
 
@@ -105,7 +107,9 @@ class TestSchwartzTwoFactorExactness:
 
     def test_s2f_futures_pricing_properties(self) -> None:
         """Futures price at tau=0 equals spot, vectorization works."""
-        s2f = SchwartzTwoFactor(s0=20.0, delta0=0.05, kappa=1.2, alpha=0.08, sigma1=0.3, sigma2=0.2, rho=0.6, rate=0.05)
+        s2f = SchwartzTwoFactor(
+            s0=20.0, delta0=0.05, kappa=1.2, alpha=0.08, sigma1=0.3, sigma2=0.2, rho=0.6, rate=0.05
+        )
 
         # tau = 0
         assert s2f.futures_price(0.0) == pytest.approx(20.0, abs=1e-12)
@@ -119,7 +123,9 @@ class TestSchwartzTwoFactorExactness:
 
     def test_s2f_european_option_put_call_parity_exact(self) -> None:
         """Put-Call parity holds exactly: C - P = exp(-r*T) * (F(T) - K)."""
-        s2f = SchwartzTwoFactor(s0=20.0, delta0=0.05, kappa=1.2, alpha=0.08, sigma1=0.3, sigma2=0.2, rho=0.6, rate=0.05)
+        s2f = SchwartzTwoFactor(
+            s0=20.0, delta0=0.05, kappa=1.2, alpha=0.08, sigma1=0.3, sigma2=0.2, rho=0.6, rate=0.05
+        )
         tau = 1.0
         fwd = s2f.futures_price(tau)
         disc = math.exp(-0.05 * tau)
@@ -163,7 +169,9 @@ class TestSchwartzTwoFactorExactness:
         # Monte Carlo
         dt = 0.002
         n_steps = int(tau / dt)
-        s_paths = s2f.simulate(n_steps=n_steps, time_horizon=tau, n_paths=40_000, rng=np.random.default_rng(2026))
+        s_paths = s2f.simulate(
+            n_steps=n_steps, time_horizon=tau, n_paths=40_000, rng=np.random.default_rng(2026)
+        )
         s_T = s_paths[:, -1]
 
         mc_fwd = float(np.mean(s_T))
@@ -177,7 +185,9 @@ class TestSchwartzTwoFactorExactness:
 
     def test_s2f_characteristic_function(self) -> None:
         """Characteristic function phi(0)=1, modulus <= 1, Hermitian symmetry."""
-        s2f = SchwartzTwoFactor(s0=20.0, delta0=0.05, kappa=1.2, alpha=0.08, sigma1=0.3, sigma2=0.2, rho=0.6, rate=0.05)
+        s2f = SchwartzTwoFactor(
+            s0=20.0, delta0=0.05, kappa=1.2, alpha=0.08, sigma1=0.3, sigma2=0.2, rho=0.6, rate=0.05
+        )
         t = 1.0
 
         # At u = 0
@@ -217,7 +227,9 @@ class TestSchwartzTwoFactorExactness:
             rate=rate,
         )
 
-        s_paths, d_paths = s2f.simulate_joint(n_steps=25, time_horizon=t, n_paths=25_000, rng=np.random.default_rng(2026))
+        s_paths, d_paths = s2f.simulate_joint(
+            n_steps=25, time_horizon=t, n_paths=25_000, rng=np.random.default_rng(2026)
+        )
         assert s_paths.shape == (25_000, 26)
         assert d_paths.shape == (25_000, 26)
         assert np.all(s_paths[:, 0] == s0)

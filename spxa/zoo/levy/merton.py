@@ -36,11 +36,10 @@ import math
 from typing import Optional, Union
 
 import numpy as np
-from scipy import special, stats
+from scipy import special
 from scipy.optimize import brentq
 
 from spxa.core.exactness import ExactnessLevel
-from spxa.core.levy_measure import LevyMeasure
 from spxa.core.process import Process
 from spxa.core.properties import ProcessProperties
 from spxa.core.triplet import LevyTriplet
@@ -116,7 +115,9 @@ class MertonJumpDiffusion(Process):
         if rate_f <= 0.0:
             raise ValueError(f"Jump intensity rate must be strictly positive, got {rate_f}")
         if jump_std_f <= 0.0:
-            raise ValueError(f"Jump standard deviation jump_std must be strictly positive, got {jump_std_f}")
+            raise ValueError(
+                f"Jump standard deviation jump_std must be strictly positive, got {jump_std_f}"
+            )
 
         self._drift = drift_f
         self._sigma = sigma_f
@@ -180,7 +181,7 @@ class MertonJumpDiffusion(Process):
         r"""
         Expected relative percentage jump size :math:`\bar{k} = \mathbb{E}[e^Y - 1] = e^{\mu_J + \frac{1}{2}\sigma_J^2} - 1`.
         """
-        return float(math.exp(self._jump_mean + 0.5 * self._jump_std ** 2) - 1.0)
+        return float(math.exp(self._jump_mean + 0.5 * self._jump_std**2) - 1.0)
 
     # ------------------------------------------------------------------
     # Lévy Triplet & Properties
@@ -191,7 +192,7 @@ class MertonJumpDiffusion(Process):
         # b = mu + lambda * E[Y * 1_{|Y| <= 1}]
         trunc_mean = self._jump_dist.truncation_mean(cutoff=1.0)
         b = self._drift + self._rate * trunc_mean
-        sigma_sq = self._sigma ** 2
+        sigma_sq = self._sigma**2
         nu = _CompoundPoissonLevyMeasure(self._rate, self._jump_dist)
         return LevyTriplet(b=b, sigma_sq=sigma_sq, nu=nu)
 
@@ -232,8 +233,10 @@ class MertonJumpDiffusion(Process):
         is_scalar = np.ndim(u) == 0
 
         drift_term = 1j * self._drift * u_arr
-        diff_term = -0.5 * (self._sigma ** 2) * (u_arr ** 2)
-        jump_term = self._rate * (np.exp(1j * self._jump_mean * u_arr - 0.5 * (self._jump_std ** 2) * (u_arr ** 2)) - 1.0)
+        diff_term = -0.5 * (self._sigma**2) * (u_arr**2)
+        jump_term = self._rate * (
+            np.exp(1j * self._jump_mean * u_arr - 0.5 * (self._jump_std**2) * (u_arr**2)) - 1.0
+        )
         psi = drift_term + diff_term + jump_term
 
         if is_scalar:
@@ -269,7 +272,7 @@ class MertonJumpDiffusion(Process):
         res[1] = float(self._drift + self._rate * self._jump_mean)
 
         if order >= 2:
-            res[2] = float(self._sigma ** 2 + self._rate * (self._jump_mean ** 2 + self._jump_std ** 2))
+            res[2] = float(self._sigma**2 + self._rate * (self._jump_mean**2 + self._jump_std**2))
 
         for n in range(3, order + 1):
             res[n] = float(self._rate * self._jump_dist.moment(n))
@@ -330,15 +333,15 @@ class MertonJumpDiffusion(Process):
 
         k_bar = self.expected_relative_jump
         if r is None:
-            r_val = float(self._drift + 0.5 * self._sigma ** 2 + self._rate * k_bar)
+            r_val = float(self._drift + 0.5 * self._sigma**2 + self._rate * k_bar)
         else:
             r_val = float(r)
 
         # Risk-neutral continuous drift of log-price under measure Q
-        mu_rn = (r_val - q) - 0.5 * (self._sigma ** 2) - self._rate * k_bar
+        mu_rn = (r_val - q) - 0.5 * (self._sigma**2) - self._rate * k_bar
         ln_s0 = math.log(S0)
-        sig2_t = (self._sigma ** 2) * T
-        sig_j2 = self._jump_std ** 2
+        sig2_t = (self._sigma**2) * T
+        sig_j2 = self._jump_std**2
         exp_neg_r_t = math.exp(-r_val * T)
 
         def _price_single(strike: float) -> float:
@@ -356,7 +359,9 @@ class MertonJumpDiffusion(Process):
 
                 d1 = (mean_k + var_k - ln_k) / std_k
                 d2 = d1 - std_k
-                call_k = exp_neg_r_t * (math.exp(mean_k + 0.5 * var_k) * special.ndtr(d1) - strike * special.ndtr(d2))
+                call_k = exp_neg_r_t * (
+                    math.exp(mean_k + 0.5 * var_k) * special.ndtr(d1) - strike * special.ndtr(d2)
+                )
                 total_call += poisson_weight * call_k
 
                 # Iterative update: p_{k+1} = p_k * (rate * T) / (k + 1)
@@ -391,7 +396,11 @@ class MertonJumpDiffusion(Process):
             P = C - S_0 e^{-q T} + K e^{-r T}
         """
         k_bar = self.expected_relative_jump
-        r_val = float(self._drift + 0.5 * self._sigma ** 2 + self._rate * k_bar) if r is None else float(r)
+        r_val = (
+            float(self._drift + 0.5 * self._sigma**2 + self._rate * k_bar)
+            if r is None
+            else float(r)
+        )
         calls = self.call_price(K, T=T, S0=S0, r=r_val, q=q, max_jumps=max_jumps, tol=tol)
         K_arr = np.asarray(K, dtype=float)
         puts = calls - S0 * math.exp(-q * T) + K_arr * math.exp(-r_val * T)
@@ -410,14 +419,21 @@ class MertonJumpDiffusion(Process):
         Black-Scholes implied volatility inverted from Merton call price.
         """
         k_bar = self.expected_relative_jump
-        r_val = float(self._drift + 0.5 * self._sigma ** 2 + self._rate * k_bar) if r is None else float(r)
+        r_val = (
+            float(self._drift + 0.5 * self._sigma**2 + self._rate * k_bar)
+            if r is None
+            else float(r)
+        )
 
         def _bs_call(vol: float, strike: float) -> float:
             if vol <= 1e-8:
                 return float(max(0.0, S0 * math.exp(-q * T) - strike * math.exp(-r_val * T)))
-            d1 = (math.log(S0 / strike) + (r_val - q + 0.5 * vol ** 2) * T) / (vol * math.sqrt(T))
+            d1 = (math.log(S0 / strike) + (r_val - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
             d2 = d1 - vol * math.sqrt(T)
-            return float(S0 * math.exp(-q * T) * special.ndtr(d1) - strike * math.exp(-r_val * T) * special.ndtr(d2))
+            return float(
+                S0 * math.exp(-q * T) * special.ndtr(d1)
+                - strike * math.exp(-r_val * T) * special.ndtr(d2)
+            )
 
         def _iv_single(strike: float) -> float:
             call_mkt = float(self.call_price(strike, T=T, S0=S0, r=r_val, q=q))

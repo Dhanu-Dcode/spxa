@@ -70,7 +70,7 @@ class TestHullWhiteExactness:
         # At t > 0
         t = 2.0
         theor_mean = b + (r0 - b) * math.exp(-a * t)
-        theor_var = (sigma ** 2 / (2.0 * a)) * (1.0 - math.exp(-2.0 * a * t))
+        theor_var = (sigma**2 / (2.0 * a)) * (1.0 - math.exp(-2.0 * a * t))
         assert hw.conditional_mean(t) == pytest.approx(theor_mean, rel=1e-12)
         assert hw.conditional_variance(t) == pytest.approx(theor_var, rel=1e-12)
         assert hw.conditional_std(t) == pytest.approx(math.sqrt(theor_var), rel=1e-12)
@@ -92,14 +92,16 @@ class TestHullWhiteExactness:
         term1 = t
         term2 = -2.0 * (1.0 - math.exp(-a * t)) / a
         term3 = (1.0 - math.exp(-2.0 * a * t)) / (2.0 * a)
-        theor_int_var = (sigma ** 2 / (a ** 2)) * (term1 + term2 + term3)
+        theor_int_var = (sigma**2 / (a**2)) * (term1 + term2 + term3)
 
         assert hw.integrated_mean(t) == pytest.approx(theor_int_mean, rel=1e-12)
         assert hw.integrated_variance(t) == pytest.approx(theor_int_var, rel=1e-12)
 
         # Autocovariance
         t1, t2 = 1.0, 2.5
-        theor_cov = (sigma ** 2 / (2.0 * a)) * (math.exp(-a * abs(t1 - t2)) - math.exp(-a * (t1 + t2)))
+        theor_cov = (sigma**2 / (2.0 * a)) * (
+            math.exp(-a * abs(t1 - t2)) - math.exp(-a * (t1 + t2))
+        )
         assert hw.autocovariance(t1, t2) == pytest.approx(theor_cov, rel=1e-12)
         assert hw.autocovariance(t1, t2) == hw.autocovariance(t2, t1)
 
@@ -208,7 +210,9 @@ class TestHullWhiteExactness:
         dt = T / n_steps
         rng = np.random.default_rng(42)
 
-        paths = hw.simulate(n_steps=n_steps, time_horizon=T, n_paths=n_paths, rng=rng, method="exact")
+        paths = hw.simulate(
+            n_steps=n_steps, time_horizon=T, n_paths=n_paths, rng=rng, method="exact"
+        )
         final_r = paths[:, -1]
 
         # Discount factor exp(-int_0^T r_s ds) via trapezoid integration
@@ -232,6 +236,8 @@ class TestHullWhiteExactness:
         rng = np.random.default_rng(99)
 
         for meth in ["exact", "euler"]:
-            paths = hw.simulate(n_steps=n_steps, time_horizon=1.0, n_paths=n_paths, rng=rng, method=meth)
+            paths = hw.simulate(
+                n_steps=n_steps, time_horizon=1.0, n_paths=n_paths, rng=rng, method=meth
+            )
             assert paths.shape == (n_paths, n_steps + 1)
             assert np.all(paths[:, 0] == hw.r0)

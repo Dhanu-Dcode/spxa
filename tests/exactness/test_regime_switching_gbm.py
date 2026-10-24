@@ -94,8 +94,8 @@ class TestRegimeSwitchingGBMExactness:
         var = proc.conditional_variance(t=1.0)
         std = proc.conditional_std(t=1.0)
 
-        assert m2 > m1 ** 2
-        assert var == pytest.approx(m2 - m1 ** 2)
+        assert m2 > m1**2
+        assert var == pytest.approx(m2 - m1**2)
         assert std == pytest.approx(math.sqrt(var))
 
         # Check Monte Carlo convergence

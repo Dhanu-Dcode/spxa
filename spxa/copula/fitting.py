@@ -10,7 +10,7 @@ Provides:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -89,7 +89,9 @@ def fit_copula(
 
     if method == "itau":
         if d != 2:
-            raise NotImplementedError("Inversion of Kendall's tau method currently supports bivariate copulas.")
+            raise NotImplementedError(
+                "Inversion of Kendall's tau method currently supports bivariate copulas."
+            )
         tau_sample = float(stats.kendalltau(u[:, 0], u[:, 1])[0])
 
         if cls_name == "GaussianCopula":
@@ -115,7 +117,9 @@ def fit_copula(
             def obj(th: float) -> float:
                 return float(FrankCopula(th).kendall_tau()) - tau_sample
 
-            sol = optimize.root_scalar(obj, bracket=[-30.0, 30.0] if tau_sample < 0 else [1e-3, 30.0], method="brentq")
+            sol = optimize.root_scalar(
+                obj, bracket=[-30.0, 30.0] if tau_sample < 0 else [1e-3, 30.0], method="brentq"
+            )
             return FrankCopula(theta=sol.root)
 
         else:
@@ -124,6 +128,7 @@ def fit_copula(
     # Canonical Maximum Likelihood (CML)
     if cls_name == "GaussianCopula":
         if d == 2:
+
             def neg_ll(rho_val: float) -> float:
                 c = GaussianCopula(corr=float(rho_val))
                 return -float(np.sum(c.log_pdf(u)))
@@ -137,6 +142,7 @@ def fit_copula(
             return GaussianCopula(corr=r_mat, dim=d)
 
     elif cls_name == "ClaytonCopula":
+
         def neg_ll(th: float) -> float:
             c = ClaytonCopula(theta=float(th))
             return -float(np.sum(c.log_pdf(u)))
@@ -145,6 +151,7 @@ def fit_copula(
         return ClaytonCopula(theta=float(res.x))
 
     elif cls_name == "GumbelCopula":
+
         def neg_ll(th: float) -> float:
             c = GumbelCopula(theta=float(th))
             return -float(np.sum(c.log_pdf(u)))
@@ -153,6 +160,7 @@ def fit_copula(
         return GumbelCopula(theta=float(res.x))
 
     elif cls_name == "FrankCopula":
+
         def neg_ll(th: float) -> float:
             c = FrankCopula(theta=float(th))
             return -float(np.sum(c.log_pdf(u)))
@@ -204,7 +212,13 @@ def select_best_copula(
         (best_copula, comparison_report_dict)
     """
     if candidate_families is None:
-        candidate_families = [GaussianCopula, StudentTCopula, ClaytonCopula, GumbelCopula, FrankCopula]
+        candidate_families = [
+            GaussianCopula,
+            StudentTCopula,
+            ClaytonCopula,
+            GumbelCopula,
+            FrankCopula,
+        ]
 
     u = pseudo_observations(data)
     n = len(u)

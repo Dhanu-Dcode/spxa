@@ -24,13 +24,14 @@ Asmussen, S., & Glynn, P. W. (2007). Stochastic Simulation: Algorithms and Analy
 from __future__ import annotations
 
 import math
-from typing import Callable, NamedTuple, Optional, Sequence, Tuple, Union
+from typing import NamedTuple, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
 
 class ControlVariateResult(NamedTuple):
     """Result of a control variate estimation."""
+
     mean: float
     std_err: float
     raw_mean: float
@@ -240,7 +241,7 @@ def importance_sampling_gaussian_shift(
     z_shifted = z0 + shift_vec[None, :]
 
     # Likelihood ratio L = p_0(z) / p_shift(z) = exp(-shift^T z + 0.5 * ||shift||^2)
-    shift_sq = float(np.sum(shift_vec ** 2))
+    shift_sq = float(np.sum(shift_vec**2))
     exponent = -z_shifted @ shift_vec + 0.5 * shift_sq
     weights = np.exp(exponent)
 

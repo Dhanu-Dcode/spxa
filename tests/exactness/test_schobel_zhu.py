@@ -77,7 +77,7 @@ class TestSchobelZhuExactness:
 
         for t in [0.5, 1.0, 2.0]:
             expected_mean = theta + (sigma0 - theta) * math.exp(-kappa * t)
-            expected_var = (tau ** 2 / (2.0 * kappa)) * (1.0 - math.exp(-2.0 * kappa * t))
+            expected_var = (tau**2 / (2.0 * kappa)) * (1.0 - math.exp(-2.0 * kappa * t))
 
             assert sz.volatility_mean(t) == pytest.approx(expected_mean, rel=1e-12)
             assert sz.volatility_variance(t) == pytest.approx(expected_var, rel=1e-12)
@@ -94,17 +94,17 @@ class TestSchobelZhuExactness:
             m = sz.volatility_mean(t)
             v = sz.volatility_variance(t)
 
-            expected_v_mean = v + m ** 2
-            expected_v_var = 2.0 * (v ** 2) + 4.0 * (m ** 2) * v
+            expected_v_mean = v + m**2
+            expected_v_var = 2.0 * (v**2) + 4.0 * (m**2) * v
 
             assert sz.variance_mean(t) == pytest.approx(expected_v_mean, rel=1e-12)
             assert sz.variance_variance(t) == pytest.approx(expected_v_var, rel=1e-12)
 
         # Stationary variance
-        var_inf_sig = tau ** 2 / (2.0 * kappa)
+        var_inf_sig = tau**2 / (2.0 * kappa)
         assert sz.stationary_volatility_mean == pytest.approx(theta, rel=1e-12)
         assert sz.stationary_volatility_var == pytest.approx(var_inf_sig, rel=1e-12)
-        assert sz.stationary_variance_mean == pytest.approx(theta ** 2 + var_inf_sig, rel=1e-12)
+        assert sz.stationary_variance_mean == pytest.approx(theta**2 + var_inf_sig, rel=1e-12)
 
     def test_sz_characteristic_function_properties(self) -> None:
         """Characteristic function satisfies phi(0)=1 and |phi|<=1 for real u."""
@@ -118,8 +118,14 @@ class TestSchobelZhuExactness:
     def test_sz_option_pricing_put_call_parity(self) -> None:
         """European call and put option prices satisfy exact Put-Call Parity."""
         sz = SchobelZhuProcess(
-            sigma0=0.20, kappa=1.5, theta=0.20, tau=0.30, rho=-0.5,
-            s0=100.0, rate=0.04, dividend=0.01
+            sigma0=0.20,
+            kappa=1.5,
+            theta=0.20,
+            tau=0.30,
+            rho=-0.5,
+            s0=100.0,
+            rate=0.04,
+            dividend=0.01,
         )
         t = 1.0
         strikes = [80.0, 90.0, 100.0, 110.0, 120.0]
@@ -154,8 +160,7 @@ class TestSchobelZhuExactness:
         div = 0.02
         T = 1.0
         sz = SchobelZhuProcess(
-            sigma0=0.20, kappa=1.5, theta=0.20, tau=0.30, rho=-0.4,
-            s0=s0, rate=rate, dividend=div
+            sigma0=0.20, kappa=1.5, theta=0.20, tau=0.30, rho=-0.4, s0=s0, rate=rate, dividend=div
         )
 
         s_paths, sig_paths = sz.simulate_joint(n_steps=25, time_horizon=T, n_paths=20_000, rng=rng)

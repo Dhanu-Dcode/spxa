@@ -229,6 +229,7 @@ class Process(ABC):
         spxa.story.story_latex : Standalone function.
         """
         from spxa.story.narrator import story_latex
+
         return story_latex(self)
 
     def _degradation_reason(self) -> str:
@@ -411,7 +412,7 @@ class _ComposedProcess(Process):
             required="EXACT",
             actual=self._exactness.name,
             reason="Subordinated processes do not have a simple triplet addition rule; "
-                   "use char_func() or simulate().",
+            "use char_func() or simulate().",
         )
 
     def _properties(self) -> ProcessProperties:
@@ -425,9 +426,8 @@ class _ComposedProcess(Process):
         rng: Optional[np.random.Generator] = None,
     ) -> np.ndarray:
         if self._operation == "+":
-            return (
-                self._left.simulate(n_steps, n_paths, T, rng)
-                + self._right.simulate(n_steps, n_paths, T, rng)
+            return self._left.simulate(n_steps, n_paths, T, rng) + self._right.simulate(
+                n_steps, n_paths, T, rng
             )
         if self._operation == "@":
             # Subordination: Z_t = X_{T_t}
@@ -436,7 +436,6 @@ class _ComposedProcess(Process):
             # Uses a path-by-path approach: for each path, simulate the
             # subordinator time grid, then interpolate the parent process.
             rng = rng or np.random.default_rng()
-            time_grid = np.linspace(0, T, n_steps + 1)
 
             # Simulate subordinator paths on a fine grid
             sub_paths = self._right.simulate(n_steps, n_paths, T, rng)

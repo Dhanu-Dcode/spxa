@@ -40,7 +40,7 @@ Hammerstein, E. A. v. (2003). Generalized Hyperbolic Distributions: Theory and
 from __future__ import annotations
 
 import math
-from typing import Optional, Union, Tuple, Dict, Any
+from typing import Optional, Union, Tuple, Dict
 
 import numpy as np
 from scipy import integrate, optimize  # type: ignore[import-untyped]
@@ -70,9 +70,9 @@ def _gig_moments(lam: float, delta: float, gamma: float) -> Tuple[float, float, 
 
     scale = delta / gamma
     m1 = scale * float(bessel_kv(lam + 1.0, dg)) / k0
-    m2 = (scale ** 2) * float(bessel_kv(lam + 2.0, dg)) / k0
-    m3 = (scale ** 3) * float(bessel_kv(lam + 3.0, dg)) / k0
-    m4 = (scale ** 4) * float(bessel_kv(lam + 4.0, dg)) / k0
+    m2 = (scale**2) * float(bessel_kv(lam + 2.0, dg)) / k0
+    m3 = (scale**3) * float(bessel_kv(lam + 3.0, dg)) / k0
+    m4 = (scale**4) * float(bessel_kv(lam + 4.0, dg)) / k0
     return m1, m2, m3, m4
 
 
@@ -82,26 +82,26 @@ def _gh_levy_measure(
     """
     Construct DensityLevyMeasure for Generalized Hyperbolic process.
     """
-    gamma = math.sqrt(alpha ** 2 - beta ** 2)
+    gamma = math.sqrt(alpha**2 - beta**2)
     m1_z, m2_z, m3_z, m4_z = _gig_moments(lambda_param, delta, gamma)
 
-    var_z = m2_z - m1_z ** 2
-    mu3_z = m3_z - 3.0 * m1_z * m2_z + 2.0 * (m1_z ** 3)
-    mu4_z = m4_z - 4.0 * m1_z * m3_z + 6.0 * (m1_z ** 2) * m2_z - 3.0 * (m1_z ** 4)
-    k4_z = mu4_z - 3.0 * (var_z ** 2)
+    var_z = m2_z - m1_z**2
+    mu3_z = m3_z - 3.0 * m1_z * m2_z + 2.0 * (m1_z**3)
+    mu4_z = m4_z - 4.0 * m1_z * m3_z + 6.0 * (m1_z**2) * m2_z - 3.0 * (m1_z**4)
+    k4_z = mu4_z - 3.0 * (var_z**2)
 
     # Moments of Lévy measure
     def moment_1() -> float:
         return beta * m1_z
 
     def moment_2() -> float:
-        return m1_z + (beta ** 2) * var_z
+        return m1_z + (beta**2) * var_z
 
     def moment_3() -> float:
-        return 3.0 * beta * var_z + (beta ** 3) * mu3_z
+        return 3.0 * beta * var_z + (beta**3) * mu3_z
 
     def moment_4() -> float:
-        return 3.0 * var_z + 6.0 * (beta ** 2) * mu3_z + (beta ** 4) * k4_z
+        return 3.0 * var_z + 6.0 * (beta**2) * mu3_z + (beta**4) * k4_z
 
     # Density function evaluation
     is_nig = math.isclose(lambda_param, -0.5, abs_tol=1e-7)
@@ -112,28 +112,33 @@ def _gh_levy_measure(
         xv = x[nz]
         if is_nig:
             # Closed-form NIG density: (alpha delta / pi) * K_1(alpha sqrt(delta^2 + x^2)) / sqrt(delta^2 + x^2) * exp(beta x)
-            hypot_term = np.sqrt(delta ** 2 + xv ** 2)
+            hypot_term = np.sqrt(delta**2 + xv**2)
             k1_vals = bessel_kv(1.0, alpha * hypot_term)
             out[nz] = (alpha * delta / np.pi) * (k1_vals / hypot_term) * np.exp(beta * xv)
         else:
             # Numerical integration of normal-GIG variance mixture representation
             for idx, x_val in enumerate(xv):
+
                 def integrand(y: float) -> float:
                     # GIG subordinator density kernel
-                    gig_kernel = (y ** (lambda_param - 1.0)) * math.exp(-0.5 * ((delta ** 2) / y + (gamma ** 2) * y))
-                    norm_kernel = (1.0 / math.sqrt(2.0 * math.pi * y)) * math.exp(-0.5 * ((x_val - beta * y) ** 2) / y)
+                    gig_kernel = (y ** (lambda_param - 1.0)) * math.exp(
+                        -0.5 * ((delta**2) / y + (gamma**2) * y)
+                    )
+                    norm_kernel = (1.0 / math.sqrt(2.0 * math.pi * y)) * math.exp(
+                        -0.5 * ((x_val - beta * y) ** 2) / y
+                    )
                     return gig_kernel * norm_kernel
 
                 res, _ = integrate.quad(integrand, 1e-6, np.inf, limit=100)
                 # Normalize by 2 K_lambda(delta gamma) / gamma^lambda
-                norm_const = 2.0 * float(bessel_kv(lambda_param, delta * gamma)) / (gamma ** lambda_param)
+                norm_const = (
+                    2.0 * float(bessel_kv(lambda_param, delta * gamma)) / (gamma**lambda_param)
+                )
                 out[np.where(nz)[0][idx]] = res / norm_const if norm_const > 0 else 0.0
         return out
 
     def tail(xv: float) -> float:
-        res, _ = integrate.quad(
-            lambda t: float(density(np.array([t]))[0]), xv, np.inf, limit=150
-        )
+        res, _ = integrate.quad(lambda t: float(density(np.array([t]))[0]), xv, np.inf, limit=150)
         return res
 
     return DensityLevyMeasure(
@@ -191,14 +196,16 @@ class GeneralizedHyperbolicProcess(Process):
         if delta <= 0.0:
             raise ValueError(f"delta must be strictly positive, got {delta}")
         if abs(beta) >= alpha:
-            raise ValueError(f"|beta| must be strictly less than alpha, got beta={beta}, alpha={alpha}")
+            raise ValueError(
+                f"|beta| must be strictly less than alpha, got beta={beta}, alpha={alpha}"
+            )
 
         self._lambda = float(lambda_param)
         self._alpha = float(alpha)
         self._beta = float(beta)
         self._delta = float(delta)
         self._mu = float(mu)
-        self._gamma = math.sqrt(self._alpha ** 2 - self._beta ** 2)
+        self._gamma = math.sqrt(self._alpha**2 - self._beta**2)
 
         # Precompute GIG moments for cumulants
         self._m1_z, self._m2_z, self._m3_z, self._m4_z = _gig_moments(
@@ -330,7 +337,7 @@ class GeneralizedHyperbolicProcess(Process):
         where :math:`\zeta(u) = \sqrt{\alpha^2 - (\beta + i u)^2}`.
         """
         u_arr = np.asarray(u, dtype=complex)
-        zeta = np.sqrt(self._alpha ** 2 - (self._beta + 1j * u_arr) ** 2)
+        zeta = np.sqrt(self._alpha**2 - (self._beta + 1j * u_arr) ** 2)
 
         # Log ratio of modified Bessel functions
         dg = self._delta * self._gamma
@@ -380,10 +387,10 @@ class GeneralizedHyperbolicProcess(Process):
             raise ValueError(f"Time t must be non-negative, got {t}")
 
         m1_z, m2_z, m3_z, m4_z = self._m1_z, self._m2_z, self._m3_z, self._m4_z
-        var_z = m2_z - m1_z ** 2
-        mu3_z = m3_z - 3.0 * m1_z * m2_z + 2.0 * (m1_z ** 3)
-        mu4_z = m4_z - 4.0 * m1_z * m3_z + 6.0 * (m1_z ** 2) * m2_z - 3.0 * (m1_z ** 4)
-        k4_z = mu4_z - 3.0 * (var_z ** 2)
+        var_z = m2_z - m1_z**2
+        mu3_z = m3_z - 3.0 * m1_z * m2_z + 2.0 * (m1_z**3)
+        mu4_z = m4_z - 4.0 * m1_z * m3_z + 6.0 * (m1_z**2) * m2_z - 3.0 * (m1_z**4)
+        k4_z = mu4_z - 3.0 * (var_z**2)
 
         beta = self._beta
 
@@ -391,17 +398,18 @@ class GeneralizedHyperbolicProcess(Process):
             k1 = self._mu + beta * m1_z
             return float(t * k1)
         elif order == 2:
-            k2 = m1_z + (beta ** 2) * var_z
+            k2 = m1_z + (beta**2) * var_z
             return float(t * k2)
         elif order == 3:
-            k3 = 3.0 * beta * var_z + (beta ** 3) * mu3_z
+            k3 = 3.0 * beta * var_z + (beta**3) * mu3_z
             return float(t * k3)
         elif order == 4:
-            k4 = 3.0 * var_z + 6.0 * (beta ** 2) * mu3_z + (beta ** 4) * k4_z
+            k4 = 3.0 * var_z + 6.0 * (beta**2) * mu3_z + (beta**4) * k4_z
             return float(t * k4)
         else:
             # High-order numerical differentiation of psi(u) at u=0
             h = 1e-4
+
             # 5-point complex derivative
             def psi_fn(u_val: float) -> complex:
                 return complex(self.char_exponent(u_val))
@@ -520,10 +528,13 @@ class GeneralizedHyperbolicProcess(Process):
         def _bs_call(s: float, k: float, t: float, r_: float, q_: float, sigma: float) -> float:
             if sigma <= 1e-8:
                 return max(0.0, s * math.exp(-q_ * t) - k * math.exp(-r_ * t))
-            d1 = (math.log(s / k) + (r_ - q_ + 0.5 * sigma ** 2) * t) / (sigma * math.sqrt(t))
+            d1 = (math.log(s / k) + (r_ - q_ + 0.5 * sigma**2) * t) / (sigma * math.sqrt(t))
             d2 = d1 - sigma * math.sqrt(t)
             from scipy.stats import norm  # type: ignore[import-untyped]
-            return s * math.exp(-q_ * t) * float(norm.cdf(d1)) - k * math.exp(-r_ * t) * float(norm.cdf(d2))
+
+            return s * math.exp(-q_ * t) * float(norm.cdf(d1)) - k * math.exp(-r_ * t) * float(
+                norm.cdf(d2)
+            )
 
         def _iv_single(k: float, target_call: float) -> float:
             intrinsic = max(0.0, s0 * math.exp(-q * T) - k * math.exp(-r * T))
@@ -542,7 +553,9 @@ class GeneralizedHyperbolicProcess(Process):
         K_arr = np.asarray(K)
         if K_arr.ndim == 0:
             return _iv_single(float(K_arr), float(calls))
-        return np.array([_iv_single(float(k), float(c)) for k, c in zip(K_arr, np.asarray(calls))], dtype=float)
+        return np.array(
+            [_iv_single(float(k), float(c)) for k, c in zip(K_arr, np.asarray(calls))], dtype=float
+        )
 
     # ------------------------------------------------------------------
     # Simulation
@@ -560,6 +573,7 @@ class GeneralizedHyperbolicProcess(Process):
         Simulate sample paths of the Generalized Hyperbolic process :math:`X_t`.
         """
         from spxa.sim.exact import sample_gh
+
         return sample_gh(
             lambda_param=self._lambda,
             alpha=self._alpha,

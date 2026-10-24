@@ -188,10 +188,9 @@ class TestCIRExactness:
         for t in [0.1, 0.5, 1.0, 3.0]:
             e_k = math.exp(-kappa * t)
             e_2k = math.exp(-2.0 * kappa * t)
-            expected = (
-                r0 * (sigma**2 / kappa) * (e_k - e_2k)
-                + theta * (sigma**2 / (2.0 * kappa)) * ((1.0 - e_k) ** 2)
-            )
+            expected = r0 * (sigma**2 / kappa) * (e_k - e_2k) + theta * (
+                sigma**2 / (2.0 * kappa)
+            ) * ((1.0 - e_k) ** 2)
             assert cir.conditional_variance(t=t) == pytest.approx(expected, rel=1e-12)
             assert cir.conditional_std(t=t) == pytest.approx(math.sqrt(expected), rel=1e-12)
 
@@ -276,7 +275,9 @@ class TestCIRExactness:
 
         # Boundary checks
         assert cir.laplace_transform(u=0.0, t=1.0) == pytest.approx(1.0, rel=1e-12)
-        assert cir.laplace_transform(u=3.0, t=0.0) == pytest.approx(math.exp(-3.0 * 0.04), rel=1e-12)
+        assert cir.laplace_transform(u=3.0, t=0.0) == pytest.approx(
+            math.exp(-3.0 * 0.04), rel=1e-12
+        )
 
         # Compare with transition density numerical quadrature
         t = 0.7

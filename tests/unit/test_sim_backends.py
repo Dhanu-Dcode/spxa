@@ -14,7 +14,6 @@ import pytest
 
 from spxa.sim import (
     MLMCResult,
-    brownian_bridge_construction,
     control_variate_estimate,
     importance_sampling_gaussian_shift,
     milstein,
@@ -115,6 +114,7 @@ class TestMilstein:
 
     def test_milstein_multivariate_commutative(self) -> None:
         """2D multivariate commutative Milstein system."""
+
         # 2D diagonal diffusion: dX_1 = a1 X_1 dt + s1 X_1 dW_1, dX_2 = a2 X_2 dt + s2 X_2 dW_2
         def drift(t, x):
             return np.array([0.05 * x[0], 0.03 * x[1]])
@@ -273,7 +273,7 @@ class TestVarianceReduction:
         true_mean_s = s0 * math.exp(r * tau)
 
         z = rng.standard_normal(n_samples)
-        s_t = s0 * np.exp((r - 0.5 * sigma ** 2) * tau + sigma * math.sqrt(tau) * z)
+        s_t = s0 * np.exp((r - 0.5 * sigma**2) * tau + sigma * math.sqrt(tau) * z)
         # Target: European call payoff
         payoffs = math.exp(-r * tau) * np.maximum(s_t - k, 0.0)
 
@@ -368,15 +368,16 @@ class TestMLMC:
         tau = 1.0
 
         # Exact Black-Scholes formula
-        d1 = (math.log(s0 / k) + (r + 0.5 * sigma ** 2) * tau) / (sigma * math.sqrt(tau))
+        d1 = (math.log(s0 / k) + (r + 0.5 * sigma**2) * tau) / (sigma * math.sqrt(tau))
         d2 = d1 - sigma * math.sqrt(tau)
         from scipy.stats import norm
+
         bs_call = s0 * norm.cdf(d1) - k * math.exp(-r * tau) * norm.cdf(d2)
 
         # Coupler function for MLMC with Euler discretization and refinement factor M = 2
         def gbm_coupler(level: int, n_samples: int, rng: np.random.Generator):
             m_factor = 2
-            n_fine = (m_factor ** level) * 4
+            n_fine = (m_factor**level) * 4
             dt_fine = tau / n_fine
             sq_dt_f = math.sqrt(dt_fine)
 

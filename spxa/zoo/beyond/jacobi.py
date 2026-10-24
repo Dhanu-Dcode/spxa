@@ -43,10 +43,10 @@ Filipović, D., & Larsson, M. (2016). Polynomial diffusions and applications in 
 from __future__ import annotations
 
 import math
-from typing import Optional, Union, Tuple, Dict, Any
+from typing import Optional, Union
 
 import numpy as np
-from scipy import special, stats  # type: ignore[import-untyped]
+from scipy import stats  # type: ignore[import-untyped]
 
 from spxa.core.exactness import ExactnessLevel
 from spxa.core.exceptions import ExactnessError
@@ -94,7 +94,9 @@ class JacobiProcess(Process):
         if sigma <= 0.0:
             raise ValueError(f"Diffusion parameter 'sigma' must be strictly positive, got {sigma}")
         if y_max <= y_min:
-            raise ValueError(f"Upper bound 'y_max' ({y_max}) must be strictly greater than 'y_min' ({y_min})")
+            raise ValueError(
+                f"Upper bound 'y_max' ({y_max}) must be strictly greater than 'y_min' ({y_min})"
+            )
         if not (y_min <= theta <= y_max):
             raise ValueError(f"Long-term mean 'theta' ({theta}) must be in [{y_min}, {y_max}]")
         if not (y_min <= y0 <= y_max):
@@ -113,8 +115,8 @@ class JacobiProcess(Process):
         self._x0 = (self._y0 - self._y_min) / self._scale
 
         # Beta stationary distribution parameters
-        self._alpha = (2.0 * self._kappa * self._theta_norm) / (self._sigma ** 2)
-        self._beta = (2.0 * self._kappa * (1.0 - self._theta_norm)) / (self._sigma ** 2)
+        self._alpha = (2.0 * self._kappa * self._theta_norm) / (self._sigma**2)
+        self._beta = (2.0 * self._kappa * (1.0 - self._theta_norm)) / (self._sigma**2)
 
         node = CompositionNode(
             kind=NodeKind.PRIMITIVE,
@@ -195,8 +197,10 @@ class JacobiProcess(Process):
 
             \mathrm{Var}(Y_\infty) = (y_{\max} - y_{\min})^2 \frac{\theta_{norm}(1 - \theta_{norm})}{1 + 2\kappa / \sigma^2}
         """
-        norm_var = (self._theta_norm * (1.0 - self._theta_norm)) / (1.0 + 2.0 * self._kappa / (self._sigma ** 2))
-        return float((self._scale ** 2) * norm_var)
+        norm_var = (self._theta_norm * (1.0 - self._theta_norm)) / (
+            1.0 + 2.0 * self._kappa / (self._sigma**2)
+        )
+        return float((self._scale**2) * norm_var)
 
     @property
     def stationary_std(self) -> float:
@@ -259,14 +263,14 @@ class JacobiProcess(Process):
         if t < 0.0:
             raise ValueError(f"Time t must be non-negative, got {t}")
         if t == 0.0:
-            return float(self._y0 ** 2)
+            return float(self._y0**2)
 
-        lam2 = 2.0 * self._kappa + self._sigma ** 2
+        lam2 = 2.0 * self._kappa + self._sigma**2
         exp_kt = math.exp(-self._kappa * t)
         exp_l2t = math.exp(-lam2 * t)
 
-        term1 = (self._x0 ** 2) * exp_l2t
-        coeff = 2.0 * self._kappa * self._theta_norm + self._sigma ** 2
+        term1 = (self._x0**2) * exp_l2t
+        coeff = 2.0 * self._kappa * self._theta_norm + self._sigma**2
         term2 = coeff * (
             (self._x0 - self._theta_norm) * (exp_kt - exp_l2t) / (lam2 - self._kappa)
             + self._theta_norm * (1.0 - exp_l2t) / lam2
@@ -275,7 +279,9 @@ class JacobiProcess(Process):
         m1_norm = self._x0 * exp_kt + self._theta_norm * (1.0 - exp_kt)
 
         # Y = y_min + scale * X => Y^2 = y_min^2 + 2*y_min*scale*X + scale^2 * X^2
-        return float(self._y_min ** 2 + 2.0 * self._y_min * self._scale * m1_norm + (self._scale ** 2) * m2_norm)
+        return float(
+            self._y_min**2 + 2.0 * self._y_min * self._scale * m1_norm + (self._scale**2) * m2_norm
+        )
 
     def conditional_variance(self, t: float = 1.0) -> float:
         r"""
@@ -283,7 +289,7 @@ class JacobiProcess(Process):
         """
         m1 = self.conditional_mean(t)
         m2 = self.conditional_second_moment(t)
-        return float(max(0.0, m2 - m1 ** 2))
+        return float(max(0.0, m2 - m1**2))
 
     def conditional_std(self, t: float = 1.0) -> float:
         """Exact conditional standard deviation."""
@@ -324,7 +330,7 @@ class JacobiProcess(Process):
         u_arr = np.asarray(u, dtype=complex)
         m1 = self.conditional_mean(t)
         var = self.conditional_variance(t)
-        res = np.exp(1j * u_arr * m1 - 0.5 * (u_arr ** 2) * var)
+        res = np.exp(1j * u_arr * m1 - 0.5 * (u_arr**2) * var)
         return res if res.ndim > 0 else res.item()
 
     # ------------------------------------------------------------------
@@ -341,6 +347,7 @@ class JacobiProcess(Process):
     ) -> np.ndarray:
         """Simulate sample paths of Jacobi diffusion :math:`Y_t` using the Milstein scheme."""
         from spxa.sim.exact import sample_jacobi
+
         return sample_jacobi(
             kappa=self._kappa,
             theta=self._theta,

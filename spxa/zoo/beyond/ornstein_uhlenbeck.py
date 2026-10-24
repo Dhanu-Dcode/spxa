@@ -506,7 +506,7 @@ class OrnsteinUhlenbeckProcess(Process):
             is_subordinator=False,
             hurst_index=None,
             notes=[
-                f"Gaussian Ornstein–Uhlenbeck (Vasicek) process: dX_t = θ(μ - X_t)dt + σ dW_t.",
+                "Gaussian Ornstein–Uhlenbeck (Vasicek) process: dX_t = θ(μ - X_t)dt + σ dW_t.",
                 f"Parameters: θ={self.theta}, μ={self.mu}, σ={self.sigma}, x0={self.x0}.",
                 f"Stationary distribution: N(mean={self.mu}, variance={self.stationary_variance:.6f}).",
                 f"Relaxation time τ={self.relaxation_time:.4f}, half-life t_1/2={self.half_life:.4f}.",
@@ -571,8 +571,7 @@ class OrnsteinUhlenbeckProcess(Process):
 
     def __repr__(self) -> str:
         return (
-            f"OrnsteinUhlenbeck(theta={self.theta}, mu={self.mu}, "
-            f"sigma={self.sigma}, x0={self.x0})"
+            f"OrnsteinUhlenbeck(theta={self.theta}, mu={self.mu}, sigma={self.sigma}, x0={self.x0})"
         )
 
 

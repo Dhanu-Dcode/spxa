@@ -168,7 +168,7 @@ class TestMeixnerProcess:
         """κ₂ = δα²/(2cos²(β/2)). Schoutens & Teugels (1998), eq. (6)."""
         a, b, d = 0.4, -1.0, 0.5
         mx = MeixnerProcess(alpha=a, beta=b, delta=d)
-        expected = d * a**2 / (2 * np.cos(b / 2)**2)
+        expected = d * a**2 / (2 * np.cos(b / 2) ** 2)
         assert mx.cumulant_exact(2) == pytest.approx(expected, rel=1e-10)
 
     @pytest.mark.exactness
@@ -176,7 +176,7 @@ class TestMeixnerProcess:
         """κ₃ = δα³ sin(β/2)/(2cos³(β/2)). Schoutens & Teugels (1998), eq. (7)."""
         a, b, d = 0.4, -1.0, 0.5
         mx = MeixnerProcess(alpha=a, beta=b, delta=d)
-        expected = d * a**3 * np.sin(b / 2) / (2 * np.cos(b / 2)**3)
+        expected = d * a**3 * np.sin(b / 2) / (2 * np.cos(b / 2) ** 3)
         assert mx.cumulant_exact(3) == pytest.approx(expected, rel=1e-10)
 
     @pytest.mark.exactness
@@ -184,7 +184,7 @@ class TestMeixnerProcess:
         """κ₄ = δα⁴(2+cosβ)/(8cos⁴(β/2)). Schoutens & Teugels (1998), eq. (8)."""
         a, b, d = 0.4, -1.0, 0.5
         mx = MeixnerProcess(alpha=a, beta=b, delta=d)
-        expected = d * a**4 * (2 + np.cos(b)) / (8 * np.cos(b / 2)**4)
+        expected = d * a**4 * (2 + np.cos(b)) / (8 * np.cos(b / 2) ** 4)
         assert mx.cumulant_exact(4) == pytest.approx(expected, rel=1e-10)
 
     @pytest.mark.exactness

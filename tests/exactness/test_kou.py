@@ -127,7 +127,9 @@ class TestKouExactness:
         rate = 1.5
 
         # Drift set to offset jump drift for martingale
-        kou_mart = KouJumpDiffusion(drift=-rate * ey, sigma=0.2, rate=rate, p=p, eta1=eta1, eta2=eta2)
+        kou_mart = KouJumpDiffusion(
+            drift=-rate * ey, sigma=0.2, rate=rate, p=p, eta1=eta1, eta2=eta2
+        )
         props_m = kou_mart.properties
         assert props_m.has_stationary_increments is True
         assert props_m.has_independent_increments is True
@@ -199,7 +201,9 @@ class TestKouExactness:
         # Addition
         composed = kou + 2.0 * bm
         assert composed.exactness == ExactnessLevel.EXACT
-        assert composed.triplet.sigma_sq == pytest.approx(kou.sigma**2 + 4.0 * bm.sigma**2, rel=1e-10)
+        assert composed.triplet.sigma_sq == pytest.approx(
+            kou.sigma**2 + 4.0 * bm.sigma**2, rel=1e-10
+        )
         assert composed.triplet.nu.total_mass() == pytest.approx(kou.rate)
 
     def test_kou_option_pricing_and_put_call_parity(self) -> None:
@@ -241,7 +245,9 @@ class TestKouExactness:
         # Analytical Black-Scholes price
         d1 = (math.log(S0 / K) + (r - q + 0.5 * sigma**2) * T) / (sigma * math.sqrt(T))
         d2 = d1 - sigma * math.sqrt(T)
-        bs_call = S0 * math.exp(-q * T) * stats.norm.cdf(d1) - K * math.exp(-r * T) * stats.norm.cdf(d2)
+        bs_call = S0 * math.exp(-q * T) * stats.norm.cdf(d1) - K * math.exp(
+            -r * T
+        ) * stats.norm.cdf(d2)
 
         assert kou_call == pytest.approx(bs_call, abs=1e-4)
 
@@ -267,8 +273,16 @@ class TestKouExactness:
         mu_rn = r - q - 0.5 * (sigma**2) - rate * kappa
 
         paths = spxa.sim.exact.sample_kou(
-            drift=mu_rn, sigma=sigma, rate=rate, p=p, eta1=eta1, eta2=eta2,
-            dt=T / 50, n_steps=50, n_paths=250_000, rng=rng,
+            drift=mu_rn,
+            sigma=sigma,
+            rate=rate,
+            p=p,
+            eta1=eta1,
+            eta2=eta2,
+            dt=T / 50,
+            n_steps=50,
+            n_paths=250_000,
+            rng=rng,
         )
         s_T = S0 * np.exp(paths[:, -1])
         mc_call = math.exp(-r * T) * np.mean(np.maximum(s_T - K, 0.0))

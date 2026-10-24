@@ -35,7 +35,7 @@ Bjerksund, P. (1991). Contingent claims evaluation when interest rates and conve
 from __future__ import annotations
 
 import math
-from typing import Optional, Union, Tuple, Dict, Any
+from typing import Optional, Union, Tuple
 
 import numpy as np
 from scipy import stats  # type: ignore[import-untyped]
@@ -194,7 +194,7 @@ class SchwartzTwoFactor(Process):
     @property
     def stationary_yield_variance(self) -> float:
         r"""Stationary convenience yield variance :math:`\frac{\sigma_2^2}{2\kappa}`."""
-        return (self._sigma2 ** 2) / (2.0 * self._kappa)
+        return (self._sigma2**2) / (2.0 * self._kappa)
 
     @property
     def stationary_yield_std(self) -> float:
@@ -261,7 +261,9 @@ class SchwartzTwoFactor(Process):
             raise ValueError(f"Time t must be non-negative, got {t}")
         if t == 0.0:
             return 0.0
-        return float(((self._sigma2 ** 2) / (2.0 * self._kappa)) * (1.0 - math.exp(-2.0 * self._kappa * t)))
+        return float(
+            ((self._sigma2**2) / (2.0 * self._kappa)) * (1.0 - math.exp(-2.0 * self._kappa * t))
+        )
 
     def yield_std(self, t: float = 1.0) -> float:
         """Exact conditional standard deviation of convenience yield."""
@@ -286,7 +288,7 @@ class SchwartzTwoFactor(Process):
 
         exp_kt = math.exp(-self._kappa * t)
         factor = (1.0 - exp_kt) / self._kappa
-        drift_term = (self._rate - 0.5 * (self._sigma1 ** 2) - self._alpha_hat) * t
+        drift_term = (self._rate - 0.5 * (self._sigma1**2) - self._alpha_hat) * t
         yield_term = (self._delta0 - self._alpha_hat) * factor
         return float(math.log(self._s0) + drift_term - yield_term)
 
@@ -311,9 +313,9 @@ class SchwartzTwoFactor(Process):
         exp_kt = math.exp(-k * t)
         exp_2kt = math.exp(-2.0 * k * t)
 
-        term1 = (s1 ** 2) * t
-        term2 = ((s2 ** 2) / (k ** 2)) * (t - 2.0 * (1.0 - exp_kt) / k + (1.0 - exp_2kt) / (2.0 * k))
-        term3 = - 2.0 * (rho * s1 * s2 / k) * (t - (1.0 - exp_kt) / k)
+        term1 = (s1**2) * t
+        term2 = ((s2**2) / (k**2)) * (t - 2.0 * (1.0 - exp_kt) / k + (1.0 - exp_2kt) / (2.0 * k))
+        term3 = -2.0 * (rho * s1 * s2 / k) * (t - (1.0 - exp_kt) / k)
         return float(max(0.0, term1 + term2 + term3))
 
     def log_spot_std(self, t: float = 1.0) -> float:
@@ -334,7 +336,7 @@ class SchwartzTwoFactor(Process):
         exp_kt = math.exp(-k * t)
         one_minus_exp = 1.0 - exp_kt
         term1 = (self._rho * self._sigma1 * self._sigma2 / k) * one_minus_exp
-        term2 = ((self._sigma2 ** 2) / (2.0 * (k ** 2))) * (one_minus_exp ** 2)
+        term2 = ((self._sigma2**2) / (2.0 * (k**2))) * (one_minus_exp**2)
         return float(term1 - term2)
 
     # ------------------------------------------------------------------
@@ -355,9 +357,9 @@ class SchwartzTwoFactor(Process):
         exp_kt = math.exp(-k * tau)
         exp_2kt = math.exp(-2.0 * k * tau)
 
-        term1 = (r - ahat + 0.5 * (s2 ** 2) / (k ** 2) - (s1 * s2 * rho) / k) * tau
-        term2 = 0.25 * (s2 ** 2) * (1.0 - exp_2kt) / (k ** 3)
-        term3 = (k * ahat + s1 * s2 * rho - (s2 ** 2) / k) * (1.0 - exp_kt) / (k ** 2)
+        term1 = (r - ahat + 0.5 * (s2**2) / (k**2) - (s1 * s2 * rho) / k) * tau
+        term2 = 0.25 * (s2**2) * (1.0 - exp_2kt) / (k**3)
+        term3 = (k * ahat + s1 * s2 * rho - (s2**2) / k) * (1.0 - exp_kt) / (k**2)
         return float(term1 + term2 + term3)
 
     def futures_price(
@@ -470,7 +472,7 @@ class SchwartzTwoFactor(Process):
         u_arr = np.asarray(u, dtype=complex)
         mean_x = self.log_spot_mean(t)
         var_x = self.log_spot_variance(t)
-        exponent = 1j * u_arr * mean_x - 0.5 * (u_arr ** 2) * var_x
+        exponent = 1j * u_arr * mean_x - 0.5 * (u_arr**2) * var_x
         res = np.exp(exponent)
         return res if res.ndim > 0 else res.item()
 
@@ -488,6 +490,7 @@ class SchwartzTwoFactor(Process):
     ) -> np.ndarray:
         """Simulate sample paths of commodity spot price :math:`S_t`."""
         from spxa.sim.exact import sample_schwartz_two_factor
+
         return sample_schwartz_two_factor(
             s0=self._s0,
             delta0=self._delta0,
@@ -515,6 +518,7 @@ class SchwartzTwoFactor(Process):
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Simulate joint sample paths of spot prices :math:`S_t` and convenience yields :math:`\\delta_t`."""
         from spxa.sim.exact import sample_schwartz_two_factor
+
         return sample_schwartz_two_factor(
             s0=self._s0,
             delta0=self._delta0,

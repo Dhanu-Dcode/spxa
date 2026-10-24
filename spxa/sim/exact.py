@@ -200,12 +200,9 @@ def sample_alpha_stable(
             * (np.cos(U - alpha * (U + B)) / E) ** ((1 - alpha) / alpha)
         )
     else:
-        X = (
-            (2 / np.pi)
-            * (
-                (np.pi / 2 + beta * U) * np.tan(U)
-                - beta * np.log(np.pi / 2 * E * np.cos(U) / (np.pi / 2 + beta * U))
-            )
+        X = (2 / np.pi) * (
+            (np.pi / 2 + beta * U) * np.tan(U)
+            - beta * np.log(np.pi / 2 * E * np.cos(U) / (np.pi / 2 + beta * U))
         )
 
     return sigma * (dt ** (1 / alpha)) * X
@@ -560,8 +557,7 @@ def sample_ou(
 
     else:
         raise ValueError(
-            f"Unknown simulation method '{method}'. "
-            "Supported methods: 'exact', 'euler'."
+            f"Unknown simulation method '{method}'. Supported methods: 'exact', 'euler'."
         )
 
     return paths
@@ -667,7 +663,7 @@ def sample_heston(
         return paths_x
 
     sqrt_dt = math.sqrt(dt)
-    sqrt_1_minus_rho2 = math.sqrt(max(0.0, 1.0 - rho ** 2))
+    sqrt_1_minus_rho2 = math.sqrt(max(0.0, 1.0 - rho**2))
 
     curr_x = np.zeros(n_paths, dtype=float)
     curr_v = np.full(n_paths, float(v0), dtype=float)
@@ -697,7 +693,9 @@ def sample_heston(
             v_pos = np.maximum(curr_v, 0.0)
             sqrt_v_pos = np.sqrt(v_pos)
 
-            curr_v = np.maximum(0.0, curr_v + kappa * (theta - v_pos) * dt + sigma_v * sqrt_v_pos * sqrt_dt * z1)
+            curr_v = np.maximum(
+                0.0, curr_v + kappa * (theta - v_pos) * dt + sigma_v * sqrt_v_pos * sqrt_dt * z1
+            )
             curr_x = curr_x + (mu - 0.5 * v_pos) * dt + sqrt_v_pos * sqrt_dt * z2
 
             paths_x[:, k + 1] = curr_x
@@ -705,8 +703,7 @@ def sample_heston(
 
     else:
         raise ValueError(
-            f"Unknown simulation method '{method}'. "
-            "Supported methods: 'full_truncation', 'euler'."
+            f"Unknown simulation method '{method}'. Supported methods: 'full_truncation', 'euler'."
         )
 
     if return_variance:
@@ -900,7 +897,7 @@ def sample_cev(
     # Step-by-step simulation with absorption at 0
     curr = np.full(n_paths, float(s0), dtype=float)
     sqrt_dt = math.sqrt(dt)
-    use_milstein = (method in ("exact", "milstein"))
+    use_milstein = method in ("exact", "milstein")
 
     for step in range(1, n_steps + 1):
         pos = curr > 0.0
@@ -1150,8 +1147,8 @@ def sample_bates(
         return paths_x
 
     sqrt_dt = math.sqrt(dt)
-    sqrt_1_minus_rho2 = math.sqrt(max(0.0, 1.0 - rho ** 2))
-    k_bar = math.exp(jump_mean + 0.5 * jump_std ** 2) - 1.0
+    sqrt_1_minus_rho2 = math.sqrt(max(0.0, 1.0 - rho**2))
+    k_bar = math.exp(jump_mean + 0.5 * jump_std**2) - 1.0
 
     curr_x = np.zeros(n_paths, dtype=float)
     curr_v = np.full(n_paths, float(v0), dtype=float)
@@ -1171,10 +1168,16 @@ def sample_bates(
                 n_jumps = rng.poisson(lam=rate * dt, size=n_paths)
                 jump_shock = np.where(
                     n_jumps > 0,
-                    n_jumps * jump_mean + np.sqrt(n_jumps) * jump_std * rng.standard_normal(size=n_paths),
+                    n_jumps * jump_mean
+                    + np.sqrt(n_jumps) * jump_std * rng.standard_normal(size=n_paths),
                     0.0,
                 )
-                curr_x = curr_x + (mu - rate * k_bar - 0.5 * v_pos) * dt + sqrt_v_pos * sqrt_dt * z2 + jump_shock
+                curr_x = (
+                    curr_x
+                    + (mu - rate * k_bar - 0.5 * v_pos) * dt
+                    + sqrt_v_pos * sqrt_dt * z2
+                    + jump_shock
+                )
             else:
                 curr_x = curr_x + (mu - 0.5 * v_pos) * dt + sqrt_v_pos * sqrt_dt * z2
 
@@ -1192,16 +1195,24 @@ def sample_bates(
             v_pos = np.maximum(curr_v, 0.0)
             sqrt_v_pos = np.sqrt(v_pos)
 
-            v_next = np.maximum(0.0, curr_v + kappa * (theta - v_pos) * dt + sigma_v * sqrt_v_pos * sqrt_dt * z1)
+            v_next = np.maximum(
+                0.0, curr_v + kappa * (theta - v_pos) * dt + sigma_v * sqrt_v_pos * sqrt_dt * z1
+            )
 
             if rate > 0.0:
                 n_jumps = rng.poisson(lam=rate * dt, size=n_paths)
                 jump_shock = np.where(
                     n_jumps > 0,
-                    n_jumps * jump_mean + np.sqrt(n_jumps) * jump_std * rng.standard_normal(size=n_paths),
+                    n_jumps * jump_mean
+                    + np.sqrt(n_jumps) * jump_std * rng.standard_normal(size=n_paths),
                     0.0,
                 )
-                curr_x = curr_x + (mu - rate * k_bar - 0.5 * v_pos) * dt + sqrt_v_pos * sqrt_dt * z2 + jump_shock
+                curr_x = (
+                    curr_x
+                    + (mu - rate * k_bar - 0.5 * v_pos) * dt
+                    + sqrt_v_pos * sqrt_dt * z2
+                    + jump_shock
+                )
             else:
                 curr_x = curr_x + (mu - 0.5 * v_pos) * dt + sqrt_v_pos * sqrt_dt * z2
 
@@ -1212,8 +1223,7 @@ def sample_bates(
 
     else:
         raise ValueError(
-            f"Unknown simulation method '{method}'. "
-            "Supported methods: 'full_truncation', 'euler'."
+            f"Unknown simulation method '{method}'. Supported methods: 'full_truncation', 'euler'."
         )
 
     if return_variance:
@@ -1298,7 +1308,7 @@ def sample_hull_white(
 
     if method == "exact":
         exp_adt = math.exp(-a * dt)
-        std_step = math.sqrt((sigma ** 2 / (2.0 * a)) * (1.0 - math.exp(-2.0 * a * dt)))
+        std_step = math.sqrt((sigma**2 / (2.0 * a)) * (1.0 - math.exp(-2.0 * a * dt)))
         for k in range(n_steps):
             z = rng.standard_normal(size=n_paths)
             paths[:, k + 1] = b + (paths[:, k] - b) * exp_adt + std_step * z
@@ -1311,8 +1321,7 @@ def sample_hull_white(
 
     else:
         raise ValueError(
-            f"Unknown simulation method '{method}'. "
-            "Supported methods: 'exact', 'euler'."
+            f"Unknown simulation method '{method}'. Supported methods: 'exact', 'euler'."
         )
 
     return paths
@@ -1413,7 +1422,7 @@ def sample_sabr(
         return paths_f
 
     sqrt_dt = math.sqrt(dt)
-    sqrt_1_minus_rho2 = math.sqrt(max(0.0, 1.0 - rho ** 2))
+    sqrt_1_minus_rho2 = math.sqrt(max(0.0, 1.0 - rho**2))
 
     curr_f = np.full(n_paths, float(f0), dtype=float)
     curr_a = np.full(n_paths, float(alpha), dtype=float)
@@ -1424,9 +1433,9 @@ def sample_sabr(
             z_indep = rng.standard_normal(size=n_paths)
             z_fwd = rho * z_vol + sqrt_1_minus_rho2 * z_indep
 
-            next_a = curr_a * np.exp(-0.5 * (nu ** 2) * dt + nu * sqrt_dt * z_vol)
+            next_a = curr_a * np.exp(-0.5 * (nu**2) * dt + nu * sqrt_dt * z_vol)
             f_pos = np.maximum(curr_f, 0.0)
-            next_f = curr_f + curr_a * (f_pos ** beta) * sqrt_dt * z_fwd
+            next_f = curr_f + curr_a * (f_pos**beta) * sqrt_dt * z_fwd
 
             if beta < 1.0:
                 next_f = np.maximum(0.0, next_f)
@@ -1444,7 +1453,7 @@ def sample_sabr(
 
             next_a = np.maximum(1e-10, curr_a + nu * curr_a * sqrt_dt * z_vol)
             f_pos = np.maximum(curr_f, 0.0)
-            next_f = curr_f + curr_a * (f_pos ** beta) * sqrt_dt * z_fwd
+            next_f = curr_f + curr_a * (f_pos**beta) * sqrt_dt * z_fwd
 
             if beta < 1.0:
                 next_f = np.maximum(0.0, next_f)
@@ -1456,8 +1465,7 @@ def sample_sabr(
 
     else:
         raise ValueError(
-            f"Unknown simulation method '{method}'. "
-            "Supported methods: 'log_euler', 'euler'."
+            f"Unknown simulation method '{method}'. Supported methods: 'log_euler', 'euler'."
         )
 
     if return_volatility:
@@ -1535,7 +1543,7 @@ def sample_gh(
         return paths
 
     rng = rng or np.random.default_rng()
-    gamma = math.sqrt(alpha ** 2 - beta ** 2)
+    gamma = math.sqrt(alpha**2 - beta**2)
 
     # Fast exact NIG subordination when lambda = -0.5
     if math.isclose(lambda_param, -0.5, abs_tol=1e-7):
@@ -1557,11 +1565,11 @@ def sample_gh(
 
     scale = delta / gamma
     m1_z = scale * float(bessel_kv(lambda_param + 1.0, dg)) / k0
-    m2_z = (scale ** 2) * float(bessel_kv(lambda_param + 2.0, dg)) / k0
-    var_z = m2_z - m1_z ** 2
+    m2_z = (scale**2) * float(bessel_kv(lambda_param + 2.0, dg)) / k0
+    var_z = m2_z - m1_z**2
 
     k1 = mu + beta * m1_z
-    k2 = m1_z + (beta ** 2) * var_z
+    k2 = m1_z + (beta**2) * var_z
 
     std_dt = max(math.sqrt(dt * k2), 1e-6)
     mean_dt = dt * k1
@@ -1569,13 +1577,9 @@ def sample_gh(
     x_grid = np.linspace(mean_dt - 8.0 * std_dt, mean_dt + 8.0 * std_dt, 600)
     u_grid = np.linspace(1e-4, min(80.0 / std_dt, 500.0), 300)
 
-    zeta = np.sqrt(alpha ** 2 - (beta + 1j * u_grid) ** 2)
+    zeta = np.sqrt(alpha**2 - (beta + 1j * u_grid) ** 2)
     k_zeta = bessel_kv(lambda_param, delta * zeta)
-    psi = (
-        1j * mu * u_grid
-        + lambda_param * np.log(gamma / zeta)
-        + np.log(k_zeta / k0)
-    )
+    psi = 1j * mu * u_grid + lambda_param * np.log(gamma / zeta) + np.log(k_zeta / k0)
     cf_vals = np.exp(dt * psi)
 
     integrand = cf_vals[None, :] * np.exp(-1j * u_grid[None, :] * x_grid[:, None])
@@ -1680,7 +1684,7 @@ def sample_black_karasinski(
         return r_paths
 
     exp_adt = math.exp(-a * dt)
-    std_step = math.sqrt((sigma ** 2 / (2.0 * a)) * (1.0 - math.exp(-2.0 * a * dt)))
+    std_step = math.sqrt((sigma**2 / (2.0 * a)) * (1.0 - math.exp(-2.0 * a * dt)))
 
     for k in range(n_steps):
         z = rng.standard_normal(size=n_paths)
@@ -1792,9 +1796,9 @@ def sample_schobel_zhu(
         return paths_s
 
     exp_kdt = math.exp(-kappa * dt)
-    std_step = math.sqrt((tau ** 2 / (2.0 * kappa)) * (1.0 - math.exp(-2.0 * kappa * dt)))
+    std_step = math.sqrt((tau**2 / (2.0 * kappa)) * (1.0 - math.exp(-2.0 * kappa * dt)))
     sqrt_dt = math.sqrt(dt)
-    sqrt_1_minus_rho2 = math.sqrt(max(0.0, 1.0 - rho ** 2))
+    sqrt_1_minus_rho2 = math.sqrt(max(0.0, 1.0 - rho**2))
     drift_const = (rate - dividend) * dt
 
     curr_s = np.full(n_paths, float(s0), dtype=float)
@@ -1806,7 +1810,9 @@ def sample_schobel_zhu(
         z_s = rho * z_vol + sqrt_1_minus_rho2 * z_indep
 
         next_sigma = theta + (curr_sigma - theta) * exp_kdt + std_step * z_vol
-        next_s = curr_s * np.exp(drift_const - 0.5 * (curr_sigma ** 2) * dt + curr_sigma * sqrt_dt * z_s)
+        next_s = curr_s * np.exp(
+            drift_const - 0.5 * (curr_sigma**2) * dt + curr_sigma * sqrt_dt * z_s
+        )
 
         curr_s = next_s
         curr_sigma = next_sigma
@@ -1958,7 +1964,7 @@ def sample_bessel(
         raise ValueError("Initial value 'r0' must be non-negative")
     besq_paths = sample_besq(
         dim=dim,
-        x0=r0 ** 2,
+        x0=r0**2,
         dt=dt,
         n_steps=n_steps,
         n_paths=n_paths,
@@ -2058,8 +2064,8 @@ def sample_jcir(
     rng = rng or np.random.default_rng()
 
     exp_kdt = math.exp(-kappa * dt)
-    c = 2.0 * kappa / (sigma ** 2 * (1.0 - exp_kdt))
-    df = 4.0 * kappa * theta / (sigma ** 2)
+    c = 2.0 * kappa / (sigma**2 * (1.0 - exp_kdt))
+    df = 4.0 * kappa * theta / (sigma**2)
 
     for k in range(n_steps):
         curr_r = np.maximum(paths[:, k], 0.0)
@@ -2179,7 +2185,7 @@ def sample_schwartz_two_factor(
 
     rng = rng or np.random.default_rng()
     sq_dt = math.sqrt(dt)
-    sqrt_1_rho2 = math.sqrt(max(0.0, 1.0 - rho ** 2))
+    sqrt_1_rho2 = math.sqrt(max(0.0, 1.0 - rho**2))
 
     for k in range(n_steps):
         z1 = rng.standard_normal(n_paths)
@@ -2189,7 +2195,7 @@ def sample_schwartz_two_factor(
         curr_x = paths_x[:, k]
         curr_delta = paths_delta[:, k]
 
-        next_x = curr_x + (rate - curr_delta - 0.5 * (sigma1 ** 2)) * dt + sigma1 * sq_dt * z1
+        next_x = curr_x + (rate - curr_delta - 0.5 * (sigma1**2)) * dt + sigma1 * sq_dt * z1
         next_delta = curr_delta + kappa * (alpha_hat - curr_delta) * dt + sigma2 * sq_dt * z2
 
         paths_x[:, k + 1] = next_x
@@ -2441,7 +2447,7 @@ def sample_jacobi(
         x_clip = np.clip(x, 1e-8, 1.0 - 1e-8)
         diff = sigma * np.sqrt(x_clip * (1.0 - x_clip))
         drift = kappa * (theta_norm - x)
-        milstein = 0.25 * (sigma ** 2) * (1.0 - 2.0 * x_clip) * (dw ** 2 - dt)
+        milstein = 0.25 * (sigma**2) * (1.0 - 2.0 * x_clip) * (dw**2 - dt)
 
         x = np.clip(x + drift * dt + diff * dw + milstein, 0.0, 1.0)
         paths[:, k + 1] = y_min + scale * x
@@ -2548,7 +2554,7 @@ def sample_regime_switching_gbm(
         m_curr = mu_arr[current_regimes]
         sig_curr = sigma_arr[current_regimes]
         z = rng.standard_normal(n_paths)
-        log_inc = (m_curr - 0.5 * (sig_curr ** 2)) * dt + sig_curr * sq_dt * z
+        log_inc = (m_curr - 0.5 * (sig_curr**2)) * dt + sig_curr * sq_dt * z
         current_s *= np.exp(log_inc)
         s_paths[:, k + 1] = current_s
 
@@ -2808,23 +2814,8 @@ def sample_cbi(
         # Milstein step for sqrt(c X_t)
         x_pos = np.maximum(curr_x, 0.0)
         diff = np.sqrt(c * x_pos)
-        milstein = 0.25 * c * (dw ** 2 - dt)
+        milstein = 0.25 * c * (dw**2 - dt)
         curr_x = np.maximum(curr_x + (a - b * curr_x) * dt + diff * dw + milstein + jumps, 0.0)
         paths[:, step + 1] = curr_x
 
     return paths
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

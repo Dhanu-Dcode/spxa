@@ -93,7 +93,9 @@ class TestGeneralizedHyperbolicExactness:
         delta = 1.3
         mu = 0.15
 
-        gh_nig = GeneralizedHyperbolicProcess(lambda_param=-0.5, alpha=alpha, beta=beta, delta=delta, mu=mu)
+        gh_nig = GeneralizedHyperbolicProcess(
+            lambda_param=-0.5, alpha=alpha, beta=beta, delta=delta, mu=mu
+        )
         pure_nig = NIG(alpha=alpha, beta=beta, delta=delta, mu=mu)
 
         u_grid = np.linspace(-4.0, 4.0, 25)
@@ -165,7 +167,9 @@ class TestGeneralizedHyperbolicExactness:
     def test_gh_simulation_paths_and_mean(self) -> None:
         """Simulated sample paths start at 0 and empirical mean matches theoretical mean."""
         rng = np.random.default_rng(2026)
-        gh = GeneralizedHyperbolicProcess(lambda_param=-0.5, alpha=2.5, beta=-0.3, delta=1.2, mu=0.2)
+        gh = GeneralizedHyperbolicProcess(
+            lambda_param=-0.5, alpha=2.5, beta=-0.3, delta=1.2, mu=0.2
+        )
         paths = gh.simulate(n_steps=20, time_horizon=1.0, n_paths=25_000, rng=rng)
         assert paths.shape == (25_000, 21)
         assert np.all(paths[:, 0] == 0.0)

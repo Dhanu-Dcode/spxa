@@ -175,6 +175,7 @@ class DensityLevyMeasure(LevyMeasure):
         if self._tail_fn is not None:
             return self._tail_fn(x)
         from scipy import integrate  # type: ignore[import-untyped]
+
         result, _ = integrate.quad(lambda t: float(self.density(np.array([t]))[0]), x, np.inf)
         return result
 
