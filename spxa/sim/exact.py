@@ -2708,6 +2708,114 @@ def sample_chen(
     return (r_paths, th_paths, z_paths) if return_factors else r_paths
 
 
+def sample_cbi(
+    a: float = 0.05,
+    b: float = 0.8,
+    c: float = 0.1,
+    lambda_j: float = 0.0,
+    eta: float = 20.0,
+    x0: float = 0.1,
+    dt: Optional[float] = None,
+    n_steps: Optional[int] = None,
+    n_paths: int = 1,
+    T: Optional[float] = None,
+    rng: Optional[np.random.Generator] = None,
+) -> np.ndarray:
+    r"""
+    Sample paths of Continuous-State Branching Process with Immigration (CBI).
+
+    Simulates the Dawson-Watanabe diffusion with quadratic branching and optional
+    compound Poisson jump immigration via high-order Milstein scheme with non-negative
+    reflection.
+
+    Parameters
+    ----------
+    a : float
+        Continuous immigration rate.
+    b : float
+        Branching drift / decay parameter.
+    c : float
+        Branching diffusion coefficient.
+    lambda_j : float
+        Jump immigration rate.
+    eta : float
+        Exponential jump scale parameter.
+    x0 : float
+        Initial state.
+    dt : float, optional
+        Time step size.
+    n_steps : int, optional
+        Number of steps.
+    n_paths : int
+        Number of paths.
+    T : float, optional
+        Time horizon.
+    rng : np.random.Generator, optional
+        Random number generator.
+    """
+    if a < 0:
+        raise ValueError("a must be >= 0")
+    if b < 0:
+        raise ValueError("b must be >= 0")
+    if c <= 0:
+        raise ValueError("c must be > 0")
+    if lambda_j < 0:
+        raise ValueError("lambda_j must be >= 0")
+    if eta <= 0:
+        raise ValueError("eta must be > 0")
+    if x0 < 0:
+        raise ValueError("x0 must be >= 0")
+    if n_paths <= 0:
+        raise ValueError("n_paths must be > 0")
+
+    if n_steps is None:
+        n_steps = 100
+    if n_steps < 0:
+        raise ValueError("n_steps must be non-negative")
+
+    if dt is None:
+        if T is not None:
+            if T <= 0:
+                raise ValueError("T must be strictly positive")
+            dt = T / n_steps if n_steps > 0 else 1.0
+        else:
+            dt = 1.0 / n_steps if n_steps > 0 else 1.0
+    else:
+        if dt <= 0:
+            raise ValueError("dt must be strictly positive")
+
+    paths = np.empty((n_paths, n_steps + 1), dtype=float)
+    paths[:, 0] = float(x0)
+
+    if n_steps == 0:
+        return paths
+
+    rng = rng or np.random.default_rng()
+    sq_dt = math.sqrt(dt)
+    curr_x = np.full(n_paths, x0, dtype=float)
+
+    for step in range(n_steps):
+        dw = rng.standard_normal(n_paths) * sq_dt
+
+        # Jump immigration
+        jumps = np.zeros(n_paths, dtype=float)
+        if lambda_j > 0.0:
+            n_jumps = rng.poisson(lambda_j * dt, size=n_paths)
+            has_j = n_jumps > 0
+            if np.any(has_j):
+                jumps[has_j] = rng.gamma(n_jumps[has_j], 1.0 / eta)
+
+        # Milstein step for sqrt(c X_t)
+        x_pos = np.maximum(curr_x, 0.0)
+        diff = np.sqrt(c * x_pos)
+        milstein = 0.25 * c * (dw ** 2 - dt)
+        curr_x = np.maximum(curr_x + (a - b * curr_x) * dt + diff * dw + milstein + jumps, 0.0)
+        paths[:, step + 1] = curr_x
+
+    return paths
+
+
+
 
 
 
