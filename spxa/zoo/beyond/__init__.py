@@ -33,6 +33,12 @@ from spxa.zoo.beyond.jacobi import (
     JacobiProcess,
     WrightFisherDiffusion,
 )
+from spxa.zoo.beyond.regime_switching_gbm import (
+    MarkovSwitchingGBM,
+    RSGBM,
+    RegimeSwitchingBlackScholes,
+    RegimeSwitchingGBM,
+)
 from spxa.zoo.beyond.cev import CEV, CEVProcess, ConstantElasticityOfVariance
 from spxa.zoo.beyond.cir import CIRProcess, CoxIngersollRoss
 from spxa.zoo.beyond.fbm import FractionalBrownianMotion
@@ -89,6 +95,10 @@ __all__ = [
     "JacobiDiffusion",
     "JacobiProcess",
     "WrightFisherDiffusion",
+    "MarkovSwitchingGBM",
+    "RSGBM",
+    "RegimeSwitchingBlackScholes",
+    "RegimeSwitchingGBM",
     "CEV",
     "CEVProcess",
     "ConstantElasticityOfVariance",

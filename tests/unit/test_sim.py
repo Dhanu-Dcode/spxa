@@ -40,6 +40,7 @@ from spxa.sim.exact import (
     sample_schwartz_two_factor,
     sample_bns,
     sample_jacobi,
+    sample_regime_switching_gbm,
     sample_nig,
     sample_ou,
     sample_vg,
@@ -1094,6 +1095,78 @@ class TestExactSamplers:
             sample_jacobi(n_steps=-1)
         with pytest.raises(ValueError, match="n_paths"):
             sample_jacobi(n_paths=0)
+
+    def test_sample_rs_gbm_shape_and_initial_condition(self) -> None:
+        """sample_regime_switching_gbm produces correct shape and positive prices."""
+        rng = np.random.default_rng(96)
+        p = sample_regime_switching_gbm(
+            mu=(0.05, -0.02),
+            sigma=(0.15, 0.30),
+            transition_rates=[[-0.5, 0.5], [1.0, -1.0]],
+            s0=100.0,
+            initial_regime=0,
+            dt=0.05,
+            n_steps=20,
+            n_paths=5,
+            rng=rng,
+        )
+        assert p.shape == (5, 21)
+        assert np.all(p[:, 0] == 100.0)
+        assert np.all(p > 0.0)
+
+        s_paths, reg_paths = sample_regime_switching_gbm(
+            mu=(0.05, -0.02),
+            sigma=(0.15, 0.30),
+            transition_rates=[[-0.5, 0.5], [1.0, -1.0]],
+            s0=100.0,
+            initial_regime=0,
+            dt=0.05,
+            n_steps=20,
+            n_paths=5,
+            rng=rng,
+            return_regimes=True,
+        )
+        assert s_paths.shape == (5, 21)
+        assert reg_paths.shape == (5, 21)
+        assert np.all(s_paths[:, 0] == 100.0)
+        assert np.all(reg_paths[:, 0] == 0)
+        assert np.all((reg_paths == 0) | (reg_paths == 1))
+
+    def test_sample_rs_gbm_zero_steps(self) -> None:
+        """sample_regime_switching_gbm with n_steps=0 returns shape (n_paths, 1)."""
+        p = sample_regime_switching_gbm(
+            mu=(0.05, -0.02),
+            sigma=(0.15, 0.30),
+            transition_rates=[[-0.5, 0.5], [1.0, -1.0]],
+            s0=100.0,
+            n_steps=0,
+            n_paths=4,
+        )
+        assert p.shape == (4, 1)
+        assert np.all(p == 100.0)
+
+    def test_sample_rs_gbm_invalid_parameters_raise(self) -> None:
+        """sample_regime_switching_gbm raises ValueError on invalid inputs."""
+        with pytest.raises(ValueError, match="s0"):
+            sample_regime_switching_gbm(
+                mu=(0.05, -0.02), sigma=(0.15, 0.30),
+                transition_rates=[[-0.5, 0.5], [1.0, -1.0]], s0=-1.0,
+            )
+        with pytest.raises(ValueError, match="initial_regime"):
+            sample_regime_switching_gbm(
+                mu=(0.05, -0.02), sigma=(0.15, 0.30),
+                transition_rates=[[-0.5, 0.5], [1.0, -1.0]], s0=100.0, initial_regime=3,
+            )
+        with pytest.raises(ValueError, match="n_steps"):
+            sample_regime_switching_gbm(
+                mu=(0.05, -0.02), sigma=(0.15, 0.30),
+                transition_rates=[[-0.5, 0.5], [1.0, -1.0]], s0=100.0, n_steps=-1,
+            )
+        with pytest.raises(ValueError, match="n_paths"):
+            sample_regime_switching_gbm(
+                mu=(0.05, -0.02), sigma=(0.15, 0.30),
+                transition_rates=[[-0.5, 0.5], [1.0, -1.0]], s0=100.0, n_paths=0,
+            )
 
 
 

@@ -38,6 +38,7 @@ the running library. All signatures are exact.
    - [CIRProcess](#cirprocess)
    - [JCIRProcess](#jcirprocess)
    - [JacobiProcess](#jacobiprocess)
+   - [RegimeSwitchingGBM](#regimeswitchinggbm)
    - [HullWhiteProcess](#hullwhiteprocess)
    - [BlackKarasinskiProcess](#blackkarasinskiprocess)
    - [SABRProcess](#sabrprocess)
@@ -144,6 +145,10 @@ spxa.Jacobi
 spxa.JacobiDiffusion
 spxa.JacobiProcess
 spxa.WrightFisherDiffusion
+spxa.MarkovSwitchingGBM
+spxa.RegimeSwitchingBlackScholes
+spxa.RegimeSwitchingGBM
+spxa.RSGBM
 spxa.ExtendedVasicek
 spxa.HW1F
 spxa.HullWhite
@@ -1388,6 +1393,56 @@ Because diffusion vanishes at the boundaries $y_{\min}$ and $y_{\max}$, the proc
 - Ackerer, D., Filipović, D., & Turnes, M. (2018). *The Jacobi stochastic volatility model*. Finance and Stochastics, 22(3), 667–700.
 - Karlin, S., & Taylor, H. M. (1981). *A Second Course in Stochastic Processes*. Academic Press.
 - Filipović, D., & Larsson, M. (2016). *Polynomial diffusions and applications in finance*. Finance and Stochastics, 20(4), 931–972.
+
+---
+
+### RegimeSwitchingGBM
+
+```python
+from spxa import RegimeSwitchingGBM, RSGBM, RegimeSwitchingBlackScholes, MarkovSwitchingGBM
+
+rs_gbm = RegimeSwitchingGBM(
+    mu=[0.08, -0.04],
+    sigma=[0.15, 0.35],
+    transition_rates=[[-0.5, 0.5], [1.0, -1.0]],
+    s0=100.0,
+    initial_regime=0,
+)
+```
+
+The continuous-time Markov-modulated Geometric Brownian Motion (Hamilton 1989; Naik 1993; Guo 2001) couples asset price dynamics with an unobserved or observed macro-economic regime:
+$$dS_t = \mu(Y_t) S_t dt + \sigma(Y_t) S_t dW_t, \quad S_0 > 0$$
+where $Y_t \in \{0, 1, \dots, K-1\}$ is a continuous-time Markov chain (CTMC) with generator matrix $Q$.
+
+**Parameters & Structural Properties:**
+- `mu` — sequence of regime drift rates $(\mu_0, \dots, \mu_{K-1})$
+- `sigma` — sequence of regime volatilities $(\sigma_0, \dots, \sigma_{K-1})$, with $\sigma_i > 0$
+- `transition_rates` — $K \times K$ CTMC generator matrix $Q$ (rows sum to 0)
+- `s0` — initial asset price $S_0 > 0$
+- `initial_regime` — initial Markov regime $Y_0 \in \{0, \dots, K-1\}$
+- `n_regimes` — number of states $K$
+- `stationary_distribution` — stationary probability vector $\boldsymbol{\pi}$ satisfying $\boldsymbol{\pi} Q = \mathbf{0}$
+
+**Matrix Exponential Analytics & Option Pricing:**
+- `transition_probabilities(t=1.0)` — exact transition probability matrix $P(t) = \exp(Q t)$
+- `conditional_moment(n, t=1.0)` — exact $n$-th moment $\mathbb{E}[S_t^n \mid S_0, Y_0] = S_0^n \sum_j [\exp(M_n t)]_{ij}$ where $M_n = Q + \mathrm{diag}(n\mu + \frac{1}{2}n(n-1)\sigma^2)$
+- `conditional_mean(t=1.0)` — exact conditional expectation $\mathbb{E}[S_t \mid S_0, Y_0]$
+- `conditional_second_moment(t=1.0)` — exact conditional second moment $\mathbb{E}[S_t^2 \mid S_0, Y_0]$
+- `conditional_variance(t=1.0)` — exact conditional variance $\mathrm{Var}(S_t \mid S_0, Y_0)$
+- `conditional_std(t=1.0)` — conditional standard deviation
+- `char_func(u, t=1.0)` — exact continuous characteristic function $\mathbb{E}[e^{i u \ln(S_t / S_0)}]$ via matrix exponentials
+- `call_price(strike, time_to_maturity=1.0, discount_rate=None)` — European call option price via Gil-Pelaez Fourier inversion
+- `put_price(strike, time_to_maturity=1.0, discount_rate=None)` — European put option price via Put-Call parity
+
+**Simulation:**
+- `simulate(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None)` — sample paths of asset price $S_t$
+- `simulate_joint(n_steps=100, dt=None, time_horizon=None, n_paths=1, rng=None)` — coupled sample paths `(spot_paths, regime_paths)`
+
+**References:**
+- Hamilton, J. D. (1989). *A new approach to the economic analysis of nonstationary time series and the business cycle*. Econometrica, 57(2), 357–384.
+- Naik, V. (1993). *Option valuation and hedging in a regime switching framework*. The Journal of Finance, 48(5), 1969–1997.
+- Guo, X. (2001). *Information and option pricings*. Quantitative Finance, 1(1), 38–44.
+- Elliott, R. J., Aggoun, L., & Moore, J. B. (1994). *Hidden Markov Models: Estimation and Control*. Springer-Verlag.
 
 ---
 
