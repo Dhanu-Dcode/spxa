@@ -33,6 +33,12 @@ from spxa.zoo.beyond.jacobi import (
     JacobiProcess,
     WrightFisherDiffusion,
 )
+from spxa.zoo.beyond.chen import (
+    ChenModel,
+    ChenProcess,
+    ChenShortRate,
+    ChenThreeFactor,
+)
 from spxa.zoo.beyond.regime_switching_gbm import (
     MarkovSwitchingGBM,
     RSGBM,
@@ -95,6 +101,10 @@ __all__ = [
     "JacobiDiffusion",
     "JacobiProcess",
     "WrightFisherDiffusion",
+    "ChenModel",
+    "ChenProcess",
+    "ChenShortRate",
+    "ChenThreeFactor",
     "MarkovSwitchingGBM",
     "RSGBM",
     "RegimeSwitchingBlackScholes",
