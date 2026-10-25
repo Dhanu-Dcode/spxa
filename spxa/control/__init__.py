@@ -15,6 +15,12 @@ from spxa.control.lqg import (
     LinearQuadraticRegulator,
     LQG,
 )
+from spxa.control.market_making import (
+    AvellanedaStoikov,
+    AvellanedaStoikovMarketMaker,
+    HighFrequencyMarketMaker,
+    OptimalMarketMaking,
+)
 from spxa.control.merton import (
     MertonControl,
     MertonPortfolio,
@@ -36,4 +42,8 @@ __all__ = [
     "AlmgrenChriss",
     "AlmgrenChrissModel",
     "OptimalExecution",
+    "AvellanedaStoikovMarketMaker",
+    "AvellanedaStoikov",
+    "OptimalMarketMaking",
+    "HighFrequencyMarketMaker",
 ]
