@@ -27,6 +27,11 @@ from spxa.zoo.levy.nig import NIG
 from spxa.zoo.levy.poisson import PoissonProcess
 from spxa.zoo.levy.stable import AlphaStable
 from spxa.zoo.levy.tempered_stable import TemperedStable
+from spxa.zoo.levy.nts import (
+    NTSProcess,
+    NormalTemperedStable,
+    NormalTemperedStableProcess,
+)
 from spxa.zoo.levy.vg import VarianceGamma
 
 __all__ = [
@@ -57,6 +62,9 @@ __all__ = [
     "NormalJump",
     "PoissonProcess",
     "TemperedStable",
+    "NormalTemperedStable",
+    "NormalTemperedStableProcess",
+    "NTSProcess",
     "UniformJump",
     "VarianceGamma",
 ]

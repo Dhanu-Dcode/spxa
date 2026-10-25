@@ -102,6 +102,26 @@ from spxa.zoo.beyond.bilinear import (
     BilinearDiffusion,
     BilinearDiffusionProcess,
 )
+from spxa.zoo.beyond.multivariate_hawkes import (
+    MHawkes,
+    MultivariateHawkes,
+    MultivariateHawkesProcess,
+)
+from spxa.zoo.beyond.kou_sv import (
+    KouSV,
+    KouSVProcess,
+    KouStochasticVolatility,
+)
+from spxa.zoo.beyond.diffusion_bridge import (
+    DiffusionBridge,
+    DoobBridge,
+    GeneralDiffusionBridge,
+)
+from spxa.zoo.beyond.rough_heston import (
+    RoughHeston,
+    RoughHestonProcess,
+    RoughVolatility,
+)
 
 from .mmpp import MarkovModulatedPoissonProcess
 
@@ -186,6 +206,18 @@ __all__ = [
     "BilinearDiffusion",
     "BilinearDiffusionProcess",
     "AffineDiffusion",
+    "MultivariateHawkes",
+    "MultivariateHawkesProcess",
+    "MHawkes",
+    "KouSV",
+    "KouSVProcess",
+    "KouStochasticVolatility",
+    "GeneralDiffusionBridge",
+    "DiffusionBridge",
+    "DoobBridge",
+    "RoughHeston",
+    "RoughHestonProcess",
+    "RoughVolatility",
     "Vasicek",
     "VasicekProcess",
     "MarkovModulatedPoissonProcess",

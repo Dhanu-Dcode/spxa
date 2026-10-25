@@ -55,6 +55,11 @@ the running library. All signatures are exact.
    - [SchwartzOneFactor](#schwartzonefactor)
    - [GARCHDiffusion](#garchdiffusion)
    - [BilinearDiffusion](#bilineardiffusion)
+   - [NormalTemperedStableProcess](#normaltemperedstableprocess)
+   - [MultivariateHawkesProcess](#multivariatehawkesprocess)
+   - [KouSVProcess](#kousvprocess)
+   - [GeneralDiffusionBridge](#generaldiffusionbridge)
+   - [RoughHestonProcess](#roughhestonprocess)
    - [SquaredBesselProcess](#squaredbesselprocess)
    - [BesselProcess](#besselprocess)
    - [OrnsteinUhlenbeck](#ornsteinuhlenbeck)
@@ -194,6 +199,21 @@ spxa.GARCHDiffusionProcess
 spxa.BilinearDiffusion
 spxa.BilinearDiffusionProcess
 spxa.AffineDiffusion
+spxa.NormalTemperedStable
+spxa.NormalTemperedStableProcess
+spxa.NTSProcess
+spxa.MultivariateHawkes
+spxa.MultivariateHawkesProcess
+spxa.MHawkes
+spxa.KouSV
+spxa.KouSVProcess
+spxa.KouStochasticVolatility
+spxa.GeneralDiffusionBridge
+spxa.DiffusionBridge
+spxa.DoobBridge
+spxa.RoughHeston
+spxa.RoughHestonProcess
+spxa.RoughVolatility
 spxa.BES
 spxa.BESQ
 spxa.Bessel
@@ -2096,6 +2116,100 @@ $$dX_t = (a + b X_t) dt + (c + d X_t) dW_t$$
 - `conditional_mean(t)`, `conditional_second_moment(t)`, `conditional_variance(t)` — exact moment ODE solutions
 - `stationary_mean`, `stationary_variance` — closed-form Pearson stationary moments
 - `simulate(t_grid, n_paths=1, rng=None)` — high-order Milstein simulation respecting the state boundary
+
+---
+
+### NormalTemperedStableProcess
+
+```python
+from spxa import NormalTemperedStableProcess, NormalTemperedStable, NTSProcess
+
+p = NormalTemperedStableProcess(alpha=0.5, lambd=1.5, delta=1.0, theta=-0.2, sigma=0.8)
+```
+
+The Normal Tempered Stable (NTS) process is a six-parameter Lévy process constructed by subordinating a Brownian motion with drift by a Tempered Stable subordinator:
+$$X_t = \theta T_t + \sigma W(T_t), \quad T_t \sim \text{TemperedStable}(\alpha, \lambda, \delta)$$
+
+**Exact Analytics:**
+- `char_func(u, t=1.0)` — closed-form analytical characteristic function
+- `cumulant(order)`, `mean`, `variance`, `skewness`, `excess_kurtosis` — exact subordination cumulants
+- `simulate(t_grid, n_paths=1, rng=None)` — exact subordination path simulation
+
+---
+
+### MultivariateHawkesProcess
+
+```python
+from spxa import MultivariateHawkesProcess, MultivariateHawkes, MHawkes
+
+p = MultivariateHawkesProcess(
+    mu=[0.5, 0.4],
+    alpha=[[0.2, 0.1], [0.1, 0.2]],
+    beta=[[1.0, 1.0], [1.0, 1.0]],
+)
+```
+
+The Multivariate Hawkes process is an $M$-dimensional self- and mutually-exciting point process with stochastic intensity:
+$$\lambda_m(t) = \mu_m + \sum_{k=1}^M \int_0^t \alpha_{m, k} e^{-\beta_{m, k}(t - s)} dN_k(s)$$
+
+**Exact Analytics:**
+- `spectral_radius`, `is_subcritical` — branching matrix stability condition $\rho(\mathbf{\Gamma}) < 1$
+- `stationary_intensity` — exact expected arrival rate vector $\mathbf{\lambda}_\infty = (\mathbf{I} - \mathbf{\Gamma})^{-1} \mathbf{\mu}$
+- `simulate(time_horizon, rng=None)` — Ogata's multivariate thinning event simulation
+
+---
+
+### KouSVProcess
+
+```python
+from spxa import KouSVProcess, KouSV, KouStochasticVolatility
+
+p = KouSVProcess(s0=100.0, v0=0.04, kappa=2.0, theta=0.04, lambd_j=0.5)
+```
+
+The Kou-SV model couples Heston stochastic volatility with Kou double-exponential asymmetric jumps:
+$$dS_t / S_{t-} = (r - q - \lambda_J \kappa_J) dt + \sqrt{v_t} dW_{1,t} + (e^Y - 1) dN_t$$
+$$dv_t = \kappa(\theta - v_t) dt + \sigma_v \sqrt{v_t} dW_{2,t}$$
+
+**Exact Analytics:**
+- `char_func(u, t=1.0)` — analytical affine characteristic function combining Heston and Kou jumps
+- `european_call(K, T)`, `european_put(K, T)` — Lewis Fourier-inversion option pricing
+- `simulate(t_grid, n_paths=1, rng=None)` — joint full-truncation Euler simulation
+
+---
+
+### GeneralDiffusionBridge
+
+```python
+from spxa import GeneralDiffusionBridge, DiffusionBridge, DoobBridge
+
+p = GeneralDiffusionBridge(a=0.0, b=2.0, T=1.0, model="ou", sigma=0.5, kappa=1.2, theta=1.0)
+```
+
+The General Diffusion Bridge conditions 1D diffusions (Brownian, OU, GBM) on pinned boundary values $X(0) = a$ and $X(T) = b$ using Doob's $h$-transform:
+$$dX_t = \left[ \mu(X_t) + \sigma^2(X_t) \frac{\partial \ln p(b, T \mid X_t, t)}{\partial x} \right] dt + \sigma(X_t) dW_t$$
+
+**Exact Analytics:**
+- `conditional_mean(t)`, `conditional_variance(t)` — closed-form moments guaranteeing $X(0)=a$ and $X(T)=b$
+- `simulate(t_grid, n_paths=1, rng=None)` — exact pinned path generation
+
+---
+
+### RoughHestonProcess
+
+```python
+from spxa import RoughHestonProcess, RoughHeston, RoughVolatility
+
+p = RoughHestonProcess(hurst=0.1, lam=1.2, theta=0.04, nu=0.3, rho=-0.6)
+```
+
+The Rough Heston model describes volatility driven by a fractional Volterra integral equation of order $\alpha = H + 1/2 \in (1/2, 1)$:
+$$v_t = v_0 + \int_0^t \frac{(t-s)^{H - 0.5}}{\Gamma(H + 0.5)} [ \lambda(\theta - v_s) ds + \nu \sqrt{v_s} dW_{2,s} ]$$
+
+**Exact Analytics:**
+- `expected_variance(t)` — Mittag-Leffler fractional expectation $\mathbb{E}[v_t] = \theta + (v_0 - \theta) E_{\alpha, 1}(-\lambda t^\alpha)$
+- `asymptotic_atm_skew(T)` — power-law at-the-money skew scaling $|\partial \sigma_{IV} / \partial k| \sim C \cdot T^{H - 0.5}$
+- `simulate(t_grid, n_paths=1, rng=None, return_vol=False)` — fractional convolution simulation
 
 ---
 

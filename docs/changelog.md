@@ -6,6 +6,16 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/multivariate_hawkes.py` — Multivariate Hawkes mutually exciting point process (`MultivariateHawkesProcess`, `MultivariateHawkes`, `MHawkes`):
+  $M$-dimensional Hawkes intensity $\lambda_m(t)$, branching infectivity matrix $\mathbf{\Gamma}$, spectral radius stationarity condition $\rho(\mathbf{\Gamma}) < 1$, exact expected arrival intensity $\mathbf{\lambda}_\infty = (\mathbf{I} - \mathbf{\Gamma})^{-1} \mathbf{\mu}$, and Ogata thinning event simulation.
+- `zoo/levy/nts.py` — Normal Tempered Stable (NTS) Lévy process (`NormalTemperedStableProcess`, `NormalTemperedStable`, `NTSProcess`):
+  Subordinated Brownian motion $X_t = \theta T_t + \sigma W(T_t)$ with Tempered Stable subordinator, exact closed-form characteristic function, exact cumulant generating function, and subordination simulation.
+- `zoo/beyond/kou_sv.py` — Kou Stochastic Volatility Jump-Diffusion model (`KouSVProcess`, `KouSV`, `KouStochasticVolatility`):
+  Coupled Heston mean-reverting stochastic volatility with Kou asymmetric double-exponential jumps, affine characteristic function, Lewis Fourier inversion European call/put options, and full-truncation Euler simulation.
+- `zoo/beyond/diffusion_bridge.py` — General Diffusion Bridge via Doob's $h$-transform (`GeneralDiffusionBridge`, `DiffusionBridge`, `DoobBridge`):
+  Drift correction $\mu^*(x, t) = \mu(x) + \sigma^2(x) \partial_x \ln p(b, T \mid x, t)$ for Brownian, Ornstein–Uhlenbeck, and Geometric Brownian Motion bridges, exact moments, and pinned path simulation.
+- `zoo/beyond/rough_heston.py` — Rough Heston stochastic volatility model (`RoughHestonProcess`, `RoughHeston`, `RoughVolatility`):
+  Fractional Volterra stochastic volatility of order $\alpha = H + 1/2 \in (1/2, 1)$, singular kernel $K(t) = t^{\alpha - 1} / \Gamma(\alpha)$, Mittag-Leffler expected variance, power-law implied volatility skew $|\partial \sigma_{IV} / \partial k| \sim T^{H - 0.5}$, and fractional convolution simulation.
 - `zoo/beyond/g2pp.py` — Two-Factor Hull–White (G2++) short-rate diffusion model (`G2PlusPlusProcess`, `G2PlusPlus`, `TwoFactorHullWhite`):
   Two coupled OU factors driving short rate $r(t) = x(t) + y(t) + \phi(t)$, closed-form zero-coupon bond pricing $P(t, T)$, Brigo–Mercurio European bond option formulas, and exact bivariate Gaussian factor simulation.
 - `zoo/beyond/three_halves.py` — 3/2 Stochastic Volatility diffusion model (`ThreeHalvesProcess`, `ThreeHalves`, `ThreeHalvesModel`):

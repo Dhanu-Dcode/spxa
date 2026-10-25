@@ -30,6 +30,7 @@ Comprehensive registry of all stochastic processes implemented in `spxa`, their 
 | **Compound Poisson** | `CompoundPoisson` | `EXACT` | Cont & Tankov (2004) |
 | **Inverse Gaussian** | `InverseGaussianProcess` | `EXACT` | Tweedie (1957) |
 | **Tempered Stable** | `TemperedStable` | `EXACT` | Rosiński (2007), Cont & Tankov (2004) |
+| **Normal Tempered Stable** | `NormalTemperedStableProcess`, `NTSProcess` | `EXACT` | Barndorff-Nielsen & Levendorskii (2001) |
 | **Negative Binomial** | `NegativeBinomialProcess` | `EXACT` | Kozubowski & Podgórski (2009) |
 
 ---
@@ -52,6 +53,8 @@ Comprehensive registry of all stochastic processes implemented in `spxa`, their 
 | **SABR Model** | `SABRProcess`, `SABR` | `MOMENT_PROPAGATION` | Hagan, P. S. et al. (2002), *Wilmott Mag.*, 84–108 |
 | **Schöbel–Zhu Model** | `SchobelZhuProcess`, `SZModel` | `EXACT` | Schöbel, R. & Zhu, J. (1999), *Eur. Finance Rev.*, 3(1), 23–46 |
 | **Barndorff-Nielsen & Shephard**| `BNSModel`, `BNS` | `EXACT` | Barndorff-Nielsen & Shephard (2001), *J. R. Stat. Soc. B*, 63(2), 167–241 |
+| **Kou Stochastic Volatility** | `KouSVProcess`, `KouSV` | `MOMENT_PROPAGATION` | Kou (2002), Heston (1993) |
+| **Rough Heston Model** | `RoughHestonProcess`, `RoughHeston` | `MOMENT_PROPAGATION` | El Euch & Rosenbaum (2019), *Math. Finance*, 29(1), 3–38 |
 
 ---
 
@@ -86,6 +89,8 @@ Comprehensive registry of all stochastic processes implemented in `spxa`, their 
 | **Bilinear Diffusion** | `BilinearDiffusion`, `AffineDiffusion` | `MOMENT_PROPAGATION` | Bibby & Sørensen (1995), *Bernoulli*, 1(1-2), 17–39 |
 | **Fractional Brownian Motion** | `FractionalBrownianMotion`, `fBM` | `MOMENT_PROPAGATION` | Mandelbrot & Van Ness (1968) |
 | **Hawkes Process** | `HawkesProcess` | `MOMENT_PROPAGATION` | Hawkes, A. G. (1971), *Biometrika*, 58(1), 83–90 |
+| **Multivariate Hawkes** | `MultivariateHawkesProcess`, `MHawkes` | `MOMENT_PROPAGATION` | Hawkes, A. G. (1971), Ogata, Y. (1981) |
+| **General Diffusion Bridge** | `GeneralDiffusionBridge`, `DiffusionBridge` | `MOMENT_PROPAGATION` | Doob, J. L. (1957), Revuz & Yor (1999) |
 | **MMPP** | `MarkovModulatedPoissonProcess` | `MOMENT_PROPAGATION` | Fischer & Meier-Hellstern (1993) |
 | **OU-Lévy** | `OULevy` | `MOMENT_PROPAGATION` | Barndorff-Nielsen & Shephard (2001) |
 
