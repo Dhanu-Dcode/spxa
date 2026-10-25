@@ -32,7 +32,9 @@ class TestShiftedCIRExactness:
             ShiftedCIRProcess(k=0.5, theta=0.04, sigma=0.1, x0=-0.01)
 
     def test_shifted_cir_properties_and_feller(self):
-        process = ShiftedCIRProcess(k=1.2, theta=0.03, sigma=0.1, x0=0.02, phi0=0.005, phi1=0.01, alpha=0.5)
+        process = ShiftedCIRProcess(
+            k=1.2, theta=0.03, sigma=0.1, x0=0.02, phi0=0.005, phi1=0.01, alpha=0.5
+        )
         # 2 * 1.2 * 0.03 / 0.01 = 7.2
         assert process.feller_ratio == pytest.approx(7.2, rel=1e-5)
         assert process.phi(0.0) == pytest.approx(0.015, rel=1e-5)
@@ -52,10 +54,14 @@ class TestShiftedCIRExactness:
 
         t_far = 50.0
         assert process.mean(t_far) == pytest.approx(process.theta + process.phi(t_far), rel=1e-3)
-        assert process.variance(t_far) == pytest.approx(process.theta * process.sigma**2 / (2.0 * process.k), rel=1e-3)
+        assert process.variance(t_far) == pytest.approx(
+            process.theta * process.sigma**2 / (2.0 * process.k), rel=1e-3
+        )
 
     def test_shifted_cir_bond_pricing_and_yield_curve(self):
-        process = ShiftedCIRProcess(k=0.5, theta=0.03, sigma=0.05, x0=0.02, phi0=0.01, phi1=0.005, alpha=0.2)
+        process = ShiftedCIRProcess(
+            k=0.5, theta=0.03, sigma=0.05, x0=0.02, phi0=0.01, phi1=0.005, alpha=0.2
+        )
         assert process.zero_coupon_bond(0.0) == pytest.approx(1.0, rel=1e-7)
 
         maturities = np.array([0.5, 1.0, 2.0, 5.0])

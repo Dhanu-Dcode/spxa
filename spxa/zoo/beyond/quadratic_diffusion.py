@@ -50,7 +50,9 @@ class QuadraticDiffusion(Process):
         # Verify radicand positive at initial point x0
         rad_0 = c + d * x0 + e * (x0**2)
         if rad_0 <= 0:
-            raise ValueError(f"Variance polynomial c + d*x0 + e*x0^2 must be positive at x0, got {rad_0}")
+            raise ValueError(
+                f"Variance polynomial c + d*x0 + e*x0^2 must be positive at x0, got {rad_0}"
+            )
 
         self.a = float(a)
         self.b = float(b)
@@ -119,7 +121,6 @@ class QuadraticDiffusion(Process):
         if lam2 >= 0:
             return float("inf")
         # Solve linear system for E[X_t^2]
-        mu_inf = self.stationary_mean()
         var_inf = self.stationary_variance()
         e_lam2t = math.exp(lam2 * t)
         return float(var_inf * (1.0 - e_lam2t))

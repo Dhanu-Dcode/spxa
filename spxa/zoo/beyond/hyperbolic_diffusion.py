@@ -46,7 +46,9 @@ class HyperbolicDiffusion(Process):
         x0: float = 0.0,
     ) -> None:
         if alpha <= 0 or delta <= 0:
-            raise ValueError(f"Parameters alpha and delta must be positive: alpha={alpha}, delta={delta}")
+            raise ValueError(
+                f"Parameters alpha and delta must be positive: alpha={alpha}, delta={delta}"
+            )
         if abs(beta) >= alpha:
             raise ValueError(f"Stability requires |beta| < alpha: |{beta}| >= {alpha}")
         if sigma <= 0:
@@ -77,7 +79,9 @@ class HyperbolicDiffusion(Process):
             is_martingale=False,
             has_finite_variance=True,
             has_finite_mean=True,
-            notes=["Hyperbolic diffusion with invariant exponential tails (Barndorff-Nielsen 1978)"],
+            notes=[
+                "Hyperbolic diffusion with invariant exponential tails (Barndorff-Nielsen 1978)"
+            ],
         )
 
     def drift(self, x: Union[float, np.ndarray]) -> Union[float, np.ndarray]:

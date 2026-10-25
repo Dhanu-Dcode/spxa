@@ -162,9 +162,7 @@ class JumpOUProcess(Process):
             total_jumps = np.zeros(num_paths)
             for path_idx, n_j in enumerate(num_jumps):
                 if n_j > 0:
-                    total_jumps[path_idx] = np.sum(
-                        np.random.normal(self.mu_j, self.sigma_j, n_j)
-                    )
+                    total_jumps[path_idx] = np.sum(np.random.normal(self.mu_j, self.sigma_j, n_j))
 
             paths[:, step + 1] = x_diff + total_jumps
 

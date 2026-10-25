@@ -17,7 +17,7 @@ References:
 from __future__ import annotations
 
 import math
-from typing import Optional, Union
+from typing import Optional
 
 import numpy as np
 from scipy import stats
@@ -117,7 +117,9 @@ class MertonFirmValueProcess(Process):
         """Market value of equity E_0 = Call(V_0, D, T, r, sigma_V)."""
         horizon = self.t_debt if t is None else float(t)
         d1, d2 = self._d1_d2(horizon)
-        e0 = self.v0 * stats.norm.cdf(d1) - self.debt * math.exp(-self.r * horizon) * stats.norm.cdf(d2)
+        e0 = self.v0 * stats.norm.cdf(d1) - self.debt * math.exp(
+            -self.r * horizon
+        ) * stats.norm.cdf(d2)
         return float(max(0.0, e0))
 
     def debt_value(self, t: Optional[float] = None) -> float:

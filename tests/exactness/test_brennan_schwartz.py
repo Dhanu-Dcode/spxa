@@ -16,8 +16,15 @@ from spxa.zoo.beyond.brennan_schwartz import (
 class TestBrennanSchwartzExactness:
     def test_bs_exactness_level_and_aliases(self):
         process = BrennanSchwartzProcess(
-            s0=50.0, delta0=0.04, mu=0.08, k=1.2, delta_bar=0.05,
-            sigma1=0.2, sigma2=0.15, rho=0.3, r=0.02,
+            s0=50.0,
+            delta0=0.04,
+            mu=0.08,
+            k=1.2,
+            delta_bar=0.05,
+            sigma1=0.2,
+            sigma2=0.15,
+            rho=0.3,
+            r=0.02,
         )
         assert process.exactness_level == ExactnessLevel.MOMENT_PROPAGATION
         assert BrennanSchwartz is BrennanSchwartzProcess
@@ -25,22 +32,37 @@ class TestBrennanSchwartzExactness:
 
     def test_bs_triplet_raises_exactness_error(self):
         process = BrennanSchwartzProcess(
-            s0=50.0, delta0=0.04, mu=0.08, k=1.2, delta_bar=0.05,
-            sigma1=0.2, sigma2=0.15,
+            s0=50.0,
+            delta0=0.04,
+            mu=0.08,
+            k=1.2,
+            delta_bar=0.05,
+            sigma1=0.2,
+            sigma2=0.15,
         )
         with pytest.raises(ExactnessError):
             _ = process.triplet
 
     def test_bs_invalid_parameters_raise(self):
         with pytest.raises(ValueError, match="Spot price s0"):
-            BrennanSchwartzProcess(s0=-5.0, delta0=0.04, mu=0.08, k=1.2, delta_bar=0.05, sigma1=0.2, sigma2=0.15)
+            BrennanSchwartzProcess(
+                s0=-5.0, delta0=0.04, mu=0.08, k=1.2, delta_bar=0.05, sigma1=0.2, sigma2=0.15
+            )
         with pytest.raises(ValueError, match="Convenience yield delta0"):
-            BrennanSchwartzProcess(s0=50.0, delta0=-0.04, mu=0.08, k=1.2, delta_bar=0.05, sigma1=0.2, sigma2=0.15)
+            BrennanSchwartzProcess(
+                s0=50.0, delta0=-0.04, mu=0.08, k=1.2, delta_bar=0.05, sigma1=0.2, sigma2=0.15
+            )
 
     def test_bs_convenience_yield_moments(self):
         process = BrennanSchwartzProcess(
-            s0=60.0, delta0=0.03, mu=0.07, k=1.5, delta_bar=0.06,
-            sigma1=0.25, sigma2=0.2, rho=0.4,
+            s0=60.0,
+            delta0=0.03,
+            mu=0.07,
+            k=1.5,
+            delta_bar=0.06,
+            sigma1=0.25,
+            sigma2=0.2,
+            rho=0.4,
         )
         assert process.mean_convenience_yield(0.0) == pytest.approx(0.03, rel=1e-7)
         assert process.stationary_mean_convenience_yield() == pytest.approx(0.06, rel=1e-7)
@@ -51,8 +73,14 @@ class TestBrennanSchwartzExactness:
 
     def test_bs_futures_pricing_term_structure(self):
         process = BrennanSchwartzProcess(
-            s0=100.0, delta0=0.05, mu=0.08, k=1.0, delta_bar=0.05,
-            sigma1=0.2, sigma2=0.1, r=0.05,
+            s0=100.0,
+            delta0=0.05,
+            mu=0.08,
+            k=1.0,
+            delta_bar=0.05,
+            sigma1=0.2,
+            sigma2=0.1,
+            r=0.05,
         )
         # When r = delta_bar = delta0, futures price F(0, T) = S_0 for all T
         f_0 = process.futures_price(0.0)
@@ -62,8 +90,14 @@ class TestBrennanSchwartzExactness:
 
     def test_bs_joint_simulation_paths(self):
         process = BrennanSchwartzProcess(
-            s0=40.0, delta0=0.04, mu=0.06, k=1.2, delta_bar=0.05,
-            sigma1=0.2, sigma2=0.1, rho=0.2,
+            s0=40.0,
+            delta0=0.04,
+            mu=0.06,
+            k=1.2,
+            delta_bar=0.05,
+            sigma1=0.2,
+            sigma2=0.1,
+            rho=0.2,
         )
         s_paths, d_paths = process.simulate(t_max=1.0, num_steps=30, num_paths=1500, seed=42)
         assert s_paths.shape == (1500, 31)

@@ -16,7 +16,9 @@ from spxa.zoo.beyond.merton_firm_value import (
 @pytest.mark.exactness
 class TestMertonFirmValueExactness:
     def test_merton_credit_exactness_level_and_aliases(self):
-        process = MertonFirmValueProcess(v0=100.0, debt=60.0, sigma_v=0.25, mu=0.08, r=0.03, t_debt=1.0)
+        process = MertonFirmValueProcess(
+            v0=100.0, debt=60.0, sigma_v=0.25, mu=0.08, r=0.03, t_debt=1.0
+        )
         assert process.exactness_level == ExactnessLevel.MOMENT_PROPAGATION
         assert MertonDefaultModel is MertonFirmValueProcess
         assert StructuralCreditModel is MertonFirmValueProcess
@@ -35,7 +37,9 @@ class TestMertonFirmValueExactness:
             MertonFirmValueProcess(v0=100.0, debt=60.0, sigma_v=-0.25)
 
     def test_merton_credit_accounting_identity_and_spread(self):
-        process = MertonFirmValueProcess(v0=100.0, debt=70.0, sigma_v=0.2, mu=0.06, r=0.03, t_debt=2.0)
+        process = MertonFirmValueProcess(
+            v0=100.0, debt=70.0, sigma_v=0.2, mu=0.06, r=0.03, t_debt=2.0
+        )
         e0 = process.equity_value()
         b0 = process.debt_value()
 
@@ -49,7 +53,9 @@ class TestMertonFirmValueExactness:
         assert spread > 0.0  # Positive credit spread for risky debt
 
     def test_merton_credit_default_probabilities(self):
-        process = MertonFirmValueProcess(v0=100.0, debt=80.0, sigma_v=0.3, mu=0.10, r=0.02, t_debt=1.0)
+        process = MertonFirmValueProcess(
+            v0=100.0, debt=80.0, sigma_v=0.3, mu=0.10, r=0.02, t_debt=1.0
+        )
         p_def = process.physical_default_probability()
         q_def = process.risk_neutral_default_probability()
 
@@ -59,7 +65,9 @@ class TestMertonFirmValueExactness:
         assert p_def < q_def
 
     def test_merton_credit_simulation_convergence(self):
-        process = MertonFirmValueProcess(v0=100.0, debt=50.0, sigma_v=0.2, mu=0.05, r=0.02, t_debt=1.0)
+        process = MertonFirmValueProcess(
+            v0=100.0, debt=50.0, sigma_v=0.2, mu=0.05, r=0.02, t_debt=1.0
+        )
         paths = process.simulate(num_steps=50, num_paths=2000, seed=42)
         assert paths.shape == (2000, 51)
         assert np.all(paths > 0.0)

@@ -53,7 +53,9 @@ class HestonNandiProcess(Process):
         if v0 < 0:
             raise ValueError(f"Initial variance v0 must be non-negative: {v0}")
         if k <= 0 or theta <= 0 or alpha <= 0:
-            raise ValueError(f"Parameters k, theta, alpha must be positive: k={k}, theta={theta}, alpha={alpha}")
+            raise ValueError(
+                f"Parameters k, theta, alpha must be positive: k={k}, theta={theta}, alpha={alpha}"
+            )
         if not (-1.0 <= rho <= 1.0):
             raise ValueError(f"Correlation rho must be in [-1, 1]: {rho}")
 
@@ -113,9 +115,12 @@ class HestonNandiProcess(Process):
         exp_dt = cmath.exp(-d * t)
 
         c = (self.k * self.theta / (a**2)) * (
-            (k_eff - self.rho * a * i * u_c - d) * t - 2.0 * cmath.log((1.0 - g * exp_dt) / (1.0 - g))
+            (k_eff - self.rho * a * i * u_c - d) * t
+            - 2.0 * cmath.log((1.0 - g * exp_dt) / (1.0 - g))
         )
-        d_val = ((k_eff - self.rho * a * i * u_c - d) / (a**2)) * ((1.0 - exp_dt) / (1.0 - g * exp_dt))
+        d_val = ((k_eff - self.rho * a * i * u_c - d) / (a**2)) * (
+            (1.0 - exp_dt) / (1.0 - g * exp_dt)
+        )
 
         drift = i * u_c * (math.log(self.s0) + self.r * t)
         return cmath.exp(drift + c + d_val * self.v0)
@@ -140,9 +145,12 @@ class HestonNandiProcess(Process):
             exp_dt = cmath.exp(-d * t)
 
             c = (self.k * self.theta / (a**2)) * (
-                (k_eff - self.rho * a * 1j * u - d) * t - 2.0 * cmath.log((1.0 - g * exp_dt) / (1.0 - g))
+                (k_eff - self.rho * a * 1j * u - d) * t
+                - 2.0 * cmath.log((1.0 - g * exp_dt) / (1.0 - g))
             )
-            d_val = ((k_eff - self.rho * a * 1j * u - d) / (a**2)) * ((1.0 - exp_dt) / (1.0 - g * exp_dt))
+            d_val = ((k_eff - self.rho * a * 1j * u - d) / (a**2)) * (
+                (1.0 - exp_dt) / (1.0 - g * exp_dt)
+            )
             return cmath.exp(drift + c + d_val * self.v0)
 
         def integrand1(u: float) -> float:
@@ -208,7 +216,11 @@ class HestonNandiProcess(Process):
             z_perp = np.random.normal(0.0, 1.0, num_paths)
             z_s = rho * z_v + math.sqrt(1.0 - rho**2) * z_perp
 
-            v_next = v_paths[:, step] + k * (theta - v_curr) * dt + alpha * np.sqrt(v_curr) * sqrt_dt * z_v
+            v_next = (
+                v_paths[:, step]
+                + k * (theta - v_curr) * dt
+                + alpha * np.sqrt(v_curr) * sqrt_dt * z_v
+            )
             v_paths[:, step + 1] = np.maximum(0.0, v_next)
 
             log_s_next = np.log(s_curr) + (r - 0.5 * v_curr) * dt + np.sqrt(v_curr) * sqrt_dt * z_s

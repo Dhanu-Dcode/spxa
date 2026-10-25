@@ -122,6 +122,82 @@ from spxa.zoo.beyond.rough_heston import (
     RoughHestonProcess,
     RoughVolatility,
 )
+from spxa.zoo.beyond.two_factor_cir import (
+    CIR2PlusPlus,
+    TwoFactorCIR,
+    TwoFactorCIRProcess,
+)
+from spxa.zoo.beyond.shifted_cir import (
+    CIRPlusPlus,
+    ShiftedCIR,
+    ShiftedCIRProcess,
+)
+from spxa.zoo.beyond.double_heston import (
+    DoubleHeston,
+    DoubleHestonProcess,
+    TwoFactorHeston,
+)
+from spxa.zoo.beyond.heston_nandi import (
+    HNGARCH,
+    HestonNandi,
+    HestonNandiProcess,
+)
+from spxa.zoo.beyond.vgsa import (
+    VGSA,
+    VGSAProcess,
+    VarianceGammaStochasticArrival,
+)
+from spxa.zoo.beyond.jump_ou import (
+    EnergyOU,
+    ExpOUJump,
+    JumpOU,
+    JumpOUProcess,
+)
+from spxa.zoo.beyond.multivariate_ou import (
+    MultivariateOU,
+    MultivariateOUProcess,
+    VectorOU,
+)
+from spxa.zoo.beyond.bessel_bridge import (
+    BESQBridge,
+    BesselBridge,
+    BesselBridgeProcess,
+)
+from spxa.zoo.beyond.wright_fisher import (
+    GeneFrequencyDiffusion,
+    WrightFisher,
+    WrightFisherProcess,
+)
+from spxa.zoo.beyond.logistic_diffusion import (
+    LogisticDiffusion,
+    LogisticGrowthProcess,
+    VerhulstDiffusion,
+)
+from spxa.zoo.beyond.merton_firm_value import (
+    MertonDefaultModel,
+    MertonFirmValueProcess,
+    StructuralCreditModel,
+)
+from spxa.zoo.beyond.brennan_schwartz import (
+    BrennanSchwartz,
+    BrennanSchwartzProcess,
+    CommodityConvenienceModel,
+)
+from spxa.zoo.beyond.kesten import (
+    KestenDiffusion,
+    KestenProcess,
+    MultiplicativeNoiseDiffusion,
+)
+from spxa.zoo.beyond.hyperbolic_diffusion import (
+    HyperbolicDiffusion,
+    HyperbolicInvariantDiffusion,
+    HyperbolicOU,
+)
+from spxa.zoo.beyond.quadratic_diffusion import (
+    QuadraticDiffusion,
+    QuadraticPearsonDiffusion,
+    WongDiffusion,
+)
 
 from .mmpp import MarkovModulatedPoissonProcess
 
@@ -218,6 +294,52 @@ __all__ = [
     "RoughHeston",
     "RoughHestonProcess",
     "RoughVolatility",
+    "TwoFactorCIR",
+    "TwoFactorCIRProcess",
+    "CIR2PlusPlus",
+    "ShiftedCIR",
+    "ShiftedCIRProcess",
+    "CIRPlusPlus",
+    "DoubleHeston",
+    "DoubleHestonProcess",
+    "TwoFactorHeston",
+    "HestonNandi",
+    "HestonNandiProcess",
+    "HNGARCH",
+    "VGSA",
+    "VGSAProcess",
+    "VarianceGammaStochasticArrival",
+    "JumpOU",
+    "JumpOUProcess",
+    "ExpOUJump",
+    "EnergyOU",
+    "MultivariateOU",
+    "MultivariateOUProcess",
+    "VectorOU",
+    "BesselBridge",
+    "BesselBridgeProcess",
+    "BESQBridge",
+    "WrightFisher",
+    "WrightFisherProcess",
+    "GeneFrequencyDiffusion",
+    "LogisticDiffusion",
+    "LogisticGrowthProcess",
+    "VerhulstDiffusion",
+    "MertonFirmValueProcess",
+    "MertonDefaultModel",
+    "StructuralCreditModel",
+    "BrennanSchwartz",
+    "BrennanSchwartzProcess",
+    "CommodityConvenienceModel",
+    "KestenProcess",
+    "KestenDiffusion",
+    "MultiplicativeNoiseDiffusion",
+    "HyperbolicDiffusion",
+    "HyperbolicOU",
+    "HyperbolicInvariantDiffusion",
+    "QuadraticDiffusion",
+    "QuadraticPearsonDiffusion",
+    "WongDiffusion",
     "Vasicek",
     "VasicekProcess",
     "MarkovModulatedPoissonProcess",

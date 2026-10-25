@@ -42,7 +42,9 @@ class WrightFisherProcess(Process):
         x0: float = 0.5,
     ) -> None:
         if alpha <= 0 or beta <= 0:
-            raise ValueError(f"Mutation rates alpha and beta must be positive: alpha={alpha}, beta={beta}")
+            raise ValueError(
+                f"Mutation rates alpha and beta must be positive: alpha={alpha}, beta={beta}"
+            )
         if sigma <= 0:
             raise ValueError(f"Diffusion volatility sigma must be positive: {sigma}")
         if not (0.0 <= x0 <= 1.0):
@@ -118,7 +120,6 @@ class WrightFisherProcess(Process):
             return 0.0
         # Exact ODE for second moment dE[X^2]/dt = ...
         rate = self.alpha + self.beta
-        sig2 = self.sigma**2
         # As t -> infinity, converges to stationary_variance
         e_rt = math.exp(-rate * t)
         var_inf = self.stationary_variance()

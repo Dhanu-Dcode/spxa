@@ -46,9 +46,13 @@ class TwoFactorCIRProcess(Process):
         phi: float = 0.0,
     ) -> None:
         if k_x <= 0 or theta_x <= 0 or sigma_x <= 0:
-            raise ValueError(f"Factor X parameters must be positive: k={k_x}, theta={theta_x}, sigma={sigma_x}")
+            raise ValueError(
+                f"Factor X parameters must be positive: k={k_x}, theta={theta_x}, sigma={sigma_x}"
+            )
         if k_y <= 0 or theta_y <= 0 or sigma_y <= 0:
-            raise ValueError(f"Factor Y parameters must be positive: k={k_y}, theta={theta_y}, sigma={sigma_y}")
+            raise ValueError(
+                f"Factor Y parameters must be positive: k={k_y}, theta={theta_y}, sigma={sigma_y}"
+            )
         if x0 < 0 or y0 < 0:
             raise ValueError(f"Initial factor values must be non-negative: x0={x0}, y0={y0}")
 
@@ -203,17 +207,13 @@ class TwoFactorCIRProcess(Process):
 
         for step in range(num_steps):
             x_prev = x_paths[:, step]
-            lambda_x = (4.0 * self.k_x * x_prev * exp_kx) / (
-                self.sigma_x**2 * (1.0 - exp_kx)
-            )
+            lambda_x = (4.0 * self.k_x * x_prev * exp_kx) / (self.sigma_x**2 * (1.0 - exp_kx))
             # Sample non-central chi-squared
             x_next = c_x * np.random.noncentral_chisquare(df=d_x, nonc=np.maximum(0.0, lambda_x))
             x_paths[:, step + 1] = np.maximum(0.0, x_next)
 
             y_prev = y_paths[:, step]
-            lambda_y = (4.0 * self.k_y * y_prev * exp_ky) / (
-                self.sigma_y**2 * (1.0 - exp_ky)
-            )
+            lambda_y = (4.0 * self.k_y * y_prev * exp_ky) / (self.sigma_y**2 * (1.0 - exp_ky))
             y_next = c_y * np.random.noncentral_chisquare(df=d_y, nonc=np.maximum(0.0, lambda_y))
             y_paths[:, step + 1] = np.maximum(0.0, y_next)
 

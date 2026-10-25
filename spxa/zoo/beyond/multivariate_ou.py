@@ -59,7 +59,9 @@ class MultivariateOUProcess(Process):
 
         eigvals = np.linalg.eigvals(self.k_mat)
         if np.any(np.real(eigvals) <= 0):
-            raise ValueError(f"All eigenvalues of K must have strictly positive real parts for stability, got {eigvals}")
+            raise ValueError(
+                f"All eigenvalues of K must have strictly positive real parts for stability, got {eigvals}"
+            )
 
         self.dim = d
         self.x0_vec = np.zeros(d) if x0 is None else np.array(x0, dtype=float)

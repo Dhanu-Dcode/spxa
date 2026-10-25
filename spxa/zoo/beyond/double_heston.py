@@ -130,8 +130,12 @@ class DoubleHestonProcess(Process):
         r"""Characteristic function of log-asset price ln(S_t)."""
         u_c = complex(u)
         drift = 1j * u_c * (math.log(self.s0) + (self.r - self.q) * t)
-        phi1 = self._heston_factor_riccati(u_c, t, self.k1, self.theta1, self.sigma1, self.rho1, self.v1_0)
-        phi2 = self._heston_factor_riccati(u_c, t, self.k2, self.theta2, self.sigma2, self.rho2, self.v2_0)
+        phi1 = self._heston_factor_riccati(
+            u_c, t, self.k1, self.theta1, self.sigma1, self.rho1, self.v1_0
+        )
+        phi2 = self._heston_factor_riccati(
+            u_c, t, self.k2, self.theta2, self.sigma2, self.rho2, self.v2_0
+        )
         return cmath.exp(drift) * phi1 * phi2
 
     def mean_spot(self, t: float) -> float:
@@ -157,8 +161,12 @@ class DoubleHestonProcess(Process):
 
         def char_return(u: complex) -> complex:
             drift = 1j * u * (r - q) * t
-            phi1 = self._heston_factor_riccati(u, t, self.k1, self.theta1, self.sigma1, self.rho1, self.v1_0)
-            phi2 = self._heston_factor_riccati(u, t, self.k2, self.theta2, self.sigma2, self.rho2, self.v2_0)
+            phi1 = self._heston_factor_riccati(
+                u, t, self.k1, self.theta1, self.sigma1, self.rho1, self.v1_0
+            )
+            phi2 = self._heston_factor_riccati(
+                u, t, self.k2, self.theta2, self.sigma2, self.rho2, self.v2_0
+            )
             return cmath.exp(drift) * phi1 * phi2
 
         def integrand1(u: float) -> float:
@@ -188,7 +196,9 @@ class DoubleHestonProcess(Process):
     def european_put(self, strike: float, maturity: float) -> float:
         """Price European put option via exact put-call parity."""
         call = self.european_call(strike, maturity)
-        parity_forward = self.s0 * math.exp(-self.q * maturity) - strike * math.exp(-self.r * maturity)
+        parity_forward = self.s0 * math.exp(-self.q * maturity) - strike * math.exp(
+            -self.r * maturity
+        )
         put = call - parity_forward
         return float(max(0.0, put))
 
@@ -236,16 +246,26 @@ class DoubleHestonProcess(Process):
             z2_s = rho2 * z2_v + math.sqrt(1.0 - rho2**2) * z2_perp
 
             # Variance updates with full truncation
-            v1_next = v1_paths[:, step] + k1 * (theta1 - v1_curr) * dt + sigma1 * np.sqrt(v1_curr) * sqrt_dt * z1_v
-            v2_next = v2_paths[:, step] + k2 * (theta2 - v2_curr) * dt + sigma2 * np.sqrt(v2_curr) * sqrt_dt * z2_v
+            v1_next = (
+                v1_paths[:, step]
+                + k1 * (theta1 - v1_curr) * dt
+                + sigma1 * np.sqrt(v1_curr) * sqrt_dt * z1_v
+            )
+            v2_next = (
+                v2_paths[:, step]
+                + k2 * (theta2 - v2_curr) * dt
+                + sigma2 * np.sqrt(v2_curr) * sqrt_dt * z2_v
+            )
             v1_paths[:, step + 1] = np.maximum(0.0, v1_next)
             v2_paths[:, step + 1] = np.maximum(0.0, v2_next)
 
             # Spot update
             total_v = v1_curr + v2_curr
-            log_s_next = np.log(s_curr) + (r - q - 0.5 * total_v) * dt + (
-                np.sqrt(v1_curr) * z1_s + np.sqrt(v2_curr) * z2_s
-            ) * sqrt_dt
+            log_s_next = (
+                np.log(s_curr)
+                + (r - q - 0.5 * total_v) * dt
+                + (np.sqrt(v1_curr) * z1_s + np.sqrt(v2_curr) * z2_s) * sqrt_dt
+            )
             s_paths[:, step + 1] = np.exp(log_s_next)
 
         return s_paths, v1_paths, v2_paths

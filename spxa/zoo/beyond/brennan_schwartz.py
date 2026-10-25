@@ -51,9 +51,13 @@ class BrennanSchwartzProcess(Process):
         if delta0 <= 0:
             raise ValueError(f"Convenience yield delta0 must be positive: {delta0}")
         if k <= 0 or delta_bar <= 0:
-            raise ValueError(f"Mean-reversion parameters k and delta_bar must be positive: k={k}, delta_bar={delta_bar}")
+            raise ValueError(
+                f"Mean-reversion parameters k and delta_bar must be positive: k={k}, delta_bar={delta_bar}"
+            )
         if sigma1 <= 0 or sigma2 <= 0:
-            raise ValueError(f"Volatilities sigma1 and sigma2 must be positive: sigma1={sigma1}, sigma2={sigma2}")
+            raise ValueError(
+                f"Volatilities sigma1 and sigma2 must be positive: sigma1={sigma1}, sigma2={sigma2}"
+            )
         if not (-1.0 <= rho <= 1.0):
             raise ValueError(f"Correlation rho must be in [-1, 1]: {rho}")
 

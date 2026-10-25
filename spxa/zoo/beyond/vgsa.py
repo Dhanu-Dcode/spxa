@@ -47,7 +47,9 @@ class VGSAProcess(Process):
         if sigma <= 0 or nu <= 0:
             raise ValueError(f"VG parameters sigma and nu must be positive: sigma={sigma}, nu={nu}")
         if k <= 0 or eta <= 0 or lambd <= 0:
-            raise ValueError(f"CIR clock parameters k, eta, lambd must be positive: k={k}, eta={eta}, lambd={lambd}")
+            raise ValueError(
+                f"CIR clock parameters k, eta, lambd must be positive: k={k}, eta={eta}, lambd={lambd}"
+            )
         if y0 <= 0:
             raise ValueError(f"Initial clock rate y0 must be positive: y0={y0}")
 

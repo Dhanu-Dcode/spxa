@@ -6,6 +6,36 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/two_factor_cir.py` — Two-Factor Cox-Ingersoll-Ross (CIR2++) short-rate process (`TwoFactorCIRProcess`, `TwoFactorCIR`, `CIR2PlusPlus`):
+  Two independent CIR state variables driving short rate $r(t) = x(t) + y(t) + \phi$, exact zero-coupon bond pricing $P(t, T) = A_x(\tau)A_y(\tau)e^{-B_x(\tau)x_t - B_y(\tau)y_t - \phi\tau}$, yield curve analytics, and exact non-central chi-square path simulation without discretization error.
+- `zoo/beyond/shifted_cir.py` — Shifted Cox-Ingersoll-Ross (CIR++) short-rate process (`ShiftedCIRProcess`, `ShiftedCIR`, `CIRPlusPlus`):
+  Deterministic yield curve shift extension $\phi(t)$ calibrating exactly to market zero-coupon curves, closed-form European bond option pricing via non-central chi-square distributions, and exact non-central chi-square path simulation.
+- `zoo/beyond/double_heston.py` — Double Heston two-factor stochastic volatility model (`DoubleHestonProcess`, `DoubleHeston`, `TwoFactorHeston`):
+  Superposition of fast and slow mean-reverting CIR variance factors, exact bivariate affine characteristic function factoring both continuous Riccati solutions, European call/put options via Gil-Pelaez Fourier inversion with exact put-call parity, and full-truncation Euler simulation.
+- `zoo/beyond/heston_nandi.py` — Heston-Nandi continuous-time GARCH diffusion limit (`HestonNandiProcess`, `HestonNandi`, `HNGARCH`):
+  Continuous limit of the discrete Heston-Nandi affine GARCH model with asymmetric leverage $\gamma$, exact affine log-price characteristic function, European option pricing via Fourier inversion, and Euler-Maruyama simulation.
+- `zoo/beyond/vgsa.py` — Variance Gamma with Stochastic Arrival (VGSA) model (`VGSAProcess`, `VGSA`, `VarianceGammaStochasticArrival`):
+  Subordinated Variance Gamma process with CIR integrated rate-of-time-change clock $Y(t) = \int_0^t y(s) ds$, exact closed-form characteristic function via CIR Laplace transform, exact conditional moments, and clock-subordinated path simulation.
+- `zoo/beyond/jump_ou.py` — Mean-reverting Ornstein-Uhlenbeck process with compound Poisson jumps (`JumpOUProcess`, `JumpOU`, `ExpOUJump`, `EnergyOU`):
+  Energy and commodity price model coupling Gaussian mean reversion with Poisson jumps, exact conditional mean and variance, long-run stationary moments, analytical characteristic function via Campbell's theorem, and exact spike simulation.
+- `zoo/beyond/multivariate_ou.py` — Multivariate Ornstein-Uhlenbeck vector Gaussian diffusion (`MultivariateOUProcess`, `MultivariateOU`, `VectorOU`):
+  $d$-dimensional mean-reverting vector process with positive-stable drift matrix $\mathbf{K}$, stationary covariance solving the continuous-time Lyapunov equation $\mathbf{K}\mathbf{V} + \mathbf{V}\mathbf{K}^T = \mathbf{\Sigma}\mathbf{\Sigma}^T$, exact conditional covariance matrix, and exact Gaussian vector step simulation.
+- `zoo/beyond/bessel_bridge.py` — Bessel and Squared Bessel Bridge process (`BesselBridge`, `BesselBridgeProcess`, `BESQBridge`):
+  $d$-dimensional squared Bessel diffusion pinned to start at $x_0$ and end at $x_T$ at terminal horizon $T$, exact conditional moments from the Pitman-Yor (1982) bridge decomposition, and pinned simulation.
+- `zoo/beyond/wright_fisher.py` — Wright-Fisher gene frequency diffusion process with mutation (`WrightFisherProcess`, `WrightFisher`, `GeneFrequencyDiffusion`):
+  Population genetics diffusion on $[0, 1]$ with two-way mutation drift and state-dependent volatility $\sigma\sqrt{X(1-X)}$, exact stationary $\text{Beta}(2\alpha/\sigma^2, 2\beta/\sigma^2)$ distribution, boundary non-attainability classification, and boundary-preserving Milstein simulation.
+- `zoo/beyond/logistic_diffusion.py` — Stochastic Logistic (Verhulst) population growth diffusion (`LogisticDiffusion`, `LogisticGrowthProcess`, `VerhulstDiffusion`):
+  Multiplicative environmental noise on logistic carrying capacity, persistence condition $r > \frac{1}{2}\sigma^2$, exact stationary Gamma distribution $\Gamma(\frac{2r}{\sigma^2}-1, \frac{2r}{\sigma^2 K})$, and strictly positive log-transformed Euler simulation.
+- `zoo/beyond/merton_firm_value.py` — Merton (1974) structural credit risk and firm value process (`MertonFirmValueProcess`, `MertonDefaultModel`, `StructuralCreditModel`):
+  Corporate asset value diffusion with debt threshold $D$, analytical distance to default (DD), physical and risk-neutral default probabilities, equity call option valuation, risky bond pricing, and exact credit spread term structure.
+- `zoo/beyond/brennan_schwartz.py` — Brennan-Schwartz (1985) two-factor commodity and convenience yield model (`BrennanSchwartzProcess`, `BrennanSchwartz`, `CommodityConvenienceModel`):
+  Spot commodity price coupled with proportional mean-reverting convenience yield $\delta(t)$, exact conditional convenience yield expectation, futures curve pricing $F(t, T)$, and bivariate correlated simulation.
+- `zoo/beyond/kesten.py` — Kesten multiplicative noise diffusion process (`KestenProcess`, `KestenDiffusion`, `MultiplicativeNoiseDiffusion`):
+  Continuous-time limit of Kesten recurrence with linear drift and multiplicative noise $\sigma X_t$, exact Inverse-Gamma stationary law with Pareto power-law tail exponent $\alpha = 2b/\sigma^2 + 1$, and positive-preserving log-Euler simulation.
+- `zoo/beyond/hyperbolic_diffusion.py` — Hyperbolic invariant diffusion process with exponential tails (`HyperbolicDiffusion`, `HyperbolicOU`, `HyperbolicInvariantDiffusion`):
+  Continuous diffusion with bounded nonlinear drift producing an exact Hyperbolic stationary distribution, normalization via modified Bessel $K_1(\delta\gamma)$, exact stationary mean and variance, and Milstein simulation.
+- `zoo/beyond/quadratic_diffusion.py` — Quadratic Pearson / Wong polynomial diffusion process (`QuadraticDiffusion`, `QuadraticPearsonDiffusion`, `WongDiffusion`):
+  Pearson diffusion family with affine drift and quadratic variance $c + d X + e X^2$, exact polynomial moment hierarchy via triangular eigenvalue recursion $\lambda_m = m b + \frac{1}{2}m(m-1)e$, exact stationary moments, and Milstein simulation.
 - `zoo/beyond/multivariate_hawkes.py` — Multivariate Hawkes mutually exciting point process (`MultivariateHawkesProcess`, `MultivariateHawkes`, `MHawkes`):
   $M$-dimensional Hawkes intensity $\lambda_m(t)$, branching infectivity matrix $\mathbf{\Gamma}$, spectral radius stationarity condition $\rho(\mathbf{\Gamma}) < 1$, exact expected arrival intensity $\mathbf{\lambda}_\infty = (\mathbf{I} - \mathbf{\Gamma})^{-1} \mathbf{\mu}$, and Ogata thinning event simulation.
 - `zoo/levy/nts.py` — Normal Tempered Stable (NTS) Lévy process (`NormalTemperedStableProcess`, `NormalTemperedStable`, `NTSProcess`):

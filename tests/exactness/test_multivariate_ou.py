@@ -51,7 +51,9 @@ class TestMultivariateOUExactness:
         # Large t -> stationary limits
         t_far = 30.0
         np.testing.assert_allclose(process.mean_vector(t_far), process.stationary_mean(), atol=1e-5)
-        np.testing.assert_allclose(process.covariance_matrix(t_far), process.stationary_covariance(), atol=1e-5)
+        np.testing.assert_allclose(
+            process.covariance_matrix(t_far), process.stationary_covariance(), atol=1e-5
+        )
 
         # Lyapunov algebraic identity: K * V + V * K^T = Sigma * Sigma^T
         v_inf = process.stationary_covariance()

@@ -60,6 +60,21 @@ the running library. All signatures are exact.
    - [KouSVProcess](#kousvprocess)
    - [GeneralDiffusionBridge](#generaldiffusionbridge)
    - [RoughHestonProcess](#roughhestonprocess)
+   - [TwoFactorCIRProcess](#twofactorcirprocess)
+   - [ShiftedCIRProcess](#shiftedcirprocess)
+   - [DoubleHestonProcess](#doublehestonprocess)
+   - [HestonNandiProcess](#hestonnandiprocess)
+   - [VGSAProcess](#vgsaprocess)
+   - [JumpOUProcess](#jumpouprocess)
+   - [MultivariateOUProcess](#multivariateouprocess)
+   - [BesselBridge](#besselbridge)
+   - [WrightFisherProcess](#wrightfisherprocess)
+   - [LogisticDiffusion](#logisticdiffusion)
+   - [MertonFirmValueProcess](#mertonfirmvalueprocess)
+   - [BrennanSchwartzProcess](#brennanschwartzprocess)
+   - [KestenProcess](#kestenprocess)
+   - [HyperbolicDiffusion](#hyperbolicdiffusion)
+   - [QuadraticDiffusion](#quadraticdiffusion)
    - [SquaredBesselProcess](#squaredbesselprocess)
    - [BesselProcess](#besselprocess)
    - [OrnsteinUhlenbeck](#ornsteinuhlenbeck)
@@ -214,6 +229,52 @@ spxa.DoobBridge
 spxa.RoughHeston
 spxa.RoughHestonProcess
 spxa.RoughVolatility
+spxa.TwoFactorCIR
+spxa.TwoFactorCIRProcess
+spxa.CIR2PlusPlus
+spxa.ShiftedCIR
+spxa.ShiftedCIRProcess
+spxa.CIRPlusPlus
+spxa.DoubleHeston
+spxa.DoubleHestonProcess
+spxa.TwoFactorHeston
+spxa.HestonNandi
+spxa.HestonNandiProcess
+spxa.HNGARCH
+spxa.VGSA
+spxa.VGSAProcess
+spxa.VarianceGammaStochasticArrival
+spxa.JumpOU
+spxa.JumpOUProcess
+spxa.ExpOUJump
+spxa.EnergyOU
+spxa.MultivariateOU
+spxa.MultivariateOUProcess
+spxa.VectorOU
+spxa.BesselBridge
+spxa.BesselBridgeProcess
+spxa.BESQBridge
+spxa.WrightFisher
+spxa.WrightFisherProcess
+spxa.GeneFrequencyDiffusion
+spxa.LogisticDiffusion
+spxa.LogisticGrowthProcess
+spxa.VerhulstDiffusion
+spxa.MertonFirmValueProcess
+spxa.MertonDefaultModel
+spxa.StructuralCreditModel
+spxa.BrennanSchwartz
+spxa.BrennanSchwartzProcess
+spxa.CommodityConvenienceModel
+spxa.KestenProcess
+spxa.KestenDiffusion
+spxa.MultiplicativeNoiseDiffusion
+spxa.HyperbolicDiffusion
+spxa.HyperbolicOU
+spxa.HyperbolicInvariantDiffusion
+spxa.QuadraticDiffusion
+spxa.QuadraticPearsonDiffusion
+spxa.WongDiffusion
 spxa.BES
 spxa.BESQ
 spxa.Bessel
@@ -2210,6 +2271,315 @@ $$v_t = v_0 + \int_0^t \frac{(t-s)^{H - 0.5}}{\Gamma(H + 0.5)} [ \lambda(\theta 
 - `expected_variance(t)` — Mittag-Leffler fractional expectation $\mathbb{E}[v_t] = \theta + (v_0 - \theta) E_{\alpha, 1}(-\lambda t^\alpha)$
 - `asymptotic_atm_skew(T)` — power-law at-the-money skew scaling $|\partial \sigma_{IV} / \partial k| \sim C \cdot T^{H - 0.5}$
 - `simulate(t_grid, n_paths=1, rng=None, return_vol=False)` — fractional convolution simulation
+
+---
+
+### TwoFactorCIRProcess
+
+```python
+from spxa import TwoFactorCIRProcess, TwoFactorCIR, CIR2PlusPlus
+
+cir2 = TwoFactorCIRProcess(
+    k_x=0.5, theta_x=0.03, sigma_x=0.08,
+    k_y=0.2, theta_y=0.02, sigma_y=0.05,
+    x0=0.02, y0=0.02, phi=0.0,
+)
+```
+
+The Two-Factor Cox-Ingersoll-Ross (CIR2++) model describes the short rate as a sum of two independent square-root diffusions plus an optional shift:
+$$r_t = x_t + y_t + \phi$$
+$$dx_t = \kappa_x (\theta_x - x_t) dt + \sigma_x \sqrt{x_t} dW_t^x$$
+$$dy_t = \kappa_y (\theta_y - y_t) dt + \sigma_y \sqrt{y_t} dW_t^y$$
+
+**Exact Analytics:**
+- `mean(t)` — exact short rate expectation $\mathbb{E}[r_t]$
+- `variance(t)` — exact conditional variance $\operatorname{Var}[r_t] = \operatorname{Var}[x_t] + \operatorname{Var}[y_t]$
+- `zero_coupon_bond(tau)` — closed-form zero-coupon bond pricing $P(0, \tau) = A_x(\tau) A_y(\tau) e^{-B_x(\tau) x_0 - B_y(\tau) y_0 - \phi \tau}$
+- `yield_curve(tau)` — continuously compounded yield $y(0, \tau) = -\frac{\ln P(0, \tau)}{\tau}$
+- `simulate(t_max, num_steps, num_paths, seed)` — exact non-central chi-square simulation with zero discretization error
+
+---
+
+### ShiftedCIRProcess
+
+```python
+from spxa import ShiftedCIRProcess, ShiftedCIR, CIRPlusPlus
+
+cir_pp = ShiftedCIRProcess(k=0.8, theta=0.03, sigma=0.05, x0=0.03, phi0=0.01)
+```
+
+The Shifted CIR (CIR++) model shifts a CIR diffusion by a deterministic function $\phi(t)$ to perfectly fit initial yield curves:
+$$r_t = x_t + \phi(t)$$
+$$dx_t = \kappa (\theta - x_t) dt + \sigma \sqrt{x_t} dW_t$$
+
+**Exact Analytics:**
+- `zero_coupon_bond(tau)` — exact bond price incorporating shift integral
+- `yield_curve(tau)` — exact term structure
+- `european_bond_call(maturity, bond_maturity, strike)` — closed-form European bond option pricing via non-central $\chi^2$
+- `simulate(t_max, num_steps, num_paths, seed)` — exact non-central chi-square simulation
+
+---
+
+### DoubleHestonProcess
+
+```python
+from spxa import DoubleHestonProcess, DoubleHeston, TwoFactorHeston
+
+dh = DoubleHestonProcess(
+    s0=100.0, v1_0=0.02, v2_0=0.02,
+    k1=2.5, theta1=0.02, sigma1=0.3, rho1=-0.7,
+    k2=0.6, theta2=0.03, sigma2=0.15, rho2=-0.2,
+    r=0.03, q=0.01,
+)
+```
+
+The Double Heston two-factor model decomposes variance into short-term and long-term mean-reverting CIR diffusions:
+$$dS_t = (r - q) S_t dt + \sqrt{V_{1,t}} S_t dW_{1,t}^S + \sqrt{V_{2,t}} S_t dW_{2,t}^S$$
+$$dV_{j,t} = \kappa_j (\theta_j - V_{j,t}) dt + \sigma_j \sqrt{V_{j,t}} dW_{j,t}^V, \quad j \in \{1, 2\}$$
+
+**Exact Analytics:**
+- `characteristic_function(u, t)` — exact bivariate affine characteristic function
+- `european_call(strike, maturity)` — call pricing via Gil-Pelaez Fourier inversion
+- `european_put(strike, maturity)` — put pricing via exact put-call parity
+- `simulate(t_max, num_steps, num_paths, seed)` — full-truncation Euler simulation
+
+---
+
+### HestonNandiProcess
+
+```python
+from spxa import HestonNandiProcess, HestonNandi, HNGARCH
+
+hn = HestonNandiProcess(s0=100.0, v0=0.04, k=2.0, theta=0.04, alpha=0.15, gamma=10.0, r=0.02)
+```
+
+The continuous-time limit of the Heston-Nandi (2000) affine GARCH model with asymmetric leverage $\gamma$:
+$$dS_t = r S_t dt + \sqrt{V_t} S_t dW_t^S$$
+$$dV_t = \kappa (\theta - V_t) dt + \alpha \sqrt{V_t} dW_t^V$$
+
+**Exact Analytics:**
+- `characteristic_function(u, t)` — exact closed-form affine characteristic function
+- `european_call(strike, maturity)` — option pricing via Fourier inversion
+- `european_put(strike, maturity)` — put pricing via put-call parity
+- `simulate(t_max, num_steps, num_paths, seed)` — coupled spot and variance simulation
+
+---
+
+### VGSAProcess
+
+```python
+from spxa import VGSAProcess, VGSA, VarianceGammaStochasticArrival
+
+vgsa = VGSAProcess(sigma=0.2, nu=0.1, theta=-0.05, k=1.5, eta=1.0, lambd=0.3, y0=1.0)
+```
+
+Variance Gamma with Stochastic Arrival (VGSA) subordinates a VG process by an integrated CIR stochastic clock $Y(t) = \int_0^t y(s) ds$:
+$$X_t = \mathrm{VG}(Y_t; \sigma, \nu, \theta)$$
+$$dy_t = \kappa (\eta - y_t) dt + \lambda \sqrt{y_t} dW_t$$
+
+**Exact Analytics:**
+- `characteristic_function(u, t)` — exact closed-form CF via CIR Laplace transform of integrated time
+- `mean(t)` / `variance(t)` — conditional moments accounting for stochastic time change
+- `simulate(t_max, num_steps, num_paths, seed)` — exact clock-subordinated path simulation
+
+---
+
+### JumpOUProcess
+
+```python
+from spxa import JumpOUProcess, JumpOU, ExpOUJump, EnergyOU
+
+jou = JumpOUProcess(k=1.5, theta=2.0, sigma=0.4, lambda_j=2.0, mu_j=0.3, sigma_j=0.2, x0=1.0)
+```
+
+Mean-reverting Ornstein-Uhlenbeck process with compound Poisson jumps:
+$$dX_t = \kappa (\theta - X_t) dt + \sigma dW_t + dJ_t, \quad J_t = \sum_{i=1}^{N_t} Y_i$$
+
+**Exact Analytics:**
+- `mean(t)` / `variance(t)` — exact analytical conditional expectation and variance
+- `stationary_mean()` / `stationary_variance()` — long-run stationary moments
+- `characteristic_function(u, t)` — exact CF via Campbell integration
+- `simulate(t_max, num_steps, num_paths, seed)` — exact Gaussian OU steps with compound Poisson jumps
+
+---
+
+### MultivariateOUProcess
+
+```python
+from spxa import MultivariateOUProcess, MultivariateOU, VectorOU
+
+mou = MultivariateOUProcess(
+    k_matrix=[[1.2, -0.3], [0.0, 0.8]],
+    theta=[1.0, 2.0],
+    sigma_matrix=[[0.4, 0.1], [0.0, 0.3]],
+    x0=[0.2, 0.5],
+)
+```
+
+A $d$-dimensional mean-reverting vector Gaussian diffusion:
+$$d\boldsymbol{X}_t = -\mathbf{K} (\boldsymbol{X}_t - \boldsymbol{\theta}) dt + \boldsymbol{\Sigma} d\boldsymbol{W}_t$$
+
+**Exact Analytics:**
+- `mean_vector(t)` — exact conditional mean $\boldsymbol{\theta} + e^{-\mathbf{K}t} (\boldsymbol{X}_0 - \boldsymbol{\theta})$
+- `covariance_matrix(t)` — exact covariance matrix $\mathbf{V}_\infty - e^{-\mathbf{K}t} \mathbf{V}_\infty e^{-\mathbf{K}^T t}$
+- `stationary_covariance()` — solution to the algebraic Lyapunov equation $\mathbf{K}\mathbf{V} + \mathbf{V}\mathbf{K}^T = \boldsymbol{\Sigma}\boldsymbol{\Sigma}^T$
+- `characteristic_function(u, t)` — multivariate Gaussian characteristic function
+- `simulate(t_max, num_steps, num_paths, seed)` — exact Gaussian vector simulation
+
+---
+
+### BesselBridge
+
+```python
+from spxa import BesselBridge, BesselBridgeProcess, BESQBridge
+
+bridge = BesselBridge(dim=4.0, x0=1.0, xT=4.0, T=2.0)
+```
+
+Squared Bessel diffusion pinned to start at $x_0$ and end at $x_T$ at terminal horizon $T$:
+
+**Exact Analytics:**
+- `mean(t)` — exact linear bridge mean $(1 - t/T) x_0 + (t/T) x_T$
+- `variance(t)` — exact conditional variance from the Pitman-Yor (1982) bridge decomposition
+- `simulate(num_steps, num_paths, seed)` — pinned simulation strictly preserving endpoints
+
+---
+
+### WrightFisherProcess
+
+```python
+from spxa import WrightFisherProcess, WrightFisher, GeneFrequencyDiffusion
+
+wf = WrightFisherProcess(alpha=1.0, beta=1.5, sigma=0.5, x0=0.4)
+```
+
+Wright-Fisher gene frequency diffusion on $[0, 1]$ with two-way mutation:
+$$dX_t = (\alpha (1 - X_t) - \beta X_t) dt + \sigma \sqrt{X_t (1 - X_t)} dW_t$$
+
+**Exact Analytics:**
+- `stationary_mean()` / `stationary_variance()` — moments of the stationary Beta distribution
+- `stationary_pdf(x)` — exact $\mathrm{Beta}(2\alpha/\sigma^2, 2\beta/\sigma^2)$ density
+- `are_boundaries_unattainable` — Feller boundary non-attainability classification
+- `simulate(t_max, num_steps, num_paths, seed)` — boundary-preserving Milstein simulation
+
+---
+
+### LogisticDiffusion
+
+```python
+from spxa import LogisticDiffusion, LogisticGrowthProcess, VerhulstDiffusion
+
+logist = LogisticDiffusion(r=1.5, k=100.0, sigma=0.4, x0=50.0)
+```
+
+Verhulst stochastic population growth diffusion with environmental noise:
+$$dX_t = r X_t \left(1 - \frac{X_t}{K}\right) dt + \sigma X_t dW_t$$
+
+**Exact Analytics:**
+- `is_persistent` — persistence condition $r > \frac{1}{2}\sigma^2$
+- `stationary_mean()` — expected equilibrium $K(1 - \frac{\sigma^2}{2r})$
+- `stationary_pdf(x)` — exact stationary Gamma distribution $\Gamma(\frac{2r}{\sigma^2}-1, \frac{2r}{\sigma^2 K})$
+- `simulate(t_max, num_steps, num_paths, seed)` — positive-preserving log-Euler simulation
+
+---
+
+### MertonFirmValueProcess
+
+```python
+from spxa import MertonFirmValueProcess, MertonDefaultModel, StructuralCreditModel
+
+merton = MertonFirmValueProcess(v0=100.0, debt=60.0, sigma_v=0.25, mu=0.08, r=0.03, t_debt=1.0)
+```
+
+Robert C. Merton (1974) structural credit risk and corporate firm value model:
+$$dV_t = \mu V_t dt + \sigma_V V_t dW_t$$
+
+**Exact Analytics:**
+- `distance_to_default()` — physical distance to default (DD) in standard deviations
+- `physical_default_probability()` / `risk_neutral_default_probability()` — cumulative default probabilities
+- `equity_value()` / `debt_value()` — structural market valuations satisfying $V_0 = E_0 + B_0$
+- `credit_spread()` — yield-to-maturity credit spread term structure
+- `simulate(num_steps, num_paths, seed)` — geometric Brownian motion asset simulation
+
+---
+
+### BrennanSchwartzProcess
+
+```python
+from spxa import BrennanSchwartzProcess, BrennanSchwartz, CommodityConvenienceModel
+
+bs = BrennanSchwartzProcess(
+    s0=50.0, delta0=0.04, mu=0.08, k=1.2, delta_bar=0.05,
+    sigma1=0.2, sigma2=0.15, rho=0.3, r=0.02,
+)
+```
+
+Two-factor commodity valuation model with proportional stochastic convenience yield:
+$$dS_t = (\mu - \delta_t) S_t dt + \sigma_1 S_t dW_{1,t}$$
+$$d\delta_t = \kappa (\bar{\delta} - \delta_t) dt + \sigma_2 \delta_t dW_{2,t}$$
+
+**Exact Analytics:**
+- `mean_convenience_yield(t)` — conditional expected convenience yield
+- `stationary_var_convenience_yield()` — long-run convenience yield variance
+- `futures_price(tau)` — futures curve term structure $F(0, \tau)$
+- `simulate(t_max, num_steps, num_paths, seed)` — bivariate correlated commodity simulation
+
+---
+
+### KestenProcess
+
+```python
+from spxa import KestenProcess, KestenDiffusion, MultiplicativeNoiseDiffusion
+
+kesten = KestenProcess(a=2.0, b=1.0, sigma=0.5, x0=1.0)
+```
+
+Continuous-time Kesten diffusion with multiplicative noise generating endogenous Pareto power-law tails:
+$$dX_t = (a - b X_t) dt + \sigma X_t dW_t$$
+
+**Exact Analytics:**
+- `pareto_tail_index` — exact power-law tail exponent $\alpha = \frac{2b}{\sigma^2} + 1$
+- `stationary_mean()` / `stationary_variance()` — stationary Inverse-Gamma moments
+- `stationary_pdf(x)` — exact stationary probability density
+- `simulate(t_max, num_steps, num_paths, seed)` — strictly positive log-Euler simulation
+
+---
+
+### HyperbolicDiffusion
+
+```python
+from spxa import HyperbolicDiffusion, HyperbolicOU, HyperbolicInvariantDiffusion
+
+hd = HyperbolicDiffusion(alpha=2.5, beta=0.8, delta=1.2, mu0=0.5, sigma=0.8)
+```
+
+Nonlinear diffusion possessing an exact Hyperbolic invariant distribution with bounded drift and exponential tails:
+$$dX_t = \frac{1}{2}\sigma^2 \left( \beta - \alpha \frac{X_t - \mu_0}{\sqrt{\delta^2 + (X_t - \mu_0)^2}} \right) dt + \sigma dW_t$$
+
+**Exact Analytics:**
+- `drift(x)` — bounded centering drift with slopes $\to \frac{1}{2}\sigma^2(\beta \mp \alpha)$
+- `stationary_pdf(x)` — exact Hyperbolic density normalized via modified Bessel $K_1$
+- `stationary_mean()` / `stationary_variance()` — exact stationary moments via Bessel functions $K_2, K_3$
+- `simulate(t_max, num_steps, num_paths, seed)` — Milstein path simulation
+
+---
+
+### QuadraticDiffusion
+
+```python
+from spxa import QuadraticDiffusion, QuadraticPearsonDiffusion, WongDiffusion
+
+qd = QuadraticDiffusion(a=2.0, b=-2.0, c=1.0, d=0.0, e=0.5, x0=0.0)
+```
+
+Pearson polynomial diffusion family with affine drift and quadratic variance:
+$$dX_t = (a + b X_t) dt + \sqrt{c + d X_t + e X_t^2} dW_t$$
+
+**Exact Analytics:**
+- `stationary_mean()` — exact equilibrium $-a / b$
+- `stationary_second_moment()` / `stationary_variance()` — exact second moment from eigenvalue $\lambda_2 = 2b + e$
+- `variance(t)` — conditional variance evolution
+- `simulate(t_max, num_steps, num_paths, seed)` — Milstein discretization with variance derivative correction
 
 ---
 

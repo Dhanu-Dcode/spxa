@@ -1,7 +1,5 @@
 """Exactness tests for Variance Gamma with Stochastic Arrival (VGSA) Process."""
 
-import cmath
-import math
 import numpy as np
 import pytest
 

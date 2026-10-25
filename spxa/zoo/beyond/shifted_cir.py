@@ -152,15 +152,15 @@ class ShiftedCIRProcess(Process):
         y[~pos] = self.r0
         return float(y[0]) if is_scalar else y
 
-    def european_bond_call(
-        self, maturity: float, bond_maturity: float, strike: float
-    ) -> float:
+    def european_bond_call(self, maturity: float, bond_maturity: float, strike: float) -> float:
         r"""European call option on zero-coupon bond P(t, T_bond) with strike K and maturity T_opt.
 
         Uses the exact non-central chi-square representation of Jamshidian / Brigo-Mercurio.
         """
         if maturity >= bond_maturity:
-            raise ValueError(f"Option maturity {maturity} must be less than bond maturity {bond_maturity}")
+            raise ValueError(
+                f"Option maturity {maturity} must be less than bond maturity {bond_maturity}"
+            )
 
         tau_bond = bond_maturity - maturity
         a_tau, b_tau = self._cir_bond_coeffs(tau_bond)
@@ -170,7 +170,9 @@ class ShiftedCIRProcess(Process):
         # K = a_tau * exp(-b_tau * x* - int_phi)
         ratio = strike / (a_tau * math.exp(-int_phi))
         if ratio <= 0.0:
-            return float(self.zero_coupon_bond(bond_maturity) - strike * self.zero_coupon_bond(maturity))
+            return float(
+                self.zero_coupon_bond(bond_maturity) - strike * self.zero_coupon_bond(maturity)
+            )
         x_star = -math.log(ratio) / b_tau
         if x_star <= 0.0:
             # Since r_t >= 0, r_t < x_star is impossible; option expires worthless
@@ -182,10 +184,6 @@ class ShiftedCIRProcess(Process):
 
         rho = 2.0 * gamma / (self.sigma**2 * (exp_gt - 1.0))
         psi = (self.k + gamma) / self.sigma**2
-
-        # Non-centrality parameters under risk-neutral / forward measures
-        theta_1 = math.sqrt(self.k**2 + 2.0 * self.sigma**2)
-        lambda_x = 2.0 * rho**2 * self.x0 * math.exp(theta_1 * maturity) / (rho + psi + b_tau)
 
         # Chi-squared CDF values
         df = d
@@ -224,9 +222,7 @@ class ShiftedCIRProcess(Process):
 
         for step in range(num_steps):
             x_prev = x_paths[:, step]
-            lambda_param = (4.0 * self.k * x_prev * exp_kdt) / (
-                self.sigma**2 * (1.0 - exp_kdt)
-            )
+            lambda_param = (4.0 * self.k * x_prev * exp_kdt) / (self.sigma**2 * (1.0 - exp_kdt))
             x_next = c * np.random.noncentral_chisquare(df=d, nonc=np.maximum(0.0, lambda_param))
             x_paths[:, step + 1] = np.maximum(0.0, x_next)
 
