@@ -6,6 +6,31 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `calibration/` — Comprehensive institutional-grade model calibration, time-series estimation, state filtering, and diagnostic validation suite (`spxa.calibration`):
+  - **Surface Calibration (`spxa.calibration.surface`)**:
+    - Data containers: `MarketQuote`, `MarketSlice`, and `MarketSurface` with 2D coordinate projections, smile interpolation, and discount curve support.
+    - Loss functions: `RMSELoss`, `VegaWeightedLoss`, `RelativeErrorLoss`, and `ArbitragePenalizedLoss` (penalizing calendar spread and butterfly arbitrage violations).
+    - Optimizers: `LeastSquaresOptimizer` (Levenberg-Marquardt / Trust-Region Reflective), `DifferentialEvolutionOptimizer` (global stochastic optimization), and `HybridOptimizer` (global exploration followed by local refinement).
+    - Specialized surface calibrators: `SABRCalibrator` (Hagan et al. 2002 asymptotic formula), `HestonCalibrator` (Fourier call pricer with Feller regularization), `BatesCalibrator` (joint SV and compound Poisson jumps), `DoubleHestonCalibrator` (two-factor stochastic volatility), and `CEVHestonCalibrator` (local-stochastic volatility).
+  - **Time-Series Maximum Likelihood & GMM (`spxa.calibration.mle`)**:
+    - Closed-form Gaussian MLE: `OrnsteinUhlenbeckMLE` (`VasicekMLE`), `BrownianMotionMLE`, and `GeometricBrownianMotionMLE`.
+    - Exact transition density MLE: `CIRMaximumLikelihood` (`CIRMLE`) using non-central chi-square distribution with Bessel-scaled evaluation, and `BESQMaximumLikelihood` (`BESQMLE`).
+    - Heavy-tailed MLE: `StudentTInnovationsMLE` and `NormalInverseGaussianMLE` (`NIGMLE`).
+    - GMM & spectral HAC: `GeneralizedMethodOfMoments` (`GMMEstimator`, `GMM`), `newey_west_hac` robust covariance estimator with Bartlett kernel, `hansen_j_test` test of overidentifying restrictions, `OrnsteinUhlenbeckGMM`, and `CIRGMM`.
+    - `ECFEstimator`: Empirical Characteristic Function estimator minimizing continuum integrated weighted distance.
+  - **Latent State Filtering (`spxa.calibration.filter`)**:
+    - `MerweScaledSigmaPoints`: Scaled unscented transformation with parameters $(\alpha, \beta, \kappa)$.
+    - `UnscentedKalmanFilter` (`UKF`): Nonlinear state filtering with innovation Gaussian pseudo log-likelihood.
+    - `QuasiMaximumLikelihoodEstimator` (`QMLE`): Calibrating state-space parameters using UKF prediction errors.
+    - Sequential Monte Carlo: `BootstrapParticleFilter` (`ParticleFilter`, `SequentialMonteCarlo`) with systematic, stratified, and multinomial resampling schemes, and ESS tracking.
+    - Domain filters: `HestonVarianceFilter` (recovering latent variance $v_t = \exp(x_t) > 0$ from returns via log-variance UKF), `SchwartzTwoFactorFilter` (filtering unobserved commodity convenience yield from futures curves), and `DefaultIntensityFilter` (filtering hazard rates from CDS spreads).
+  - **Diagnostics, Standard Errors, & Reporting (`spxa.calibration.diagnostics`)**:
+    - `compute_numerical_hessian`, `fisher_information_matrix`, and `sandwich_covariance_matrix` (Godambe robust covariance).
+    - `compute_parameter_inference`: Standard errors, $t$-statistics, $p$-values, Wald confidence intervals, and parameter correlation matrix.
+    - Information criteria: AIC, AICc, BIC, HQIC, and `ModelComparisonTable` with relative Akaike weights.
+    - Residual diagnostics: `compute_residual_diagnostics` (Ljung-Box autocorrelation test, Jarque-Bera normality test), `analyze_surface_residuals` (RMSE, MAE, butterfly and calendar arbitrage checks), `compute_profile_likelihood`, and `evaluate_pit_diagnostics` (uniformity and Berkowitz 2001 LR test).
+    - `CalibrationReport`: Institutional summary report generator exporting formatted ASCII text tables and GitHub-flavored Markdown tables.
+    - Visualization helpers: `plot_smile_overlay`, `plot_surface_error_heatmap`, and `plot_filtered_trajectory`.
 - `control/` — Continuous-time stochastic optimal control module (`spxa.control`):
   - Base abstractions `ControlProblem` and `ControlledTrajectory` for stochastic optimal control, value functions, running/terminal costs, and Monte Carlo trajectory evaluation.
   - `LinearQuadraticGaussian` (`LQG`, `LinearQuadraticRegulator`): Multi-dimensional LQG regulator with backward matrix differential Riccati ODE solver, Continuous Algebraic Riccati Equation (CARE) solver, optimal state-feedback gain $u^*(t, x) = -R^{-1}B^T P(t)x$, and analytical quadratic value function $V(t, x) = x^T P(t) x + s(t)$.

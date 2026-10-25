@@ -119,4 +119,26 @@ Every process implemented in `spxa`. The exactness level, available cumulants, s
 
 ---
 
+## Model Calibration & Estimation Engines (`spxa.calibration`)
+
+| Engine / Component | Submodule | Methods & Formulations | Capabilities & Guarantees | Primary References |
+|---|---|---|---|---|
+| `SABRCalibrator` | `calibration.surface` | Hagan asymptotic implied volatility formula $(\alpha, \beta, \rho, \nu)$ | Exact ATM and wings expansion; bounded nonlinear least squares & differential evolution | Hagan et al. 2002; Obłój 2008 |
+| `HestonCalibrator` | `calibration.surface` | Semi-analytical Fourier inversion pricer $(v_0, \kappa, \theta, \sigma, \rho)$ | Feller regularization penalty $2\kappa\theta > \sigma^2$; vega-weighted & arbitrage-penalized losses | Heston 1993; Albrecher et al. 2007 |
+| `BatesCalibrator` | `calibration.surface` | Joint Fourier transform factoring Heston SV and Merton jumps | Smiles and skews across short and long maturities; jump intensity and jump distribution calibration | Bates 1996 |
+| `DoubleHestonCalibrator` | `calibration.surface` | Two-factor additive variance Fourier pricing | Captures short-term steep skew and long-term term structure curvature simultaneously | Christoffersen et al. 2009 |
+| `CEVHestonCalibrator` | `calibration.surface` | Local-stochastic volatility combining CEV backbone elasticity $\gamma$ with Heston | Resolves implied volatility smile flat-tail discrepancies; reduces to Heston when $\gamma = 1$ | Andersen & Brotherton-Ratcliffe 1998 |
+| `OrnsteinUhlenbeckMLE` | `calibration.mle` | Exact conditional Gaussian transition log-likelihood | Analytical closed-form estimators for $\kappa, \theta, \sigma$; zero bias under equidistant sampling | Uhlenbeck & Ornstein 1930 |
+| `CIRMaximumLikelihood` | `calibration.mle` | Exact non-central $\chi^2$ transition density | Bessel-scaled $I_\nu$ evaluation avoiding numerical underflow/overflow; exact Feller condition verification | Cox, Ingersoll, & Ross 1985 |
+| `GeneralizedMethodOfMoments` | `calibration.mle` | Two-step optimal GMM with iterative HAC spectral weight matrix | Newey-West Bartlett kernel; Hansen $J$-test of overidentifying restrictions | Hansen 1982; Newey & West 1987 |
+| `ECFEstimator` | `calibration.mle` | Empirical Characteristic Function minimum distance | Fourier transform moment matching over continuum $u \in [u_{\min}, u_{\max}]$ | Singleton 2001; Yu 2004 |
+| `UnscentedKalmanFilter` (`UKF`) | `calibration.filter` | Merwe scaled unscented transformation $(\alpha, \beta, \kappa)$ | Captures third-order Taylor moments; computes Gaussian pseudo log-likelihood for QMLE | Julier & Uhlmann 2004; Wan & van der Merwe 2000 |
+| `BootstrapParticleFilter` | `calibration.filter` | Sequential Importance Resampling (SIR) SMC | Systematic, stratified, and multinomial resampling; ESS monitoring; non-linear state spaces | Gordon, Salmond, & Smith 1993; Doucet et al. 2001 |
+| `HestonVarianceFilter` | `calibration.filter` | Log-variance state-space UKF tracker | Guaranteed positive variance $v_t = \exp(x_t) > 0$; filters latent variance directly from asset returns | Javaheri et al. 2003 |
+| `SchwartzTwoFactorFilter` | `calibration.filter` | Kalman state-space filtering on futures term structure | Filters unobserved stochastic convenience yield $\delta_t$ and spot price $S_t$ from futures curves | Schwartz 1997 |
+| `DefaultIntensityFilter` | `calibration.filter` | Duffie-Singleton hazard rate UKF | Recovers unobserved credit default intensity $\lambda_t$ from multi-tenor CDS spreads | Duffie & Singleton 1999 |
+| `CalibrationReport` | `calibration.diagnostics` | Asymptotic Fisher Information, standard errors, Wald intervals, AIC/BIC/HQIC, residuals | Rich ASCII tables and Markdown reports; Ljung-Box autocorrelation, Jarque-Bera, PIT Berkowitz test | Godambe 1960; White 1982; Berkowitz 2001 |
+
+---
+
 New process proposals: open an issue using the **Process Proposal** template.

@@ -4411,4 +4411,82 @@ Features:
 - `solve(drift, diffusion, running_cost, terminal_cost)` & `solve_problem(problem)` backward PDE integration.
 - Bivariate cubic spline interpolator `value(t, x)` and optimal feedback lookup `optimal_control(t, x)`.
 
+---
+
+## Model Calibration & Estimation Suite (`spxa.calibration`)
+
+The `spxa.calibration` package provides institutional-grade cross-sectional implied volatility surface fitting, time-series econometric estimation (MLE, GMM, ECF), nonlinear latent state filtering (UKF, SMC), and diagnostic validation.
+
+### Surface Calibration (`spxa.calibration.surface`)
+
+#### Data Containers & Representations
+- `MarketQuote(strike, maturity, value, quote_type)`: Single option contract market quote (implied volatility or price), with optional bid/ask, vega, forward, and discount factors.
+- `MarketSlice(maturity, strikes, quotes)`: Single expiration smile with vectorized interpolation and moneyness transformations.
+- `MarketSurface(slices, spot, rate, dividend_yield)`: Multi-tenor volatility surface with grid projection, coordinate flattening (`to_arrays()`), and classmethod `MarketSurface.from_quotes()`.
+
+#### Calibrators
+- `SABRCalibrator`: Calibrates Hagan et al. (2002) asymptotic Black-76 implied volatility smile $(\alpha, \beta, \rho, \nu)$ with bounded optimization.
+- `HestonCalibrator`: Calibrates Heston (1993) semi-analytical Fourier call pricing engine $(v_0, \kappa, \theta, \sigma, \rho)$ with Feller condition violation regularization.
+- `BatesCalibrator`: Joint calibration of Heston stochastic volatility and Merton compound Poisson jumps $(v_0, \kappa, \theta, \sigma, \rho, \lambda_J, \mu_J, \sigma_J)$.
+- `DoubleHestonCalibrator`: Two-factor stochastic volatility calibration $(v_{0,1}, \kappa_1, \theta_1, \sigma_1, \rho_1, v_{0,2}, \kappa_2, \theta_2, \sigma_2, \rho_2)$ capturing both short-term skew and long-term smile curvature.
+- `CEVHestonCalibrator`: Local-stochastic volatility model calibration combining CEV backbone elasticity $\gamma$ with Heston stochastic variance.
+
+#### Losses & Optimizers
+- Loss functions: `RMSELoss`, `VegaWeightedLoss`, `RelativeErrorLoss`, `ArbitragePenalizedLoss` (penalizing calendar and butterfly arbitrage violations).
+- Optimization engines: `LeastSquaresOptimizer` (Levenberg-Marquardt / Trust-Region Reflective), `DifferentialEvolutionOptimizer` (global stochastic search), `HybridOptimizer` (global differential evolution followed by local polish).
+
+---
+
+### Time-Series Econometric Estimation (`spxa.calibration.mle`)
+
+#### Maximum Likelihood Estimators
+- `OrnsteinUhlenbeckMLE` (`VasicekMLE`): Analytical Gaussian exact conditional MLE for mean-reverting diffusions.
+- `BrownianMotionMLE` & `GeometricBrownianMotionMLE`: Analytical exact closed-form Gaussian log-likelihood estimators.
+- `CIRMaximumLikelihood` (`CIRMLE`): Exact transition density MLE based on non-central chi-square distribution $\chi^2(d, \lambda)$ with Bessel-scaled modified Bessel functions $I_\nu$.
+- `BESQMaximumLikelihood` (`BESQMLE`): Exact dimension and scale recovery from squared Bessel diffusion paths.
+- `StudentTInnovationsMLE`: Heavy-tailed log-likelihood optimization over $(\mu, \sigma, \nu)$ with $t$-distributed innovations.
+- `NormalInverseGaussianMLE` (`NIGMLE`): Exact MLE for generalized hyperbolic NIG distributions using modified Bessel functions $K_1$.
+
+#### GMM & Spectral HAC
+- `GeneralizedMethodOfMoments` (`GMMEstimator`, `GMM`): Two-step optimal GMM with iterative weighting matrix update.
+- `newey_west_hac`: Robust Newey-West (1987) Heteroskedasticity and Autocorrelation Consistent (HAC) spectral density matrix estimator with Bartlett kernel.
+- `hansen_j_test`: Hansen (1982) omnibus test of overidentifying moment restrictions: $J = N \cdot g_N(\hat{\theta})^T W_N^* g_N(\hat{\theta}) \sim \chi^2(m - k)$.
+- `OrnsteinUhlenbeckGMM` & `CIRGMM`: Multi-moment conditional expectation estimators.
+- `ECFEstimator`: Empirical Characteristic Function estimator minimizing integrated continuum weighted distance between sample ECF $\phi_N(u)$ and model CF $\phi(u; \theta)$.
+
+---
+
+### Latent State Filtering (`spxa.calibration.filter`)
+
+#### Unscented Kalman Filter & SMC
+- `MerweScaledSigmaPoints`: Scaled unscented transformation with parameters $\alpha, \beta, \kappa$ preserving higher-order Gaussian kurtosis without negative covariance spread.
+- `UnscentedKalmanFilter` (`UKF`): Nonlinear state filtering propagating sigma points through arbitrary non-linear transitions and measurement functions with online innovation log-likelihood tracking.
+- `QuasiMaximumLikelihoodEstimator` (`QMLE`): Maximum likelihood calibration of underlying state-space parameters using UKF Gaussian innovation decomposition $\sum_t [\ln |F_t| + v_t^T F_t^{-1} v_t]$.
+- Resampling algorithms: `effective_sample_size`, `systematic_resample`, `stratified_resample`, `multinomial_resample`.
+- `BootstrapParticleFilter` (`ParticleFilter`, `SequentialMonteCarlo`): Sequential Monte Carlo SIR particle filtering for general non-Gaussian/non-linear latent state spaces.
+
+#### Specialized Domain Filters
+- `HestonVarianceFilter`: Log-variance state-space tracker recovering latent variance $v_t = \exp(x_t) > 0$ from realized asset returns.
+- `SchwartzTwoFactorFilter`: Convenience yield filter tracking unobserved commodity convenience yield $\delta_t$ and spot price $S_t$ from futures term structures.
+- `DefaultIntensityFilter`: Credit default hazard rate filter estimating unobservable hazard rate $\lambda_t$ from observed CDS spread curves.
+
+---
+
+### Diagnostics, Standard Errors, & Reporting (`spxa.calibration.diagnostics`)
+
+#### Statistical Inference & Information Criteria
+- `compute_numerical_hessian`: High-precision central finite difference Hessian matrix.
+- `fisher_information_matrix`: Observed Fisher information $\mathcal{I}(\hat{\theta}) = -\nabla^2 \ln L(\hat{\theta})$.
+- `sandwich_covariance_matrix`: Huber-White / Godambe sandwich covariance estimator $V = H^{-1} J H^{-1}$.
+- `compute_parameter_inference`: Standard errors, $t$-statistics, two-tailed $p$-values, Wald 95% confidence intervals, and parameter correlation matrix.
+- Information criteria: `akaike_information_criterion` (AIC), `corrected_aic` (AICc), `bayesian_information_criterion` (BIC), `hannan_quinn_criterion` (HQIC), and `ModelComparisonTable` with relative Akaike evidence weights.
+
+#### Residual & Arbitrage Diagnostics
+- `compute_residual_diagnostics`: Standardized residual diagnostics, Ljung-Box autocorrelation test, and Jarque-Bera normality test.
+- `analyze_surface_residuals`: Volatility surface goodness-of-fit (RMSE, MAE, MRE) alongside butterfly and calendar spread arbitrage violation counts.
+- `compute_profile_likelihood`: Profile likelihood analysis evaluating parameter identifiability and non-linear profile confidence intervals.
+- `evaluate_pit_diagnostics`: Probability Integral Transform (PIT) uniformity test and Berkowitz (2001) joint likelihood ratio test.
+- `CalibrationReport`: Institutional summary report generator exporting formatted ASCII text tables and GitHub-flavored Markdown tables.
+- Visualization helpers: `plot_smile_overlay`, `plot_surface_error_heatmap`, `plot_filtered_trajectory`.
+
 

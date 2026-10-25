@@ -21,6 +21,9 @@ from spxa.calibration.mle.heavy_tailed import (
 )
 from spxa.calibration.mle.j_test import JTestResult, hansen_j_test
 
+GeneralizedMethodOfMoments = GMMEstimator
+GMM = GMMEstimator
+
 __all__ = [
     "TimeSeriesEstimator",
     "EstimationResult",
@@ -39,6 +42,8 @@ __all__ = [
     "NormalInverseGaussianMLE",
     "NIGMLE",
     "GMMEstimator",
+    "GeneralizedMethodOfMoments",
+    "GMM",
     "GMMResult",
     "OrnsteinUhlenbeckGMM",
     "CIRGMM",
