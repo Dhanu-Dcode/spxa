@@ -144,8 +144,8 @@ class ThreeHalvesProcess(Process):
 
     @property
     def stationary_shape(self) -> float:
-        r"""Shape parameter α = 1 + 2κ / ε² of the stationary Inverse-Gamma law."""
-        return 1.0 + 2.0 * self.kappa / (self.epsilon**2)
+        r"""Shape parameter α = 2 + 2κ / ε² of the stationary Inverse-Gamma law for reciprocal CIR."""
+        return 2.0 + 2.0 * self.kappa / (self.epsilon**2)
 
     @property
     def stationary_scale(self) -> float:
@@ -154,18 +154,18 @@ class ThreeHalvesProcess(Process):
 
     @property
     def stationary_mean(self) -> float:
-        r"""Stationary expectation E[v_∞] = θ."""
-        return self.theta
+        r"""Stationary expectation E[v_∞] = β / (α - 1) = θ * (2κ / (2κ + ε²))."""
+        return self.stationary_scale / (self.stationary_shape - 1.0)
 
     @property
     def stationary_variance(self) -> float:
         r"""
-        Stationary variance Var(v_∞) = ε² θ² / (2κ - ε²).
-        Finite if and only if 2κ > ε² (shape α > 2).
+        Stationary variance Var(v_∞) = β² / [(α - 1)² (α - 2)] = ε² E[v_∞]² / (2κ).
+        Finite since α = 2 + 2κ/ε² > 2 for all κ, ε > 0.
         """
-        if 2.0 * self.kappa <= self.epsilon**2:
-            return float("inf")
-        return (self.epsilon**2 * self.theta**2) / (2.0 * self.kappa - self.epsilon**2)
+        alpha = self.stationary_shape
+        beta = self.stationary_scale
+        return (beta**2) / (((alpha - 1.0) ** 2) * (alpha - 2.0))
 
     def stationary_density(self, v: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
         r"""
@@ -240,7 +240,7 @@ class ThreeHalvesProcess(Process):
             has_stationary_increments=False,
             has_independent_increments=False,
             is_martingale=False,
-            has_finite_variance=bool(2.0 * self.kappa > self.epsilon**2),
+            has_finite_variance=True,
             has_finite_mean=True,
             self_similarity_index=None,
             tail_index=self.stationary_shape,
@@ -253,30 +253,34 @@ class ThreeHalvesProcess(Process):
         )
 
     def _moment_propagation_cumulants(self, order: int) -> dict[int, float]:
-        res: dict[int, float] = {1: self.theta}
-        if 2.0 * self.kappa > self.epsilon**2:
+        res: dict[int, float] = {1: self.stationary_mean}
+        if order >= 2:
             res[2] = self.stationary_variance
-        else:
-            res[2] = self.theta**2
         for k in range(3, order + 1):
             res[k] = 0.0
         return res
 
     def simulate(
         self,
-        t_grid: np.ndarray,
-        n_paths: int = 1,
+        t_grid: Optional[Union[np.ndarray, float]] = None,
+        n_paths: Optional[int] = None,
         rng: Optional[np.random.Generator] = None,
         method: str = "exact",
+        T: Optional[float] = None,
+        n_steps: Optional[int] = None,
+        *,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
+        t_max: Optional[float] = None,
     ) -> np.ndarray:
         r"""
         Simulate sample paths of the 3/2 variance process.
 
         Parameters
         ----------
-        t_grid : np.ndarray
-            1-D strictly increasing array of time points starting at 0.
-        n_paths : int
+        t_grid : np.ndarray or float, optional
+            1-D strictly increasing array of time points starting at 0, or terminal time T.
+        n_paths : int, optional
             Number of simulated sample paths.
         rng : np.random.Generator, optional
             Numpy random generator.
@@ -284,25 +288,37 @@ class ThreeHalvesProcess(Process):
             Simulation scheme. "exact" simulates the reciprocal CIR process exactly
             via the non-central chi-squared distribution and inverts back.
         """
-        t_grid = np.asarray(t_grid, dtype=np.float64)
-        if t_grid.ndim != 1 or len(t_grid) < 2:
+        paths_count = (
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 1)
+        )
+        steps = n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+        final_t = T if T is not None else (t_max if t_max is not None else 1.0)
+
+        if t_grid is None:
+            grid = np.linspace(0.0, final_t, steps + 1)
+        elif isinstance(t_grid, (int, float)):
+            grid = np.linspace(0.0, float(t_grid), steps + 1)
+        else:
+            grid = np.asarray(t_grid, dtype=np.float64)
+
+        if grid.ndim != 1 or len(grid) < 2:
             raise ValueError("t_grid must be a 1-D array with at least 2 points")
         if rng is None:
             rng = np.random.default_rng()
 
-        n_steps = len(t_grid)
-        paths = np.zeros((n_paths, n_steps), dtype=np.float64)
+        num_pts = len(grid)
+        paths = np.zeros((paths_count, num_pts), dtype=np.float64)
         paths[:, 0] = self.v0
 
         if method == "exact":
             # Exact reciprocal CIR simulation
-            y_paths = np.zeros((n_paths, n_steps), dtype=np.float64)
+            y_paths = np.zeros((paths_count, num_pts), dtype=np.float64)
             y_paths[:, 0] = 1.0 / self.v0
 
             df = 4.0 * self.kappa_cir * self.theta_cir / (self.sigma_cir**2)
 
-            for i in range(1, n_steps):
-                dt = t_grid[i] - t_grid[i - 1]
+            for i in range(1, num_pts):
+                dt = grid[i] - grid[i - 1]
                 if dt <= 0:
                     raise ValueError("t_grid must be strictly increasing")
 
@@ -311,11 +327,7 @@ class ThreeHalvesProcess(Process):
                 nc = 2.0 * c * y_paths[:, i - 1] * exp_k
 
                 # Sample non-central chi-square
-                # nc can vary per path
-                # Standard decomposition: Poisson(nc / 2) + chi2(df + 2 * Poisson)
                 pois = rng.poisson(lam=nc / 2.0)
-                # chi2 degrees of freedom: df + 2 * pois
-                # Sample standard gamma: shape = (df + 2 * pois) / 2, scale = 2
                 gam = rng.standard_gamma(shape=(df + 2.0 * pois) / 2.0) * 2.0
                 y_paths[:, i] = gam / (2.0 * c)
 
@@ -323,14 +335,13 @@ class ThreeHalvesProcess(Process):
 
         elif method in ("euler", "milstein"):
             # Direct Euler/Milstein simulation on log-variance for numerical stability:
-            # d ln v_t = (κ(θ - v_t) - 0.5 ε² v_t) dt + ε √v_t dW_t
-            log_v = np.full(n_paths, math.log(self.v0), dtype=np.float64)
-            for i in range(1, n_steps):
-                dt = t_grid[i] - t_grid[i - 1]
+            log_v = np.full(paths_count, math.log(self.v0), dtype=np.float64)
+            for i in range(1, num_pts):
+                dt = grid[i] - grid[i - 1]
                 if dt <= 0:
                     raise ValueError("t_grid must be strictly increasing")
                 sqrt_dt = math.sqrt(dt)
-                z = rng.standard_normal(size=n_paths)
+                z = rng.standard_normal(size=paths_count)
 
                 v_curr = np.exp(log_v)
                 drift = self.kappa * (self.theta - v_curr) - 0.5 * (self.epsilon**2) * v_curr
