@@ -344,8 +344,10 @@ class JacobiProcess(Process):
         time_horizon: Optional[float] = None,
         n_paths: int = 1,
         rng: Optional[np.random.Generator] = None,
+        T: Optional[float] = None,
     ) -> np.ndarray:
         """Simulate sample paths of Jacobi diffusion :math:`Y_t` using the Milstein scheme."""
+        horizon = T if T is not None else time_horizon
         from spxa.sim.exact import sample_jacobi
 
         return sample_jacobi(
@@ -358,7 +360,7 @@ class JacobiProcess(Process):
             dt=dt,
             n_steps=n_steps,
             n_paths=n_paths,
-            T=time_horizon,
+            T=horizon,
             rng=rng,
         )
 

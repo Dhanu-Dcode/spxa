@@ -768,6 +768,7 @@ class CEVProcess(Process):
         n_paths: int = 1,
         rng: Optional[np.random.Generator] = None,
         method: str = "exact",
+        T: Optional[float] = None,
     ) -> np.ndarray:
         r"""
         Simulate sample paths of the CEV process.
@@ -786,12 +787,15 @@ class CEVProcess(Process):
             Random number generator.
         method : {"exact", "milstein", "euler", "absorbed_euler"}, default "exact"
             Simulation scheme.
+        T : float, optional
+            Alias for time_horizon.
 
         Returns
         -------
         np.ndarray
             Path array of shape (n_paths, n_steps + 1) with paths[:, 0] == s0.
         """
+        horizon = T if T is not None else time_horizon
         return sample_cev(
             mu=self.mu,
             sigma=self.sigma,
@@ -800,7 +804,7 @@ class CEVProcess(Process):
             dt=dt,
             n_steps=n_steps,
             n_paths=n_paths,
-            T=time_horizon,
+            T=horizon,
             rng=rng,
             method=method,
         )
