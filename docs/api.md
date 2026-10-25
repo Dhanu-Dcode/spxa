@@ -90,21 +90,45 @@ the running library. All signatures are exact.
    - [CorrelatedLevy](#correlatedlevy)
    - [correlated_brownian_motion](#correlated_brownian_motion)
    - [independent_levy_vector](#independent_levy_vector)
-6. [ops — operations](#ops-operations)
+6. [Copulas & Multi-Asset Dependence (`spxa.copula`)](#copulas-multi-asset-dependence-spxacopula)
+   - [Copula Base Class](#copula-base-class)
+   - [Fundamental Fréchet–Hoeffding Copulas](#fundamental-frechethoeffding-copulas)
+   - [Elliptical Copulas](#elliptical-copulas)
+   - [Archimedean Copulas](#archimedean-copulas)
+   - [Extreme Value Copulas](#extreme-value-copulas)
+   - [CoupledProcess](#coupledprocess)
+   - [Fitting & Model Selection](#fitting-model-selection)
+   - [Copula Visualizations](#copula-visualizations)
+7. [ops — operations](#ops-operations)
    - [addition](#addition)
    - [scaling](#scaling)
    - [subordination](#subordination)
    - [product](#product)
    - [integral](#integral)
-7. [analytics](#analytics)
+8. [analytics](#analytics)
    - [cumulants](#cumulants-module)
    - [divergence](#divergence)
    - [fourier](#fourier)
-8. [sim — simulation backends](#sim-simulation-backends)
+9. [sim — simulation backends](#sim-simulation-backends)
    - [euler](#euler)
    - [exact samplers](#exact-samplers)
    - [bridge](#bridge)
-9. [story — derivation traces](#story-derivation-traces)
+   - [milstein](#milstein)
+   - [stochastic runge-kutta](#stochastic-runge-kutta)
+   - [quasi-monte carlo (qmc)](#quasi-monte-carlo-qmc)
+   - [variance reduction](#variance-reduction)
+   - [predictor-corrector](#predictor-corrector)
+   - [multilevel monte carlo (mlmc)](#multilevel-monte-carlo-mlmc)
+10. [story — derivation traces](#story-derivation-traces)
+   - [CompositionNode](#compositionnode)
+   - [NodeKind](#nodekind)
+   - [narrate](#narrate)
+   - [narrate_latex](#narrate_latex)
+   - [story_latex](#story_latex)
+11. [Visualization Module (`spxa.vis`)](#visualization-module-spxavis)
+   - [Lévy Inspector](#levy-inspector-spxavislevy_inspector)
+   - [Volatility Surfaces & Smiles](#volatility-surfaces-smiles-spxavissurface)
+   - [Story Composition DAG Visualizer](#story-composition-dag-visualizer-spxavisstory_dag)
 
 ---
 
@@ -323,6 +347,31 @@ spxa.MultivariateLevyTriplet
 spxa.CorrelatedLevy
 spxa.correlated_brownian_motion
 spxa.independent_levy_vector
+
+# Copulas & Multi-Asset Dependence
+spxa.Copula
+spxa.IndependenceCopula
+spxa.ComonotonicityCopula
+spxa.CountermonotonicityCopula
+spxa.GaussianCopula
+spxa.StudentTCopula
+spxa.ArchimedeanCopula
+spxa.ClaytonCopula
+spxa.GumbelCopula
+spxa.FrankCopula
+spxa.JoeCopula
+spxa.AliMikhailHaqCopula
+spxa.ExtremeValueCopula
+spxa.GalambosCopula
+spxa.HuslerReissCopula
+spxa.CoupledProcess
+spxa.pseudo_observations
+spxa.fit_copula
+spxa.select_best_copula
+spxa.plot_copula_cdf
+spxa.plot_copula_pdf
+spxa.plot_copula_samples
+spxa.plot_tail_dependence_curves
 ```
 
 ---
@@ -3056,6 +3105,169 @@ with identity mixing matrix A=I_d.
 
 ---
 
+## Copulas & Multi-Asset Dependence (`spxa.copula`)
+
+The `spxa.copula` module provides comprehensive multi-asset dependence modeling rooted in Sklar's Theorem (1959).
+It includes Fréchet–Hoeffding bounds, elliptical copulas, Archimedean copulas, extreme value copulas,
+arbitrary marginal process coupling via `CoupledProcess`, ML/CML parameter estimation, and 3D visualization routines.
+
+### Copula Base Class
+
+```python
+from spxa.copula import Copula
+```
+
+Abstract base class for all $d$-dimensional copulas on $[0, 1]^d$.
+
+**Core Methods:**
+- `cdf(u)` — Joint cumulative distribution function $C(u_1, \dots, u_d) = \mathbb{P}(U_1 \le u_1, \dots, U_d \le u_d)$.
+- `pdf(u)` — Copula density $c(\boldsymbol{u}) = \frac{\partial^d C}{\partial u_1 \cdots \partial u_d}$.
+- `log_pdf(u)` — Log-density with numerical stabilization.
+- `sample(n, rng=None)` — Generate $n$ independent random vectors from $[0, 1]^d$.
+- `conditional_cdf(u_d, u_given)` — Conditional distribution $\mathbb{P}(U_d \le u_d \mid U_1 = u_1, \dots)$.
+- `inverse_conditional_cdf(p, u_given)` — Inverse conditional CDF for sequential sampling.
+- `rosenblatt_transform(u)` — Rosenblatt probability integral transform to independent uniforms.
+- `inverse_rosenblatt_transform(w)` — Exact inversion of Rosenblatt transform.
+- `kendall_tau()` — Exact or numerical Kendall's rank correlation $\tau$.
+- `spearman_rho()` — Exact or numerical Spearman's rank correlation $\rho_S$.
+- `tail_dependence()` — Lower and upper tail dependence coefficients $(\lambda_L, \lambda_U)$.
+- `frechet_hoeffding_bounds(u)` — Lower $W(\boldsymbol{u})$ and upper $M(\boldsymbol{u})$ Fréchet–Hoeffding bounds.
+
+---
+
+### Fundamental Fréchet–Hoeffding Copulas
+
+```python
+from spxa.copula import (
+    IndependenceCopula,
+    ComonotonicityCopula,
+    CountermonotonicityCopula,
+)
+```
+
+- **`IndependenceCopula(dim=2)`**: Product copula $\Pi(\boldsymbol{u}) = \prod_{i=1}^d u_i$. Represents mutually independent variables ($\tau = 0, \rho_S = 0, \lambda_L = \lambda_U = 0$).
+- **`ComonotonicityCopula(dim=2)`**: Upper Fréchet–Hoeffding bound $M(\boldsymbol{u}) = \min(u_1, \dots, u_d)$. Represents perfect positive co-movement ($\tau = 1, \rho_S = 1, \lambda_L = \lambda_U = 1$).
+- **`CountermonotonicityCopula()`**: Lower Fréchet–Hoeffding bound for $d=2$: $W(u_1, u_2) = \max(u_1 + u_2 - 1, 0)$. Represents perfect negative dependence ($\tau = -1, \rho_S = -1, \lambda_L = \lambda_U = 0$).
+
+---
+
+### Elliptical Copulas
+
+```python
+from spxa.copula import GaussianCopula, StudentTCopula
+```
+
+- **`GaussianCopula(corr=0.5, dim=2)`**:
+  $$C(\boldsymbol{u}) = \Phi_{\boldsymbol{\Sigma}}(\Phi^{-1}(u_1), \dots, \Phi^{-1}(u_d))$$
+  Zero tail dependence $\lambda_L = \lambda_U = 0$. Kendall's tau satisfies $\tau = \frac{2}{\pi} \arcsin(\rho)$.
+- **`StudentTCopula(df=4.0, corr=0.5, dim=2)`**:
+  $$C(\boldsymbol{u}) = t_{\nu, \boldsymbol{\Sigma}}(t_\nu^{-1}(u_1), \dots, t_\nu^{-1}(u_d))$$
+  Exhibits symmetric positive tail dependence:
+  $$\lambda_L = \lambda_U = 2 t_{\nu + 1}\left(-\sqrt{\frac{(\nu + 1)(1 - \rho)}{1 + \rho}}\right) > 0$$
+
+---
+
+### Archimedean Copulas
+
+```python
+from spxa.copula import (
+    ArchimedeanCopula,
+    ClaytonCopula,
+    GumbelCopula,
+    FrankCopula,
+    JoeCopula,
+    AliMikhailHaqCopula,
+)
+```
+
+Generated by continuous, strictly decreasing convex generator $\psi(t)$:
+$$C(\boldsymbol{u}) = \psi^{[-1]}\left(\sum_{i=1}^d \psi(u_i)\right)$$
+
+| Copula | Generator $\psi(t)$ | Parameter Range | Tail Dependence $(\lambda_L, \lambda_U)$ |
+|---|---|---|---|
+| `ClaytonCopula` | $\frac{1}{\theta}(t^{-\theta} - 1)$ | $\theta \in (0, \infty)$ | $\lambda_L = 2^{-1/\theta}, \lambda_U = 0$ |
+| `GumbelCopula` | $(-\ln t)^\theta$ | $\theta \in [1, \infty)$ | $\lambda_L = 0, \lambda_U = 2 - 2^{1/\theta}$ |
+| `FrankCopula` | $-\ln\frac{e^{-\theta t} - 1}{e^{-\theta} - 1}$ | $\theta \in \mathbb{R} \setminus \{0\}$ | $\lambda_L = 0, \lambda_U = 0$ (radial symmetry) |
+| `JoeCopula` | $-\ln(1 - (1 - t)^\theta)$ | $\theta \in [1, \infty)$ | $\lambda_L = 0, \lambda_U = 2 - 2^{1/\theta}$ |
+| `AliMikhailHaqCopula` | $\ln\frac{1 - \theta(1 - t)}{t}$ | $\theta \in [-1, 1)$ | $\lambda_L = 0, \lambda_U = 0$ |
+
+---
+
+### Extreme Value Copulas
+
+```python
+from spxa.copula import (
+    ExtremeValueCopula,
+    GalambosCopula,
+    HuslerReissCopula,
+)
+```
+
+Max-stable copulas satisfying $C(u_1^t, \dots, u_d^t) = C(\boldsymbol{u})^t$ characterized by the Pickands dependence function $A(w)$:
+$$C(u_1, u_2) = \exp\left( (\ln u_1 + \ln u_2) A\left(\frac{\ln u_2}{\ln u_1 + \ln u_2}\right) \right)$$
+
+- **`GalambosCopula(theta=1.5)`**:
+  $$A(w) = 1 - (w^{-\theta} + (1 - w)^{-\theta})^{-1/\theta}, \quad \lambda_U = 2^{-1/\theta}$$
+- **`HuslerReissCopula(theta=1.5)`**:
+  $$A(w) = w \Phi\left(\frac{1}{\theta} + \frac{\theta}{2} \ln\frac{w}{1-w}\right) + (1 - w) \Phi\left(\frac{1}{\theta} - \frac{\theta}{2} \ln\frac{w}{1-w}\right), \quad \lambda_U = 2 - 2\Phi(1/\theta)$$
+
+---
+
+### CoupledProcess
+
+```python
+from spxa import CoupledProcess, GeometricBrownianMotion, ClaytonCopula
+
+s1 = GeometricBrownianMotion(drift=0.05, sigma=0.20, s0=100.0)
+s2 = GeometricBrownianMotion(drift=0.03, sigma=0.25, s0=100.0)
+coupled = CoupledProcess(processes=[s1, s2], copula=ClaytonCopula(theta=2.0))
+```
+
+Couples arbitrary 1D marginal `Process` instances through a copula using quantile coupling / copula subordination.
+
+**Methods:**
+- `simulate(t_max, num_steps, num_paths, seed)` — Generates correlated multi-asset paths strictly preserving 1D marginal distributions.
+- `basket_call_price(strike, maturity, weights=None, r=0.0, num_paths=20000)` — Monte Carlo pricing of European basket options $(\sum w_i S_i(T) - K)^+$.
+- `spread_option_price(strike, maturity, r=0.0, num_paths=20000)` — European spread options $(S_1(T) - S_2(T) - K)^+$.
+- `best_of_call_price(strike, maturity, r=0.0, num_paths=20000)` — Rainbow best-of call $(\max(S_1, \dots) - K)^+$.
+- `worst_of_call_price(strike, maturity, r=0.0, num_paths=20000)` — Rainbow worst-of call $(\min(S_1, \dots) - K)^+$.
+
+---
+
+### Fitting & Model Selection
+
+```python
+from spxa.copula import fit_copula, select_best_copula, pseudo_observations
+```
+
+- **`pseudo_observations(data)`**:
+  Transforms continuous empirical multivariate observations $\mathbf{X} \in \mathbb{R}^{n \times d}$ into uniform pseudo-observations on $[0, 1]^d$ via normalized empirical rank:
+  $$U_{ij} = \frac{\operatorname{rank}(X_{ij})}{n + 1}$$
+- **`fit_copula(data, copula_cls, method="cml") -> Copula`**:
+  Fits copula parameters via Canonical Maximum Likelihood (CML) or rank inversion (`"itau"`, `"irho"`).
+- **`select_best_copula(data, candidate_families=None) -> tuple[Copula, dict]`**:
+  Evaluates candidate copula models, ranking by AIC / BIC and Log-Likelihood to identify the best-fitting dependence structure.
+
+---
+
+### Copula Visualizations
+
+```python
+from spxa.copula import (
+    plot_copula_cdf,
+    plot_copula_pdf,
+    plot_copula_samples,
+    plot_tail_dependence_curves,
+)
+```
+
+- **`plot_copula_cdf(copula, ...)`** — Interactive 3D wireframe and surface plot of the copula distribution $C(u_1, u_2)$.
+- **`plot_copula_pdf(copula, ...)`** — 3D density surface $c(u_1, u_2)$ illustrating corner blow-ups and joint tail concentrations.
+- **`plot_copula_samples(copula, n_samples=1500, ...)`** — Scatter plot of copula pseudo-samples alongside joint marginal distributions.
+- **`plot_tail_dependence_curves(copulas, ...)`** — Lower $\lambda_L(u) = C(u, u) / u$ and upper $\lambda_U(u) = (1 - 2u + C(u, u)) / (1 - u)$ empirical tail concentration curves.
+
+---
+
 ## ops — operations
 
 ### addition
@@ -3428,8 +3640,11 @@ fine-grid reference solution. Returns dict with keys:
 
 ### exact samplers
 
-All return increments of shape `(n_paths, n_steps)`.
-Use `increments_to_paths(increments, x0=0.0)` to convert to paths.
+The `spxa.sim` module contains high-performance standalone samplers.
+Lévy samplers return increments of shape `(n_paths, n_steps)`.
+Diffusion and jump-diffusion samplers return path arrays of shape `(n_paths, n_steps+1)`.
+
+#### Lévy Increment Samplers
 
 ```python
 from spxa.sim import (
@@ -3455,6 +3670,44 @@ from spxa.sim import (
 increments_to_paths(increments: np.ndarray, x0: float = 0.0) -> np.ndarray
 # Prepend x0 and cumsum. (n_paths, n_steps) → (n_paths, n_steps+1).
 ```
+
+#### Diffusion & Beyond-Lévy Path Samplers
+
+All return simulated path trajectories of shape `(n_paths, n_steps + 1)`.
+
+```python
+from spxa.sim import (
+    sample_cir, sample_ou, sample_heston, sample_merton,
+    sample_cev, sample_kou, sample_bates, sample_hull_white,
+    sample_sabr, sample_gh, sample_black_karasinski, sample_schobel_zhu,
+    sample_besq, sample_bessel, sample_jcir, sample_schwartz_two_factor,
+    sample_bns, sample_jacobi, sample_regime_switching_gbm, sample_chen, sample_cbi,
+)
+```
+
+| Sampler | Process Family | Discretization / Exact Algorithm |
+|---|---|---|
+| `sample_cir` | Cox–Ingersoll–Ross | Exact non-central $\chi^2$ transitions |
+| `sample_ou` | Ornstein–Uhlenbeck | Exact Gaussian transition density |
+| `sample_heston` | Heston Stochastic Volatility | Full-truncation Lord et al. (2010) Euler scheme |
+| `sample_merton` | Merton Jump Diffusion | Exact Poisson compounding + Gaussian jumps |
+| `sample_cev` | Constant Elasticity of Variance | Exact non-central $\chi^2$ or Milstein with absorption |
+| `sample_kou` | Kou Jump Diffusion | Asymmetric double-exponential jump thinning |
+| `sample_bates` | Bates SV with Jumps | Coupled full-truncation CIR + compound Poisson |
+| `sample_hull_white` | Hull–White One-Factor | Exact Gaussian transitions with mean reversion |
+| `sample_sabr` | SABR Stochastic Volatility | Correlated log-Euler predictor scheme |
+| `sample_gh` | Generalized Hyperbolic | Generalized Inverse Gaussian (GIG) subordination |
+| `sample_black_karasinski` | Black–Karasinski Lognormal Rate | Exact log-rate Gaussian OU transitions |
+| `sample_schobel_zhu` | Schöbel–Zhu Stochastic Vol | Coupled Gaussian OU volatility paths |
+| `sample_besq` | Squared Bessel Process | Exact non-central $\chi^2$ transitions without discretization error |
+| `sample_bessel` | Bessel Radial Process | Root-BESQ exact sampling |
+| `sample_jcir` | Jump-Extended CIR | Non-central $\chi^2$ + compound exponential jumps |
+| `sample_schwartz_two_factor` | Schwartz 2F Commodity | Correlated bivariate log-spot and convenience yield |
+| `sample_bns` | Barndorff-Nielsen–Shephard | Coupled stationary Gamma BDLP subordination |
+| `sample_jacobi` | Jacobi Bounded Diffusion | Boundary-preserving Milstein scheme on $[y_{\min}, y_{\max}]$ |
+| `sample_regime_switching_gbm` | Markov-Modulated Black–Scholes | Exact CTMC jump transitions + regime diffusion |
+| `sample_chen` | Chen Three-Factor Rate | Coupled 3-factor stochastic central tendency and variance |
+| `sample_cbi` | Continuous-State Branching | Non-negative boundary Milstein with jump immigration |
 
 ---
 
