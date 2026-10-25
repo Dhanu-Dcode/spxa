@@ -258,36 +258,31 @@ class CEVHestonProcess(Process):
 
     def simulate(
         self,
-        t_max: float = 1.0,
-        num_steps: int = 100,
-        num_paths: int = 1000,
+        t_max: Optional[float] = None,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
         seed: Optional[int] = None,
         return_variance: bool = False,
+        T: Optional[float] = None,
+        n_steps: Optional[int] = None,
+        n_paths: Optional[int] = None,
     ) -> np.ndarray:
-        r"""Simulate spot price (and optionally variance) paths using full-truncation Euler scheme.
+        r"""Simulate spot price (and optionally variance) paths using full-truncation Euler scheme."""
+        final_t = t_max if t_max is not None else (T if T is not None else 1.0)
+        steps = num_steps if num_steps is not None else (n_steps if n_steps is not None else 100)
+        paths_count = (
+            num_paths if num_paths is not None else (n_paths if n_paths is not None else 1000)
+        )
 
-        Parameters
-        ----------
-        t_max : float
-            Simulation time horizon.
-        num_steps : int
-            Number of discrete time steps.
-        num_paths : int
-            Number of simulated sample paths.
-        seed : int, optional
-            Random number generator seed.
-        return_variance : bool
-            If True, returns a tuple (s_paths, v_paths). Otherwise returns s_paths.
-        """
-        if t_max <= 0.0 or num_steps <= 0 or num_paths <= 0:
+        if final_t <= 0.0 or steps <= 0 or paths_count <= 0:
             raise ValueError("t_max, num_steps, and num_paths must be strictly positive.")
 
         rng = np.random.default_rng(seed)
-        dt = t_max / num_steps
+        dt = final_t / steps
         sqrt_dt = math.sqrt(dt)
 
-        s_paths = np.empty((num_paths, num_steps + 1), dtype=float)
-        v_paths = np.empty((num_paths, num_steps + 1), dtype=float)
+        s_paths = np.empty((paths_count, steps + 1), dtype=float)
+        v_paths = np.empty((paths_count, steps + 1), dtype=float)
 
         s_paths[:, 0] = self.s0
         v_paths[:, 0] = self.v0
@@ -301,12 +296,12 @@ class CEVHestonProcess(Process):
         q = self.q
         gamma = self.gamma
 
-        for step in range(num_steps):
+        for step in range(steps):
             s_curr = s_paths[:, step]
             v_curr = np.maximum(0.0, v_paths[:, step])
 
-            z_v = rng.standard_normal(num_paths)
-            z_indep = rng.standard_normal(num_paths)
+            z_v = rng.standard_normal(paths_count)
+            z_indep = rng.standard_normal(paths_count)
             z_s = rho * z_v + sqrt_one_minus_rho2 * z_indep
 
             # Full truncation Euler step for CIR variance

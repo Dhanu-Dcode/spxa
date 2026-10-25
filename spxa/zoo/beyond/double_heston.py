@@ -204,21 +204,28 @@ class DoubleHestonProcess(Process):
 
     def simulate(
         self,
-        t_max: float,
-        num_steps: int,
+        t_max: Optional[float] = None,
+        num_steps: Optional[int] = None,
         num_paths: int = 1,
         seed: Optional[int] = None,
+        T: Optional[float] = None,
+        n_steps: Optional[int] = None,
+        n_paths: Optional[int] = None,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Simulate spot and variance paths using full-truncation Euler-Maruyama discretization."""
         if seed is not None:
             np.random.seed(seed)
 
-        dt = float(t_max) / num_steps
+        final_t = t_max if t_max is not None else (T if T is not None else 1.0)
+        steps = num_steps if num_steps is not None else (n_steps if n_steps is not None else 100)
+        paths_count = n_paths if n_paths is not None else num_paths
+
+        dt = float(final_t) / steps
         sqrt_dt = math.sqrt(dt)
 
-        s_paths = np.zeros((num_paths, num_steps + 1))
-        v1_paths = np.zeros((num_paths, num_steps + 1))
-        v2_paths = np.zeros((num_paths, num_steps + 1))
+        s_paths = np.zeros((paths_count, steps + 1))
+        v1_paths = np.zeros((paths_count, steps + 1))
+        v2_paths = np.zeros((paths_count, steps + 1))
 
         s_paths[:, 0] = self.s0
         v1_paths[:, 0] = self.v1_0
@@ -230,20 +237,20 @@ class DoubleHestonProcess(Process):
         k2, theta2, sigma2 = self.k2, self.theta2, self.sigma2
         r, q = self.r, self.q
 
-        for step in range(num_steps):
+        for step in range(steps):
             s_curr = s_paths[:, step]
             v1_curr = np.maximum(0.0, v1_paths[:, step])
             v2_curr = np.maximum(0.0, v2_paths[:, step])
 
             # Correlated Gaussian increments for Factor 1
-            z1_v = np.random.normal(0.0, 1.0, num_paths)
-            z1_perp = np.random.normal(0.0, 1.0, num_paths)
-            z1_s = rho1 * z1_v + math.sqrt(1.0 - rho1**2) * z1_perp
+            z1_v = np.random.normal(0.0, 1.0, paths_count)
+            z1_perp = np.random.normal(0.0, 1.0, paths_count)
+            z1_s = rho1 * z1_v + math.sqrt(max(0.0, 1.0 - rho1**2)) * z1_perp
 
             # Correlated Gaussian increments for Factor 2
-            z2_v = np.random.normal(0.0, 1.0, num_paths)
-            z2_perp = np.random.normal(0.0, 1.0, num_paths)
-            z2_s = rho2 * z2_v + math.sqrt(1.0 - rho2**2) * z2_perp
+            z2_v = np.random.normal(0.0, 1.0, paths_count)
+            z2_perp = np.random.normal(0.0, 1.0, paths_count)
+            z2_s = rho2 * z2_v + math.sqrt(max(0.0, 1.0 - rho2**2)) * z2_perp
 
             # Variance updates with full truncation
             v1_next = (

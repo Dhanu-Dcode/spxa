@@ -186,20 +186,27 @@ class HestonNandiProcess(Process):
 
     def simulate(
         self,
-        t_max: float,
-        num_steps: int,
+        t_max: Optional[float] = None,
+        num_steps: Optional[int] = None,
         num_paths: int = 1,
         seed: Optional[int] = None,
+        T: Optional[float] = None,
+        n_steps: Optional[int] = None,
+        n_paths: Optional[int] = None,
     ) -> tuple[np.ndarray, np.ndarray]:
         """Simulate spot and variance paths using Euler-Maruyama discretization."""
         if seed is not None:
             np.random.seed(seed)
 
-        dt = float(t_max) / num_steps
+        final_t = t_max if t_max is not None else (T if T is not None else 1.0)
+        steps = num_steps if num_steps is not None else (n_steps if n_steps is not None else 100)
+        paths_count = n_paths if n_paths is not None else num_paths
+
+        dt = float(final_t) / steps
         sqrt_dt = math.sqrt(dt)
 
-        s_paths = np.zeros((num_paths, num_steps + 1))
-        v_paths = np.zeros((num_paths, num_steps + 1))
+        s_paths = np.zeros((paths_count, steps + 1))
+        v_paths = np.zeros((paths_count, steps + 1))
 
         s_paths[:, 0] = self.s0
         v_paths[:, 0] = self.v0
@@ -208,13 +215,13 @@ class HestonNandiProcess(Process):
         rho = self.rho
         r = self.r
 
-        for step in range(num_steps):
+        for step in range(steps):
             s_curr = s_paths[:, step]
             v_curr = np.maximum(0.0, v_paths[:, step])
 
-            z_v = np.random.normal(0.0, 1.0, num_paths)
-            z_perp = np.random.normal(0.0, 1.0, num_paths)
-            z_s = rho * z_v + math.sqrt(1.0 - rho**2) * z_perp
+            z_v = np.random.normal(0.0, 1.0, paths_count)
+            z_perp = np.random.normal(0.0, 1.0, paths_count)
+            z_s = rho * z_v + math.sqrt(max(0.0, 1.0 - rho**2)) * z_perp
 
             v_next = (
                 v_paths[:, step]

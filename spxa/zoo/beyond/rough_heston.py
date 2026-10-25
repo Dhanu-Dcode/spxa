@@ -219,10 +219,16 @@ class RoughHestonProcess(Process):
 
     def simulate(
         self,
-        t_grid: np.ndarray,
-        n_paths: int = 1,
+        t_grid: Optional[Union[np.ndarray, float]] = None,
+        n_paths: Optional[int] = None,
         rng: Optional[np.random.Generator] = None,
         return_vol: bool = False,
+        T: Optional[float] = None,
+        n_steps: Optional[int] = None,
+        *,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
+        t_max: Optional[float] = None,
     ) -> Union[np.ndarray, tuple[np.ndarray, np.ndarray]]:
         r"""
         Vectorized fractional convolution simulation of Rough Heston paths.
@@ -234,15 +240,27 @@ class RoughHestonProcess(Process):
         v_paths : np.ndarray (optional)
             Variance paths if return_vol=True.
         """
-        t_grid = np.asarray(t_grid, dtype=np.float64)
-        if t_grid.ndim != 1 or len(t_grid) < 2:
+        paths_count = (
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 1)
+        )
+        steps = n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+        final_t = T if T is not None else (t_max if t_max is not None else 1.0)
+
+        if t_grid is None:
+            grid = np.linspace(0.0, final_t, steps + 1)
+        elif isinstance(t_grid, (int, float)):
+            grid = np.linspace(0.0, float(t_grid), steps + 1)
+        else:
+            grid = np.asarray(t_grid, dtype=np.float64)
+
+        if grid.ndim != 1 or len(grid) < 2:
             raise ValueError("t_grid must be a 1-D array with at least 2 points")
         if rng is None:
             rng = np.random.default_rng()
 
-        n_steps = len(t_grid)
-        s_paths = np.zeros((n_paths, n_steps), dtype=np.float64)
-        v_paths = np.zeros((n_paths, n_steps), dtype=np.float64)
+        num_pts = len(grid)
+        s_paths = np.zeros((paths_count, num_pts), dtype=np.float64)
+        v_paths = np.zeros((paths_count, num_pts), dtype=np.float64)
         s_paths[:, 0] = self.s0
         v_paths[:, 0] = self.v0
 
@@ -251,16 +269,16 @@ class RoughHestonProcess(Process):
 
         # Precompute kernel weights
         gamma_alpha = gamma(self.alpha)
-        dt = t_grid[1] - t_grid[0]
+        dt = grid[1] - grid[0]
 
         # Convolution noise history
-        increments_v = np.zeros((n_paths, n_steps), dtype=np.float64)
+        increments_v = np.zeros((paths_count, num_pts), dtype=np.float64)
 
-        for i in range(1, n_steps):
-            cur_dt = t_grid[i] - t_grid[i - 1]
+        for i in range(1, num_pts):
+            cur_dt = grid[i] - grid[i - 1]
             sqrt_dt = math.sqrt(cur_dt)
 
-            z = rng.standard_normal(size=(2, n_paths))
+            z = rng.standard_normal(size=(2, paths_count))
             w = chol @ z
             w1, w2 = w[0], w[1]
 
@@ -268,7 +286,6 @@ class RoughHestonProcess(Process):
             v_curr = np.maximum(v_paths[:, i - 1], 1e-12)
 
             # Volterra convolution term:
-            # v_t = v0 + (1/Gamma(alpha)) sum_{j=0}^{i-1} ((i-j)*dt)^{alpha-1} * [lam(theta - v_j)*dt + nu*sqrt(v_j)*sqrt_dt*w2]
             drift_j = self.lam * (self.theta - v_curr) * cur_dt
             diff_j = self.nu * np.sqrt(v_curr) * sqrt_dt * w2
             increments_v[:, i - 1] = drift_j + diff_j

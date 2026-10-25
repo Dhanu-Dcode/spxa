@@ -412,16 +412,35 @@ class SchobelZhuProcess(Process):
 
     def simulate(
         self,
-        n_steps: int = 100,
+        n_steps: Optional[int] = None,
         dt: Optional[float] = None,
         time_horizon: Optional[float] = None,
-        n_paths: int = 1,
+        n_paths: Optional[int] = None,
         rng: Optional[np.random.Generator] = None,
+        T: Optional[float] = None,
+        *,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
+        t_max: Optional[float] = None,
     ) -> np.ndarray:
         r"""
         Simulate sample paths of asset price :math:`S_t`.
         """
         from spxa.sim.exact import sample_schobel_zhu
+
+        final_steps = (
+            n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+        )
+        final_paths = (
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 1)
+        )
+        final_t = (
+            T
+            if T is not None
+            else (
+                time_horizon if time_horizon is not None else (t_max if t_max is not None else 1.0)
+            )
+        )
 
         return sample_schobel_zhu(
             sigma0=self._sigma0,
@@ -433,21 +452,61 @@ class SchobelZhuProcess(Process):
             rate=self._rate,
             dividend=self._dividend,
             dt=dt,
-            n_steps=n_steps,
-            n_paths=n_paths,
-            T=time_horizon,
+            n_steps=final_steps,
+            n_paths=final_paths,
+            T=final_t,
             rng=rng,
             return_volatility=False,
         )
 
     def simulate_joint(
         self,
-        n_steps: int = 100,
+        n_steps: Optional[int] = None,
         dt: Optional[float] = None,
         time_horizon: Optional[float] = None,
-        n_paths: int = 1,
+        n_paths: Optional[int] = None,
         rng: Optional[np.random.Generator] = None,
+        T: Optional[float] = None,
+        *,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
+        t_max: Optional[float] = None,
     ) -> Tuple[np.ndarray, np.ndarray]:
+        r"""
+        Simulate coupled paths of asset price :math:`S_t` and instantaneous volatility :math:`\sigma_t`.
+        """
+        from spxa.sim.exact import sample_schobel_zhu
+
+        final_steps = (
+            n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+        )
+        final_paths = (
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 1)
+        )
+        final_t = (
+            T
+            if T is not None
+            else (
+                time_horizon if time_horizon is not None else (t_max if t_max is not None else 1.0)
+            )
+        )
+
+        return sample_schobel_zhu(
+            sigma0=self._sigma0,
+            kappa=self._kappa,
+            theta=self._theta,
+            tau=self._tau,
+            rho=self._rho,
+            s0=self._s0,
+            rate=self._rate,
+            dividend=self._dividend,
+            dt=dt,
+            n_steps=final_steps,
+            n_paths=final_paths,
+            T=final_t,
+            rng=rng,
+            return_volatility=True,
+        )
         r"""
         Simulate coupled paths of asset price :math:`S_t` and volatility :math:`\sigma_t`.
         """
