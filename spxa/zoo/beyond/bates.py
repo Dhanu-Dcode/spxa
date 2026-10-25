@@ -355,7 +355,12 @@ class BatesProcess(Process):
     # Characteristic Function (Bates 1996 / Albrecher et al. 2007)
     # ------------------------------------------------------------------
 
-    def char_func(self, u: Union[float, np.ndarray], t: float = 1.0) -> Union[complex, np.ndarray]:
+    def char_func(
+        self,
+        u: Union[float, np.ndarray],
+        t: float = 1.0,
+        mu: Optional[float] = None,
+    ) -> Union[complex, np.ndarray]:
         r"""
         Characteristic function of log-return :math:`X_t = \ln(S_t / S_0)`.
 
@@ -369,6 +374,8 @@ class BatesProcess(Process):
             Real or complex frequency parameter (scalar or numpy array).
         t :
             Evaluation horizon :math:`t > 0`. Default 1.0.
+        mu :
+            Optional drift override. Defaults to ``self._mu``.
 
         Returns
         -------
@@ -383,6 +390,7 @@ class BatesProcess(Process):
 
         u_arr = np.asarray(u)
         is_scalar = u_arr.ndim == 0
+        mu_val = self._mu if mu is None else float(mu)
 
         i = 1j
         k = self._kappa
@@ -404,7 +412,7 @@ class BatesProcess(Process):
         log_term = np.log(one_minus_g_exp / one_minus_g)
         C = (k * th / sig2) * ((term1 - d) * t - 2.0 * log_term)
 
-        cf_heston = np.exp(C + D * self._v0 + i * u_arr * self._mu * t)
+        cf_heston = np.exp(C + D * self._v0 + i * u_arr * mu_val * t)
 
         # 2. Merton Jump component with compensator
         if self._rate > 0.0:
@@ -562,6 +570,7 @@ class BatesProcess(Process):
             raise ValueError(f"Maturity T must be strictly positive, got {T}")
         r_val = float(self._mu) if r is None else float(r)
         q_val = float(q)
+        mu_eff = (r_val - q_val) if (r is not None or q != 0.0) else self._mu
 
         def _price_single(strike: float) -> float:
             if strike <= 0.0:
@@ -572,14 +581,14 @@ class BatesProcess(Process):
             def integrand1(u: float) -> float:
                 if u < 1e-12:
                     return 0.0
-                cf1 = np.exp(-self._mu * T) * self.char_func(u - 1j, t=T)
+                cf1 = np.exp(-mu_eff * T) * self.char_func(u - 1j, t=T, mu=mu_eff)
                 val = np.exp(-1j * u * ln_k_s0) * cf1 / (1j * u)
                 return float(np.real(val))
 
             def integrand2(u: float) -> float:
                 if u < 1e-12:
                     return 0.0
-                cf2 = self.char_func(u, t=T)
+                cf2 = self.char_func(u, t=T, mu=mu_eff)
                 val = np.exp(-1j * u * ln_k_s0) * cf2 / (1j * u)
                 return float(np.real(val))
 
@@ -677,12 +686,17 @@ class BatesProcess(Process):
 
     def simulate(
         self,
-        n_steps: int = 100,
+        n_steps: Optional[int] = None,
         dt: Optional[float] = None,
         time_horizon: Optional[float] = None,
-        n_paths: int = 1,
+        n_paths: Optional[int] = None,
         rng: Optional[np.random.Generator] = None,
         method: str = "full_truncation",
+        T: Optional[float] = None,
+        *,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
+        t_max: Optional[float] = None,
     ) -> np.ndarray:
         r"""
         Simulate sample paths of log-price :math:`X_t = \ln(S_t / S_0)`.
@@ -692,6 +706,20 @@ class BatesProcess(Process):
         np.ndarray
             Array of shape ``(n_paths, n_steps + 1)`` with :math:`X_0 = 0`.
         """
+        final_steps = (
+            n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+        )
+        final_paths = (
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 1)
+        )
+        final_t = (
+            T
+            if T is not None
+            else (
+                time_horizon if time_horizon is not None else (t_max if t_max is not None else 1.0)
+            )
+        )
+
         return sample_bates(
             v0=self._v0,
             kappa=self._kappa,
@@ -704,9 +732,9 @@ class BatesProcess(Process):
             mu=self._mu,
             s0=self._s0,
             dt=dt,
-            n_steps=n_steps,
-            n_paths=n_paths,
-            T=time_horizon,
+            n_steps=final_steps,
+            n_paths=final_paths,
+            T=final_t,
             rng=rng,
             method=method,
             return_variance=False,
@@ -714,21 +742,35 @@ class BatesProcess(Process):
 
     def simulate_joint(
         self,
-        n_steps: int = 100,
+        n_steps: Optional[int] = None,
         dt: Optional[float] = None,
         time_horizon: Optional[float] = None,
-        n_paths: int = 1,
+        n_paths: Optional[int] = None,
         rng: Optional[np.random.Generator] = None,
         method: str = "full_truncation",
+        T: Optional[float] = None,
+        *,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
+        t_max: Optional[float] = None,
     ) -> Tuple[np.ndarray, np.ndarray]:
         r"""
         Simulate coupled paths of log-price :math:`X_t` and instantaneous variance :math:`V_t`.
-
-        Returns
-        -------
-        tuple[np.ndarray, np.ndarray]
-            Paths of :math:`X_t` and :math:`V_t`, each of shape ``(n_paths, n_steps + 1)``.
         """
+        final_steps = (
+            n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+        )
+        final_paths = (
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 1)
+        )
+        final_t = (
+            T
+            if T is not None
+            else (
+                time_horizon if time_horizon is not None else (t_max if t_max is not None else 1.0)
+            )
+        )
+
         return sample_bates(
             v0=self._v0,
             kappa=self._kappa,
@@ -741,9 +783,9 @@ class BatesProcess(Process):
             mu=self._mu,
             s0=self._s0,
             dt=dt,
-            n_steps=n_steps,
-            n_paths=n_paths,
-            T=time_horizon,
+            n_steps=final_steps,
+            n_paths=final_paths,
+            T=final_t,
             rng=rng,
             method=method,
             return_variance=True,
