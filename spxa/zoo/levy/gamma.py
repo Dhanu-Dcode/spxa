@@ -177,6 +177,19 @@ class GammaProcess(Process):
 
         return self.a * t * math.factorial(n - 1) / self.b**n
 
+    def char_func_exact(self, u: float | np.ndarray, t: float = 1.0) -> np.ndarray:
+        """
+        Exact characteristic function: E[e^{iuX_t}] = (1 - iu/b)^{-at}.
+
+        Reference: Cont & Tankov (2004), Table 4.2.
+        """
+        u_arr = np.atleast_1d(np.asarray(u, dtype=complex))
+        result = (1.0 - 1j * u_arr / self.b) ** (-self.a * t)
+        return result if result.shape != (1,) else result[0]
+
+    def char_func(self, u: float | np.ndarray, t: float = 1.0) -> np.ndarray:
+        return self.char_func_exact(u=u, t=t)
+
     def simulate(
         self,
         n_steps: int,
