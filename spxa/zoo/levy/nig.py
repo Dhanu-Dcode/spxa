@@ -229,6 +229,40 @@ class NIG(Process):
     def char_func(self, u: float | np.ndarray, t: float = 1.0) -> np.ndarray:
         return self.char_func_exact(u=u, t=t)
 
+    def cumulant_exact(self, n: int, t: float = 1.0) -> float:
+        """
+        Exact closed-form cumulant per unit time scaled by t.
+
+        κ_1 = μ + δβ/γ
+        κ_2 = δα²/γ³
+        κ_3 = 3δα²β/γ⁵
+        κ_4 = 3δα²(α²+4β²)/γ⁷
+
+        Barndorff-Nielsen (1997).
+        """
+        gamma = self._gamma
+        if n == 1:
+            return t * (self.mu + self.delta * self.beta / gamma)
+        elif n == 2:
+            return t * (self.delta * (self.alpha**2) / (gamma**3))
+        elif n == 3:
+            return t * (3.0 * self.delta * (self.alpha**2) * self.beta / (gamma**5))
+        elif n == 4:
+            return t * (
+                3.0
+                * self.delta
+                * (self.alpha**2)
+                * (self.alpha**2 + 4.0 * self.beta**2)
+                / (gamma**7)
+            )
+        else:
+            raise NotImplementedError(f"Exact cumulant order {n} not implemented for NIG")
+
+    def cumulants(self, order: int) -> dict[int, float]:
+        if order > 4:
+            raise NotImplementedError("NIG exact cumulants currently available up to order 4")
+        return {n: self.cumulant_exact(n) for n in range(1, order + 1)}
+
     def simulate(
         self,
         n_steps: int,
