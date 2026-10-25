@@ -263,35 +263,53 @@ class KouSVProcess(Process):
 
     def simulate(
         self,
-        t_grid: np.ndarray,
-        n_paths: int = 1,
+        t_grid: Optional[Union[np.ndarray, float]] = None,
+        n_paths: Optional[int] = None,
         rng: Optional[np.random.Generator] = None,
+        T: Optional[float] = None,
+        n_steps: Optional[int] = None,
+        *,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
+        t_max: Optional[float] = None,
     ) -> np.ndarray:
         r"""
         Vectorized full-truncation Euler simulation of Kou-SV price paths.
         """
-        t_grid = np.asarray(t_grid, dtype=np.float64)
-        if t_grid.ndim != 1 or len(t_grid) < 2:
+        paths_count = (
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 1)
+        )
+        steps = n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+        final_t = T if T is not None else (t_max if t_max is not None else 1.0)
+
+        if t_grid is None:
+            grid = np.linspace(0.0, final_t, steps + 1)
+        elif isinstance(t_grid, (int, float)):
+            grid = np.linspace(0.0, float(t_grid), steps + 1)
+        else:
+            grid = np.asarray(t_grid, dtype=np.float64)
+
+        if grid.ndim != 1 or len(grid) < 2:
             raise ValueError("t_grid must be a 1-D array with at least 2 points")
         if rng is None:
             rng = np.random.default_rng()
 
-        n_steps = len(t_grid)
-        s_paths = np.zeros((n_paths, n_steps), dtype=np.float64)
-        v_paths = np.zeros((n_paths, n_steps), dtype=np.float64)
+        num_pts = len(grid)
+        s_paths = np.zeros((paths_count, num_pts), dtype=np.float64)
+        v_paths = np.zeros((paths_count, num_pts), dtype=np.float64)
         s_paths[:, 0] = self.s0
         v_paths[:, 0] = self.v0
 
         corr_mat = np.array([[1.0, self.rho], [self.rho, 1.0]])
         chol = np.linalg.cholesky(corr_mat)
 
-        for i in range(1, n_steps):
-            dt = t_grid[i] - t_grid[i - 1]
+        for i in range(1, num_pts):
+            dt = grid[i] - grid[i - 1]
             if dt <= 0:
                 raise ValueError("t_grid must be strictly increasing")
             sqrt_dt = math.sqrt(dt)
 
-            z = rng.standard_normal(size=(2, n_paths))
+            z = rng.standard_normal(size=(2, paths_count))
             w = chol @ z
             w1, w2 = w[0], w[1]
 
@@ -305,8 +323,8 @@ class KouSVProcess(Process):
             v_paths[:, i] = np.maximum(v_paths[:, i - 1] + dv, 0.0)
 
             # Jumps in this interval
-            n_jumps = rng.poisson(lam=self.lambd_j * dt, size=n_paths)
-            jump_mult = np.ones(n_paths, dtype=np.float64)
+            n_jumps = rng.poisson(lam=self.lambd_j * dt, size=paths_count)
+            jump_mult = np.ones(paths_count, dtype=np.float64)
 
             # Sample Kou jumps where n_jumps > 0
             has_jump = n_jumps > 0

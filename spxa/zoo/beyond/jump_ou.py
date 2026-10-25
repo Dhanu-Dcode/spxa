@@ -135,31 +135,36 @@ class JumpOUProcess(Process):
 
     def simulate(
         self,
-        t_max: float,
-        num_steps: int,
+        t_max: Optional[float] = None,
+        num_steps: Optional[int] = None,
         num_paths: int = 1,
         seed: Optional[int] = None,
+        T: Optional[float] = None,
+        n_steps: Optional[int] = None,
+        n_paths: Optional[int] = None,
     ) -> np.ndarray:
         """Simulate sample paths with exact Gaussian OU step and Poisson jumps."""
         if seed is not None:
             np.random.seed(seed)
 
-        dt = float(t_max) / num_steps
+        final_t = t_max if t_max is not None else (T if T is not None else 1.0)
+        steps = num_steps if num_steps is not None else (n_steps if n_steps is not None else 100)
+        paths_count = n_paths if n_paths is not None else num_paths
+
+        dt = float(final_t) / steps
         exp_kdt = math.exp(-self.k * dt)
         ou_std = math.sqrt((self.sigma**2 / (2.0 * self.k)) * (1.0 - math.exp(-2.0 * self.k * dt)))
 
-        paths = np.zeros((num_paths, num_steps + 1))
+        paths = np.zeros((paths_count, steps + 1))
         paths[:, 0] = self.x0
 
-        for step in range(num_steps):
+        for step in range(steps):
             x_prev = paths[:, step]
-            # Gaussian OU step
-            z = np.random.normal(0.0, 1.0, num_paths)
+            z = np.random.normal(0.0, 1.0, paths_count)
             x_diff = x_prev * exp_kdt + self.theta * (1.0 - exp_kdt) + ou_std * z
 
-            # Poisson jump increments
-            num_jumps = np.random.poisson(self.lambda_j * dt, num_paths)
-            total_jumps = np.zeros(num_paths)
+            num_jumps = np.random.poisson(self.lambda_j * dt, paths_count)
+            total_jumps = np.zeros(paths_count)
             for path_idx, n_j in enumerate(num_jumps):
                 if n_j > 0:
                     total_jumps[path_idx] = np.sum(np.random.normal(self.mu_j, self.sigma_j, n_j))

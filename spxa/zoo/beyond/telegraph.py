@@ -199,35 +199,32 @@ class TelegraphProcess(Process):
 
     def simulate(
         self,
-        t_max: float = 1.0,
-        num_steps: int = 100,
-        num_paths: int = 1000,
+        t_max: Optional[float] = None,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
         seed: Optional[int] = None,
+        T: Optional[float] = None,
+        n_steps: Optional[int] = None,
+        n_paths: Optional[int] = None,
     ) -> np.ndarray:
-        r"""Simulate exact sample paths using event-driven Poisson direction reversals.
+        r"""Simulate exact sample paths using event-driven Poisson direction reversals."""
+        final_t = t_max if t_max is not None else (T if T is not None else 1.0)
+        steps = num_steps if num_steps is not None else (n_steps if n_steps is not None else 100)
+        paths_count = (
+            num_paths if num_paths is not None else (n_paths if n_paths is not None else 1000)
+        )
 
-        Parameters
-        ----------
-        t_max : float
-            Simulation time horizon.
-        num_steps : int
-            Number of discrete observation grid steps.
-        num_paths : int
-            Number of paths.
-        seed : int, optional
-            RNG seed.
-        """
-        if t_max <= 0.0 or num_steps <= 0 or num_paths <= 0:
+        if final_t <= 0.0 or steps <= 0 or paths_count <= 0:
             raise ValueError("t_max, num_steps, and num_paths must be strictly positive.")
 
         rng = np.random.default_rng(seed)
-        t_grid = np.linspace(0.0, t_max, num_steps + 1)
-        paths = np.empty((num_paths, num_steps + 1), dtype=float)
+        t_grid = np.linspace(0.0, final_t, steps + 1)
+        paths = np.empty((paths_count, steps + 1), dtype=float)
 
         c = self.c
         lam = self.lambd
 
-        for p in range(num_paths):
+        for p in range(paths_count):
             # Initial velocity
             if self.v0 is not None:
                 v = self.v0
@@ -240,7 +237,7 @@ class TelegraphProcess(Process):
             while True:
                 dt_jump = rng.exponential(1.0 / lam)
                 curr_time += dt_jump
-                if curr_time > t_max:
+                if curr_time > final_t:
                     break
                 reversals.append(curr_time)
 
@@ -252,7 +249,7 @@ class TelegraphProcess(Process):
             n_revs = len(reversals)
 
             paths[p, 0] = x
-            for step in range(1, num_steps + 1):
+            for step in range(1, steps + 1):
                 t_target = t_grid[step]
                 # Process all reversals up to t_target
                 while rev_idx < n_revs and reversals[rev_idx] <= t_target:

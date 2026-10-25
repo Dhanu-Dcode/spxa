@@ -161,30 +161,42 @@ class MarkovModulatedPoissonProcess(Process):
 
     def simulate(
         self,
-        n_steps: int,
-        n_paths: int = 1,
-        T: float = 1.0,  # noqa: N803
+        n_steps: int | None = None,
+        n_paths: int | None = None,
+        T: float | None = None,  # noqa: N803
         rng: np.random.Generator | None = None,
+        *,
+        num_steps: int | None = None,
+        num_paths: int | None = None,
+        t_max: float | None = None,
     ) -> np.ndarray:
         """Simulate independent counting paths on an equally spaced time grid."""
-        if not _is_positive_int(n_steps):
+        final_steps = (
+            n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+        )
+        final_paths = (
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 1)
+        )
+        final_t = T if T is not None else (t_max if t_max is not None else 1.0)
+
+        if not _is_positive_int(final_steps):
             raise ValueError("n_steps must be a positive integer")
-        if not _is_positive_int(n_paths):
+        if not _is_positive_int(final_paths):
             raise ValueError("n_paths must be a positive integer")
         if (
-            isinstance(T, (bool, np.bool_))
-            or not np.isscalar(T)
-            or not np.isfinite(T)
-            or float(T) < 0
+            isinstance(final_t, (bool, np.bool_))
+            or not np.isscalar(final_t)
+            or not np.isfinite(final_t)
+            or float(final_t) < 0
         ):
             raise ValueError("T must be finite and nonnegative")
         if rng is not None and not isinstance(rng, np.random.Generator):
             raise TypeError("rng must be a numpy.random.Generator")
         generator = np.random.default_rng() if rng is None else rng
-        grid = np.linspace(0.0, T, n_steps + 1)
-        paths = np.empty((n_paths, n_steps + 1), dtype=float)
-        for i in range(n_paths):
-            sample = self.simulate_events(T, rng=generator)
+        grid = np.linspace(0.0, final_t, final_steps + 1)
+        paths = np.empty((final_paths, final_steps + 1), dtype=float)
+        for i in range(final_paths):
+            sample = self.simulate_events(final_t, rng=generator)
             paths[i] = np.searchsorted(sample.arrival_times, grid, side="right")
         return paths
 

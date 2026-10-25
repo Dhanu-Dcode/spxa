@@ -142,18 +142,25 @@ class VGSAProcess(Process):
 
     def simulate(
         self,
-        t_max: float,
-        num_steps: int,
+        t_max: Optional[float] = None,
+        num_steps: Optional[int] = None,
         num_paths: int = 1,
         seed: Optional[int] = None,
+        T: Optional[float] = None,
+        n_steps: Optional[int] = None,
+        n_paths: Optional[int] = None,
     ) -> np.ndarray:
         """Simulate VGSA sample paths using CIR rate clock and Gamma-subordinated BM."""
         if seed is not None:
             np.random.seed(seed)
 
-        dt = float(t_max) / num_steps
-        y_curr = np.full(num_paths, self.y0)
-        x_paths = np.zeros((num_paths, num_steps + 1))
+        final_t = t_max if t_max is not None else (T if T is not None else 1.0)
+        steps = num_steps if num_steps is not None else (n_steps if n_steps is not None else 100)
+        paths_count = n_paths if n_paths is not None else num_paths
+
+        dt = float(final_t) / steps
+        y_curr = np.full(paths_count, self.y0)
+        x_paths = np.zeros((paths_count, steps + 1))
 
         k, eta, lam = self.k, self.eta, self.lambd
         sigma, nu, theta = self.sigma, self.nu, self.theta
@@ -163,22 +170,19 @@ class VGSAProcess(Process):
         exp_kdt = math.exp(-k * dt)
         c = (lam**2 / (4.0 * k)) * (1.0 - exp_kdt)
 
-        for step in range(num_steps):
-            # Sample CIR clock rate at next step
+        for step in range(steps):
             nonc = (4.0 * k * y_curr * exp_kdt) / (lam**2 * (1.0 - exp_kdt))
-            y_next = c * np.random.noncentral_chisquare(df=d, nonc=np.maximum(0.0, nonc))
+            y_next = c * np.random.noncentral_chisquare(
+                df=d, nonc=np.maximum(0.0, nonc), size=paths_count
+            )
             y_next = np.maximum(0.0, y_next)
 
-            # Integrated time increment by trapezoidal rule
             delta_y = 0.5 * (y_curr + y_next) * dt
 
-            # Subordinated Variance Gamma increment for delta_y
-            # Gamma subordinator increment tau ~ Gamma(shape=delta_y/nu, scale=nu)
             shape = np.maximum(1e-8, delta_y / nu)
             tau = np.random.gamma(shape=shape, scale=nu)
 
-            # Gaussian increment given tau: N(theta * tau, sigma^2 * tau)
-            z = np.random.normal(0.0, 1.0, num_paths)
+            z = np.random.normal(0.0, 1.0, paths_count)
             dx = theta * tau + sigma * np.sqrt(tau) * z
 
             x_paths[:, step + 1] = x_paths[:, step] + dx
