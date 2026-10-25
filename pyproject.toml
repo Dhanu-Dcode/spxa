@@ -87,6 +87,7 @@ disable_error_code = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 addopts = "-v --tb=short"
 markers = [
     "exactness: marks tests that verify closed-form results against published formulas (never skip)",
