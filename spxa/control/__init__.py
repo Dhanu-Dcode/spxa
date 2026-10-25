@@ -9,6 +9,12 @@ from spxa.control.lqg import (
     LinearQuadraticRegulator,
     LQG,
 )
+from spxa.control.merton import (
+    MertonControl,
+    MertonPortfolio,
+    MertonPortfolioControl,
+    OptimalConsumptionInvestment,
+)
 
 __all__ = [
     "ControlProblem",
@@ -16,4 +22,8 @@ __all__ = [
     "LinearQuadraticGaussian",
     "LQG",
     "LinearQuadraticRegulator",
+    "MertonPortfolioControl",
+    "MertonControl",
+    "MertonPortfolio",
+    "OptimalConsumptionInvestment",
 ]
