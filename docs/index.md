@@ -19,5 +19,5 @@ Z.__story__()      # derivation trace
 - **[Theory: Lévy–Khintchine](theory/levy_khintchine.md)** — the bijection that makes arithmetic exact
 - **[Theory: Triplet arithmetic](theory/triplet_arithmetic.md)** — the rules behind every operator
 - **[Theory: Beyond Lévy](theory/beyond_levy.md)** — fBM, Hawkes, OU-Lévy and the degradation policy
-- **[Process registry](process_registry.md)** — all implemented processes with exactness levels and references
+- **[Process registry](https://github.com/Nityahapani/spxa/blob/main/PROCESS_REGISTRY.md)** — all implemented processes with exactness levels and references
 - **[Contributing](contributing.md)** — how to add processes, operations, and core changes

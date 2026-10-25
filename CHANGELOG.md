@@ -6,6 +6,26 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/multivariate_hawkes.py` — Multivariate Hawkes mutually exciting point process (`MultivariateHawkesProcess`, `MultivariateHawkes`, `MHawkes`):
+  $M$-dimensional Hawkes intensity $\lambda_m(t)$, branching infectivity matrix $\mathbf{\Gamma}$, spectral radius stationarity condition $\rho(\mathbf{\Gamma}) < 1$, exact expected arrival intensity $\mathbf{\lambda}_\infty = (\mathbf{I} - \mathbf{\Gamma})^{-1} \mathbf{\mu}$, and Ogata thinning event simulation.
+- `zoo/levy/nts.py` — Normal Tempered Stable (NTS) Lévy process (`NormalTemperedStableProcess`, `NormalTemperedStable`, `NTSProcess`):
+  Subordinated Brownian motion $X_t = \theta T_t + \sigma W(T_t)$ with Tempered Stable subordinator, exact closed-form characteristic function, exact cumulant generating function, and subordination simulation.
+- `zoo/beyond/kou_sv.py` — Kou Stochastic Volatility Jump-Diffusion model (`KouSVProcess`, `KouSV`, `KouStochasticVolatility`):
+  Coupled Heston mean-reverting stochastic volatility with Kou asymmetric double-exponential jumps, affine characteristic function, Lewis Fourier inversion European call/put options, and full-truncation Euler simulation.
+- `zoo/beyond/diffusion_bridge.py` — General Diffusion Bridge via Doob's $h$-transform (`GeneralDiffusionBridge`, `DiffusionBridge`, `DoobBridge`):
+  Drift correction $\mu^*(x, t) = \mu(x) + \sigma^2(x) \partial_x \ln p(b, T \mid x, t)$ for Brownian, Ornstein–Uhlenbeck, and Geometric Brownian Motion bridges, exact moments, and pinned path simulation.
+- `zoo/beyond/rough_heston.py` — Rough Heston stochastic volatility model (`RoughHestonProcess`, `RoughHeston`, `RoughVolatility`):
+  Fractional Volterra stochastic volatility of order $\alpha = H + 1/2 \in (1/2, 1)$, singular kernel $K(t) = t^{\alpha - 1} / \Gamma(\alpha)$, Mittag-Leffler expected variance, power-law implied volatility skew $|\partial \sigma_{IV} / \partial k| \sim T^{H - 0.5}$, and fractional convolution simulation.
+- `zoo/beyond/g2pp.py` — Two-Factor Hull–White (G2++) short-rate diffusion model (`G2PlusPlusProcess`, `G2PlusPlus`, `TwoFactorHullWhite`):
+  Two coupled OU factors driving short rate $r(t) = x(t) + y(t) + \phi(t)$, closed-form zero-coupon bond pricing $P(t, T)$, Brigo–Mercurio European bond option formulas, and exact bivariate Gaussian factor simulation.
+- `zoo/beyond/three_halves.py` — 3/2 Stochastic Volatility diffusion model (`ThreeHalvesProcess`, `ThreeHalves`, `ThreeHalvesModel`):
+  Super-linear volatility-of-variance $dv_t = \kappa v_t (\theta - v_t) dt + \epsilon v_t^{3/2} dW_t$, exact reciprocal CIR transformation $y_t = 1/v_t$ with automatic Feller satisfaction, Inverse-Gamma stationary law, and exact non-central chi-square path simulation.
+- `zoo/beyond/schwartz_one_factor.py` — Schwartz One-Factor (1997) commodity diffusion model (`SchwartzOneFactor`, `ExponentialOU`, `Schwartz1F`):
+  Mean-reverting log-spot Ornstein–Uhlenbeck dynamics, exact lognormal transition law and moments, closed-form commodity futures price term structure $F(t, T)$, and Black-76 European options on futures.
+- `zoo/beyond/garch_diffusion.py` — Nelson (1990) continuous-time GARCH(1,1) diffusion limit (`GARCHDiffusion`, `ContinuousGARCH`, `GARCHDiffusionProcess`):
+  Linear diffusion coefficient $g(v) = \sigma v$, exact Inverse-Gamma stationary distribution, conditional moments from linear moment ODE system, and guaranteed-positive log-Euler simulation.
+- `zoo/beyond/bilinear.py` — Bilinear Diffusion process (`BilinearDiffusion`, `BilinearDiffusionProcess`, `AffineDiffusion`):
+  Affine drift and affine volatility $dX_t = (a + b X_t) dt + (c + d X_t) dW_t$, Pearson diffusion family moments, exact second-moment ODE solution, and high-order Milstein boundary simulation.
 - `vis/levy_inspector.py` — Lévy triplet diagnostic inspector and dual-panel density visualizer:
   Decomposes $(b, \sigma^2, \nu)$, classifies finite activity ($\int \nu(dx) < \infty$) vs infinite activity ($\nu(\mathbb{R}) = \infty$),
   finite vs infinite path variation, estimates Blumenthal-Getoor index $\beta \in [0, 2]$ and singularity order $s$,
