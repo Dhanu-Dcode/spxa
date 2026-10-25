@@ -113,29 +113,36 @@ class KestenProcess(Process):
 
     def simulate(
         self,
-        t_max: float,
-        num_steps: int,
+        t_max: Optional[float] = None,
+        num_steps: Optional[int] = None,
         num_paths: int = 1,
         seed: Optional[int] = None,
+        T: Optional[float] = None,
+        n_steps: Optional[int] = None,
+        n_paths: Optional[int] = None,
     ) -> np.ndarray:
         """Simulate strictly positive paths using log-Euler / Milstein discretization."""
         if seed is not None:
             np.random.seed(seed)
 
-        dt = float(t_max) / num_steps
+        final_t = t_max if t_max is not None else (T if T is not None else 1.0)
+        steps = num_steps if num_steps is not None else (n_steps if n_steps is not None else 100)
+        paths_count = n_paths if n_paths is not None else num_paths
+
+        dt = float(final_t) / steps
         sqrt_dt = math.sqrt(dt)
 
-        paths = np.zeros((num_paths, num_steps + 1))
+        paths = np.zeros((paths_count, steps + 1))
         paths[:, 0] = self.x0
-        log_x = np.full(num_paths, math.log(self.x0))
+        log_x = np.full(paths_count, math.log(self.x0))
 
         a, b, sig = self.a, self.b, self.sigma
 
-        for step in range(num_steps):
+        for step in range(steps):
             x_curr = np.exp(log_x)
             # Drift of ln(X_t): a/X_t - b - 0.5*sigma^2
             drift = (a / x_curr) - b - 0.5 * (sig**2)
-            z = np.random.normal(0.0, 1.0, num_paths)
+            z = np.random.normal(0.0, 1.0, paths_count)
 
             log_x = log_x + drift * dt + sig * sqrt_dt * z
             paths[:, step + 1] = np.exp(log_x)
