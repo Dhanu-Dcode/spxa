@@ -1574,8 +1574,8 @@ def sample_gh(
     std_dt = max(math.sqrt(dt * k2), 1e-6)
     mean_dt = dt * k1
 
-    x_grid = np.linspace(mean_dt - 8.0 * std_dt, mean_dt + 8.0 * std_dt, 600)
-    u_grid = np.linspace(1e-4, min(80.0 / std_dt, 500.0), 300)
+    x_grid = np.linspace(mean_dt - 10.0 * std_dt, mean_dt + 10.0 * std_dt, 1200)
+    u_grid = np.linspace(1e-4, min(100.0 / std_dt, 800.0), 1000)
 
     zeta = np.sqrt(alpha**2 - (beta + 1j * u_grid) ** 2)
     k_zeta = bessel_kv(lambda_param, delta * zeta)

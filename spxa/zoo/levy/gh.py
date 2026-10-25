@@ -568,10 +568,12 @@ class GeneralizedHyperbolicProcess(Process):
         time_horizon: Optional[float] = None,
         n_paths: int = 1,
         rng: Optional[np.random.Generator] = None,
+        T: Optional[float] = None,
     ) -> np.ndarray:
         r"""
         Simulate sample paths of the Generalized Hyperbolic process :math:`X_t`.
         """
+        horizon = T if T is not None else time_horizon
         from spxa.sim.exact import sample_gh
 
         return sample_gh(
@@ -583,7 +585,7 @@ class GeneralizedHyperbolicProcess(Process):
             dt=dt,
             n_steps=n_steps,
             n_paths=n_paths,
-            T=time_horizon,
+            T=horizon,
             rng=rng,
         )
 

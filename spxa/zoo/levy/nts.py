@@ -162,6 +162,12 @@ class NormalTemperedStableProcess(Process):
         else:
             raise NotImplementedError("Cumulants for order > 4 not available in closed form")
 
+    def cumulants(self, order: int) -> dict[int, float]:
+        r"""Return exact cumulants up to order."""
+        if order > 4:
+            raise NotImplementedError("Cumulants for order > 4 not available in closed form")
+        return {n: self.cumulant(n) for n in range(1, order + 1)}
+
     @property
     def mean(self) -> float:
         r"""Mean E[X_1]."""
@@ -260,14 +266,23 @@ class NormalTemperedStableProcess(Process):
 
     def simulate(
         self,
-        t_grid: np.ndarray,
+        t_grid: Optional[np.ndarray] = None,
         n_paths: int = 1,
         rng: Optional[np.random.Generator] = None,
+        n_steps: Optional[int] = None,
+        T: float = 1.0,
     ) -> np.ndarray:
         r"""
         Vectorized simulation of NTS paths via subordinator discretization.
         """
-        t_grid = np.asarray(t_grid, dtype=np.float64)
+        if t_grid is None:
+            steps = n_steps if n_steps is not None else 100
+            t_grid = np.linspace(0.0, T, steps + 1)
+        elif isinstance(t_grid, (int, np.integer)):
+            steps = int(t_grid)
+            t_grid = np.linspace(0.0, T, steps + 1)
+        else:
+            t_grid = np.asarray(t_grid, dtype=np.float64)
         if t_grid.ndim != 1 or len(t_grid) < 2:
             raise ValueError("t_grid must be a 1-D array with at least 2 points")
         if rng is None:
