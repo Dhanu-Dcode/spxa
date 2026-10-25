@@ -79,6 +79,11 @@ Comprehensive registry of all stochastic processes implemented in `spxa`, their 
 | **Regime-Switching GBM** | `RegimeSwitchingGBM`, `RSGBM` | `EXACT` | Hamilton, J. D. (1989), Naik, V. (1993) |
 | **Schwartz Two-Factor** | `SchwartzTwoFactor`, `Schwartz97` | `EXACT` | Schwartz, E. S. (1997), *J. Finance*, 52(3), 923–973 |
 | **CBI Subordinator** | `CBISubordinator`, `CBIProcess` | `EXACT` | Kawazu & Watanabe (1971), Li (2011) |
+| **Two-Factor Hull-White (G2++)** | `G2PlusPlusProcess`, `G2PlusPlus` | `MOMENT_PROPAGATION` | Brigo & Mercurio (2006), *Interest Rate Models*, Sec. 4.2 |
+| **3/2 Stochastic Volatility** | `ThreeHalvesProcess`, `ThreeHalves` | `MOMENT_PROPAGATION` | Heston (1997), Carr & Sun (2007), *Rev. Deriv. Res.*, 10(2) |
+| **Schwartz One-Factor** | `SchwartzOneFactor`, `ExponentialOU` | `MOMENT_PROPAGATION` | Schwartz, E. S. (1997), *J. Finance*, 52(3), 923–973 |
+| **GARCH Diffusion** | `GARCHDiffusion`, `ContinuousGARCH` | `MOMENT_PROPAGATION` | Nelson, D. B. (1990), *J. Econometrics*, 45(1-2), 7–38 |
+| **Bilinear Diffusion** | `BilinearDiffusion`, `AffineDiffusion` | `MOMENT_PROPAGATION` | Bibby & Sørensen (1995), *Bernoulli*, 1(1-2), 17–39 |
 | **Fractional Brownian Motion** | `FractionalBrownianMotion`, `fBM` | `MOMENT_PROPAGATION` | Mandelbrot & Van Ness (1968) |
 | **Hawkes Process** | `HawkesProcess` | `MOMENT_PROPAGATION` | Hawkes, A. G. (1971), *Biometrika*, 58(1), 83–90 |
 | **MMPP** | `MarkovModulatedPoissonProcess` | `MOMENT_PROPAGATION` | Fischer & Meier-Hellstern (1993) |

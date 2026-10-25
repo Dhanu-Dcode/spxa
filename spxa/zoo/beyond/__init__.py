@@ -77,6 +77,31 @@ from spxa.zoo.beyond.schwartz_two_factor import (
     SchwartzTwoFactor,
     SchwartzTwoFactorModel,
 )
+from spxa.zoo.beyond.g2pp import (
+    G2PlusPlus,
+    G2PlusPlusProcess,
+    TwoFactorHullWhite,
+)
+from spxa.zoo.beyond.three_halves import (
+    ThreeHalves,
+    ThreeHalvesModel,
+    ThreeHalvesProcess,
+)
+from spxa.zoo.beyond.schwartz_one_factor import (
+    ExponentialOU,
+    Schwartz1F,
+    SchwartzOneFactor,
+)
+from spxa.zoo.beyond.garch_diffusion import (
+    ContinuousGARCH,
+    GARCHDiffusion,
+    GARCHDiffusionProcess,
+)
+from spxa.zoo.beyond.bilinear import (
+    AffineDiffusion,
+    BilinearDiffusion,
+    BilinearDiffusionProcess,
+)
 
 from .mmpp import MarkovModulatedPoissonProcess
 
@@ -146,6 +171,21 @@ __all__ = [
     "Schwartz97",
     "SchwartzTwoFactor",
     "SchwartzTwoFactorModel",
+    "G2PlusPlus",
+    "G2PlusPlusProcess",
+    "TwoFactorHullWhite",
+    "ThreeHalves",
+    "ThreeHalvesModel",
+    "ThreeHalvesProcess",
+    "SchwartzOneFactor",
+    "ExponentialOU",
+    "Schwartz1F",
+    "GARCHDiffusion",
+    "ContinuousGARCH",
+    "GARCHDiffusionProcess",
+    "BilinearDiffusion",
+    "BilinearDiffusionProcess",
+    "AffineDiffusion",
     "Vasicek",
     "VasicekProcess",
     "MarkovModulatedPoissonProcess",

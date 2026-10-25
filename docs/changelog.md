@@ -6,6 +6,16 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/g2pp.py` — Two-Factor Hull–White (G2++) short-rate diffusion model (`G2PlusPlusProcess`, `G2PlusPlus`, `TwoFactorHullWhite`):
+  Two coupled OU factors driving short rate $r(t) = x(t) + y(t) + \phi(t)$, closed-form zero-coupon bond pricing $P(t, T)$, Brigo–Mercurio European bond option formulas, and exact bivariate Gaussian factor simulation.
+- `zoo/beyond/three_halves.py` — 3/2 Stochastic Volatility diffusion model (`ThreeHalvesProcess`, `ThreeHalves`, `ThreeHalvesModel`):
+  Super-linear volatility-of-variance $dv_t = \kappa v_t (\theta - v_t) dt + \epsilon v_t^{3/2} dW_t$, exact reciprocal CIR transformation $y_t = 1/v_t$ with automatic Feller satisfaction, Inverse-Gamma stationary law, and exact non-central chi-square path simulation.
+- `zoo/beyond/schwartz_one_factor.py` — Schwartz One-Factor (1997) commodity diffusion model (`SchwartzOneFactor`, `ExponentialOU`, `Schwartz1F`):
+  Mean-reverting log-spot Ornstein–Uhlenbeck dynamics, exact lognormal transition law and moments, closed-form commodity futures price term structure $F(t, T)$, and Black-76 European options on futures.
+- `zoo/beyond/garch_diffusion.py` — Nelson (1990) continuous-time GARCH(1,1) diffusion limit (`GARCHDiffusion`, `ContinuousGARCH`, `GARCHDiffusionProcess`):
+  Linear diffusion coefficient $g(v) = \sigma v$, exact Inverse-Gamma stationary distribution, conditional moments from linear moment ODE system, and guaranteed-positive log-Euler simulation.
+- `zoo/beyond/bilinear.py` — Bilinear Diffusion process (`BilinearDiffusion`, `BilinearDiffusionProcess`, `AffineDiffusion`):
+  Affine drift and affine volatility $dX_t = (a + b X_t) dt + (c + d X_t) dW_t$, Pearson diffusion family moments, exact second-moment ODE solution, and high-order Milstein boundary simulation.
 - `vis/levy_inspector.py` — Lévy triplet diagnostic inspector and dual-panel density visualizer:
   Decomposes $(b, \sigma^2, \nu)$, classifies finite activity ($\int \nu(dx) < \infty$) vs infinite activity ($\nu(\mathbb{R}) = \infty$),
   finite vs infinite path variation, estimates Blumenthal-Getoor index $\beta \in [0, 2]$ and singularity order $s$,

@@ -50,6 +50,11 @@ the running library. All signatures are exact.
    - [HestonProcess](#hestonprocess)
    - [SchobelZhuProcess](#schobelzhuprocess)
    - [SchwartzTwoFactor](#schwartztwofactor)
+   - [G2PlusPlusProcess](#g2plusplusprocess)
+   - [ThreeHalvesProcess](#threehalvesprocess)
+   - [SchwartzOneFactor](#schwartzonefactor)
+   - [GARCHDiffusion](#garchdiffusion)
+   - [BilinearDiffusion](#bilineardiffusion)
    - [SquaredBesselProcess](#squaredbesselprocess)
    - [BesselProcess](#besselprocess)
    - [OrnsteinUhlenbeck](#ornsteinuhlenbeck)
@@ -174,6 +179,21 @@ spxa.Schwartz2F
 spxa.Schwartz97
 spxa.SchwartzTwoFactor
 spxa.SchwartzTwoFactorModel
+spxa.G2PlusPlus
+spxa.G2PlusPlusProcess
+spxa.TwoFactorHullWhite
+spxa.ThreeHalves
+spxa.ThreeHalvesModel
+spxa.ThreeHalvesProcess
+spxa.SchwartzOneFactor
+spxa.ExponentialOU
+spxa.Schwartz1F
+spxa.GARCHDiffusion
+spxa.ContinuousGARCH
+spxa.GARCHDiffusionProcess
+spxa.BilinearDiffusion
+spxa.BilinearDiffusionProcess
+spxa.AffineDiffusion
 spxa.BES
 spxa.BESQ
 spxa.Bessel
@@ -1978,6 +1998,104 @@ Because $(X_t = \ln S_t, \delta_t)$ is a joint bivariate Gaussian diffusion syst
 - Schwartz, E. S. (1997). *The stochastic behavior of commodity prices: Implications for valuation and hedging*. The Journal of Finance, 52(3), 923–973.
 - Bjerksund, P. (1991). *Contingent claims evaluation when interest rates and convenience yields are stochastic*. Working Paper, Norwegian School of Economics.
 
+
+---
+
+### G2PlusPlusProcess
+
+```python
+from spxa import G2PlusPlusProcess, G2PlusPlus, TwoFactorHullWhite
+
+p = G2PlusPlusProcess(a=0.1, b=0.05, sigma=0.015, eta=0.01, rho=-0.3, r0=0.03)
+```
+
+The Two-Factor Hull-White (G2++) short-rate model decomposes interest rates into two correlated Gaussian factors:
+$$r(t) = x(t) + y(t) + \phi(t)$$
+$$dx(t) = -a x(t) dt + \sigma dW_1(t), \quad dy(t) = -b y(t) dt + \eta dW_2(t), \quad d\langle W_1, W_2 \rangle_t = \rho dt$$
+
+**Exact Analytics:**
+- `bond_price(t, T, x_t=0.0, y_t=0.0)` — analytical zero-coupon bond price $P(t, T)$
+- `bond_yield(t, T, x_t=0.0, y_t=0.0)` — zero-coupon yield curve
+- `european_call_bond_option(t, T, S, K, x_t=0.0, y_t=0.0)` — closed-form Brigo-Mercurio European bond option price
+- `factor_covariance(t)` — exact bivariate Gaussian factor covariance matrix
+- `simulate(t_grid, n_paths=1, rng=None, return_factors=False)` — exact vectorized factor simulation
+
+---
+
+### ThreeHalvesProcess
+
+```python
+from spxa import ThreeHalvesProcess, ThreeHalves, ThreeHalvesModel
+
+p = ThreeHalvesProcess(kappa=2.0, theta=0.04, epsilon=1.0, v0=0.04)
+```
+
+The 3/2 Stochastic Volatility model features super-linear volatility-of-variance:
+$$dv_t = \kappa v_t (\theta - v_t) dt + \epsilon v_t^{3/2} dW_t, \quad v_0 > 0$$
+
+**Exact Analytics:**
+- Reciprocal transformation: $y_t = 1 / v_t$ follows an exact CIR process with guaranteed Feller condition satisfaction $1 + 2\kappa/\epsilon^2 > 1$.
+- `stationary_density(v)` — exact stationary Inverse-Gamma probability density function
+- `stationary_mean`, `stationary_variance` — closed-form stationary moments
+- `transition_density(v, t, v0=None)` — exact inverted non-central chi-square transition law
+- `simulate(t_grid, n_paths=1, rng=None, method="exact")` — exact non-central chi-square path simulation
+
+---
+
+### SchwartzOneFactor
+
+```python
+from spxa import SchwartzOneFactor, ExponentialOU, Schwartz1F
+
+p = SchwartzOneFactor(kappa=1.2, alpha=3.5, sigma=0.35, s0=30.0)
+```
+
+The Schwartz (1997) One-Factor commodity model describes spot prices whose logarithm follows an Ornstein-Uhlenbeck diffusion:
+$$d \ln S_t = \kappa(\alpha - \ln S_t) dt + \sigma dW_t$$
+
+**Exact Analytics:**
+- `conditional_mean(t)`, `conditional_variance(t)` — closed-form lognormal spot moments
+- `stationary_mean`, `stationary_variance` — stationary lognormal moments
+- `futures_price(t, T, st=None)` — analytical commodity futures price term structure $F(t, T)$
+- `european_futures_call(t, T, T_futures, K, r=0.0)` — Black-76 closed-form options on futures contracts
+- `simulate(t_grid, n_paths=1, rng=None)` — exact vectorized lognormal path sampler
+
+---
+
+### GARCHDiffusion
+
+```python
+from spxa import GARCHDiffusion, ContinuousGARCH, GARCHDiffusionProcess
+
+p = GARCHDiffusion(kappa=2.0, theta=0.04, sigma=0.3, v0=0.04)
+```
+
+The Nelson (1990) continuous-time GARCH(1,1) diffusion limit models variance with a linear diffusion coefficient:
+$$dv_t = \kappa(\theta - v_t) dt + \sigma v_t dW_t, \quad v_0 > 0$$
+
+**Exact Analytics:**
+- `stationary_density(v)` — exact stationary Inverse-Gamma distribution
+- `stationary_mean`, `stationary_variance` — closed-form stationary moments
+- `conditional_mean(t)`, `conditional_variance(t)` — exact moments via linear moment ODE system
+- `simulate(t_grid, n_paths=1, rng=None)` — vectorized log-Euler simulation ensuring strict positivity
+
+---
+
+### BilinearDiffusion
+
+```python
+from spxa import BilinearDiffusion, BilinearDiffusionProcess, AffineDiffusion
+
+p = BilinearDiffusion(a=0.5, b=-1.0, c=0.2, d=0.3, x0=0.5)
+```
+
+The Bilinear Diffusion model features an affine drift and affine volatility:
+$$dX_t = (a + b X_t) dt + (c + d X_t) dW_t$$
+
+**Exact Analytics:**
+- `conditional_mean(t)`, `conditional_second_moment(t)`, `conditional_variance(t)` — exact moment ODE solutions
+- `stationary_mean`, `stationary_variance` — closed-form Pearson stationary moments
+- `simulate(t_grid, n_paths=1, rng=None)` — high-order Milstein simulation respecting the state boundary
 
 ---
 
