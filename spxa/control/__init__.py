@@ -4,6 +4,12 @@ from spxa.control.base import (
     ControlledTrajectory,
     ControlProblem,
 )
+from spxa.control.execution import (
+    AlmgrenChriss,
+    AlmgrenChrissExecution,
+    AlmgrenChrissModel,
+    OptimalExecution,
+)
 from spxa.control.lqg import (
     LinearQuadraticGaussian,
     LinearQuadraticRegulator,
@@ -26,4 +32,8 @@ __all__ = [
     "MertonControl",
     "MertonPortfolio",
     "OptimalConsumptionInvestment",
+    "AlmgrenChrissExecution",
+    "AlmgrenChriss",
+    "AlmgrenChrissModel",
+    "OptimalExecution",
 ]
