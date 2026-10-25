@@ -138,25 +138,36 @@ class MertonFirmValueProcess(Process):
 
     def simulate(
         self,
-        num_steps: int,
-        num_paths: int = 1,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
         seed: Optional[int] = None,
+        T: Optional[float] = None,
+        n_steps: Optional[int] = None,
+        n_paths: Optional[int] = None,
+        *,
+        t_max: Optional[float] = None,
     ) -> np.ndarray:
-        """Simulate asset value paths up to debt maturity t_debt."""
+        """Simulate asset value paths up to debt maturity t_debt or T."""
         if seed is not None:
             np.random.seed(seed)
 
-        dt = self.t_debt / num_steps
+        final_t = T if T is not None else (t_max if t_max is not None else self.t_debt)
+        steps = num_steps if num_steps is not None else (n_steps if n_steps is not None else 100)
+        paths_count = (
+            num_paths if num_paths is not None else (n_paths if n_paths is not None else 1)
+        )
+
+        dt = final_t / steps
         sqrt_dt = math.sqrt(dt)
 
-        paths = np.zeros((num_paths, num_steps + 1))
+        paths = np.zeros((paths_count, steps + 1))
         paths[:, 0] = self.v0
 
         drift = (self.mu - 0.5 * self.sigma_v**2) * dt
         vol = self.sigma_v * sqrt_dt
 
-        for step in range(num_steps):
-            z = np.random.normal(0.0, 1.0, num_paths)
+        for step in range(steps):
+            z = np.random.normal(0.0, 1.0, paths_count)
             paths[:, step + 1] = paths[:, step] * np.exp(drift + vol * z)
 
         return paths

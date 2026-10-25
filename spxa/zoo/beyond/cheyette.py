@@ -228,36 +228,31 @@ class CheyetteProcess(Process):
 
     def simulate(
         self,
-        t_max: float = 1.0,
-        num_steps: int = 100,
-        num_paths: int = 1000,
+        t_max: Optional[float] = None,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
         seed: Optional[int] = None,
         return_states: bool = False,
+        T: Optional[float] = None,
+        n_steps: Optional[int] = None,
+        n_paths: Optional[int] = None,
     ) -> np.ndarray:
-        r"""Simulate short rate r_t and state paths (x_t, y_t).
+        r"""Simulate short rate r_t and state paths (x_t, y_t)."""
+        final_t = t_max if t_max is not None else (T if T is not None else 1.0)
+        steps = num_steps if num_steps is not None else (n_steps if n_steps is not None else 100)
+        paths_count = (
+            num_paths if num_paths is not None else (n_paths if n_paths is not None else 1000)
+        )
 
-        Parameters
-        ----------
-        t_max : float
-            Simulation horizon.
-        num_steps : int
-            Number of time steps.
-        num_paths : int
-            Number of sample paths.
-        seed : int, optional
-            RNG seed.
-        return_states : bool
-            If True, returns tuple (r_paths, x_paths, y_paths). Otherwise returns r_paths.
-        """
-        if t_max <= 0.0 or num_steps <= 0 or num_paths <= 0:
+        if final_t <= 0.0 or steps <= 0 or paths_count <= 0:
             raise ValueError("t_max, num_steps, and num_paths must be strictly positive.")
 
         rng = np.random.default_rng(seed)
-        dt = t_max / num_steps
+        dt = final_t / steps
         sqrt_dt = math.sqrt(dt)
 
-        x_paths = np.empty((num_paths, num_steps + 1), dtype=float)
-        y_paths = np.empty((num_paths, num_steps + 1), dtype=float)
+        x_paths = np.empty((paths_count, steps + 1), dtype=float)
+        y_paths = np.empty((paths_count, steps + 1), dtype=float)
 
         x_paths[:, 0] = self.x0
         y_paths[:, 0] = self.y0
@@ -265,15 +260,13 @@ class CheyetteProcess(Process):
         k = self.kappa
         sig = self.sigma
 
-        for step in range(num_steps):
+        for step in range(steps):
             t_curr = step * dt
-            # Exact deterministic y_curr and y_next
             y_curr = y_paths[:, step]
             y_next = self.y_deterministic(t_curr + dt)
             y_paths[:, step + 1] = y_next
 
-            # x_t update with drift (y_t - kappa * x_t)
-            z = rng.standard_normal(num_paths)
+            z = rng.standard_normal(paths_count)
             dx = (y_curr - k * x_paths[:, step]) * dt + sig * sqrt_dt * z
             x_paths[:, step + 1] = x_paths[:, step] + dx
 

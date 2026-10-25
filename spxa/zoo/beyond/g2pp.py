@@ -405,38 +405,44 @@ class G2PlusPlusProcess(Process):
 
     def simulate(
         self,
-        t_grid: np.ndarray,
-        n_paths: int = 1,
+        t_grid: Optional[Union[np.ndarray, float]] = None,
+        n_paths: Optional[int] = None,
         rng: Optional[np.random.Generator] = None,
         return_factors: bool = False,
+        T: Optional[float] = None,
+        n_steps: Optional[int] = None,
+        *,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
+        t_max: Optional[float] = None,
     ) -> Union[np.ndarray, tuple[np.ndarray, np.ndarray, np.ndarray]]:
         r"""
         Exact vectorized simulation of the G2++ short rate paths.
-
-        Parameters
-        ----------
-        t_grid : np.ndarray
-            1-D strictly increasing array of time points starting at 0.
-        n_paths : int
-            Number of simulated sample paths.
-        rng : np.random.Generator, optional
-            Numpy random number generator.
-        return_factors : bool, optional
-            If True, returns tuple (r_paths, x_paths, y_paths).
-            If False, returns r_paths of shape (n_paths, len(t_grid)).
         """
-        t_grid = np.asarray(t_grid, dtype=np.float64)
-        if t_grid.ndim != 1 or len(t_grid) < 2:
+        paths_count = (
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 1)
+        )
+        steps = n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+        final_t = T if T is not None else (t_max if t_max is not None else 1.0)
+
+        if t_grid is None:
+            grid = np.linspace(0.0, final_t, steps + 1)
+        elif isinstance(t_grid, (int, float)):
+            grid = np.linspace(0.0, float(t_grid), steps + 1)
+        else:
+            grid = np.asarray(t_grid, dtype=np.float64)
+
+        if grid.ndim != 1 or len(grid) < 2:
             raise ValueError("t_grid must be a 1-D array with at least 2 points")
         if rng is None:
             rng = np.random.default_rng()
 
-        n_steps = len(t_grid)
-        x_paths = np.zeros((n_paths, n_steps), dtype=np.float64)
-        y_paths = np.zeros((n_paths, n_steps), dtype=np.float64)
+        num_pts = len(grid)
+        x_paths = np.zeros((paths_count, num_pts), dtype=np.float64)
+        y_paths = np.zeros((paths_count, num_pts), dtype=np.float64)
 
-        for i in range(1, n_steps):
-            dt = t_grid[i] - t_grid[i - 1]
+        for i in range(1, num_pts):
+            dt = grid[i] - grid[i - 1]
             if dt <= 0:
                 raise ValueError("t_grid must be strictly increasing")
 
@@ -455,13 +461,13 @@ class G2PlusPlusProcess(Process):
             step_cov = np.array([[var_x, cov_xy], [cov_xy, var_y]])
             step_chol = np.linalg.cholesky(step_cov)
 
-            raw_z = rng.standard_normal(size=(2, n_paths))
+            raw_z = rng.standard_normal(size=(2, paths_count))
             diffs = step_chol @ raw_z
 
             x_paths[:, i] = x_paths[:, i - 1] * exp_a + diffs[0]
             y_paths[:, i] = y_paths[:, i - 1] * exp_b + diffs[1]
 
-        phi_vals = np.array([self.phi(t) for t in t_grid], dtype=np.float64)
+        phi_vals = np.array([self.phi(t) for t in grid], dtype=np.float64)
         r_paths = x_paths + y_paths + phi_vals[np.newaxis, :]
 
         if return_factors:
@@ -477,4 +483,6 @@ class G2PlusPlusProcess(Process):
 
 # Aliases
 G2PlusPlus = G2PlusPlusProcess
+G2PPProcess = G2PlusPlusProcess
+G2PP = G2PlusPlusProcess
 TwoFactorHullWhite = G2PlusPlusProcess

@@ -202,25 +202,32 @@ class ShiftedCIRProcess(Process):
 
     def simulate(
         self,
-        t_max: float,
-        num_steps: int,
+        t_max: Optional[float] = None,
+        num_steps: Optional[int] = None,
         num_paths: int = 1,
         seed: Optional[int] = None,
+        T: Optional[float] = None,
+        n_steps: Optional[int] = None,
+        n_paths: Optional[int] = None,
     ) -> np.ndarray:
         """Simulate short-rate paths with exact non-central chi-square transitions for x(t)."""
         if seed is not None:
             np.random.seed(seed)
 
-        dt = float(t_max) / num_steps
-        t_grid = np.linspace(0.0, t_max, num_steps + 1)
-        x_paths = np.zeros((num_paths, num_steps + 1))
+        final_t = t_max if t_max is not None else (T if T is not None else 1.0)
+        steps = num_steps if num_steps is not None else (n_steps if n_steps is not None else 100)
+        paths_count = n_paths if n_paths is not None else num_paths
+
+        dt = float(final_t) / steps
+        t_grid = np.linspace(0.0, final_t, steps + 1)
+        x_paths = np.zeros((paths_count, steps + 1))
         x_paths[:, 0] = self.x0
 
         d = 4.0 * self.k * self.theta / (self.sigma**2)
         c = (self.sigma**2 / (4.0 * self.k)) * (1.0 - math.exp(-self.k * dt))
         exp_kdt = math.exp(-self.k * dt)
 
-        for step in range(num_steps):
+        for step in range(steps):
             x_prev = x_paths[:, step]
             lambda_param = (4.0 * self.k * x_prev * exp_kdt) / (self.sigma**2 * (1.0 - exp_kdt))
             x_next = c * np.random.noncentral_chisquare(df=d, nonc=np.maximum(0.0, lambda_param))

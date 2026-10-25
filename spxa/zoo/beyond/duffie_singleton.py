@@ -236,34 +236,29 @@ class DuffieSingletonProcess(Process):
 
     def simulate(
         self,
-        t_max: float = 1.0,
-        num_steps: int = 100,
-        num_paths: int = 1000,
+        t_max: Optional[float] = None,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
         seed: Optional[int] = None,
         return_default_times: bool = False,
+        T: Optional[float] = None,
+        n_steps: Optional[int] = None,
+        n_paths: Optional[int] = None,
     ) -> np.ndarray:
-        r"""Simulate hazard intensity lambda_t paths using exact non-central chi-square transitions.
+        r"""Simulate hazard intensity lambda_t paths using exact non-central chi-square transitions."""
+        final_t = t_max if t_max is not None else (T if T is not None else 1.0)
+        steps = num_steps if num_steps is not None else (n_steps if n_steps is not None else 100)
+        paths_count = (
+            num_paths if num_paths is not None else (n_paths if n_paths is not None else 1000)
+        )
 
-        Parameters
-        ----------
-        t_max : float
-            Simulation time horizon.
-        num_steps : int
-            Number of discrete time steps.
-        num_paths : int
-            Number of sample paths.
-        seed : int, optional
-            RNG seed.
-        return_default_times : bool
-            If True, returns tuple (lambda_paths, default_times). Otherwise returns lambda_paths.
-        """
-        if t_max <= 0.0 or num_steps <= 0 or num_paths <= 0:
+        if final_t <= 0.0 or steps <= 0 or paths_count <= 0:
             raise ValueError("t_max, num_steps, and num_paths must be strictly positive.")
 
         rng = np.random.default_rng(seed)
-        dt = t_max / num_steps
+        dt = final_t / steps
 
-        lambda_paths = np.empty((num_paths, num_steps + 1), dtype=float)
+        lambda_paths = np.empty((paths_count, steps + 1), dtype=float)
         lambda_paths[:, 0] = self.lambda0
 
         k = self.kappa
@@ -273,29 +268,22 @@ class DuffieSingletonProcess(Process):
         c = (sig**2) * (1.0 - math.exp(-k * dt)) / (4.0 * k)
         e_kdt = math.exp(-k * dt)
 
-        # For default time generation
-        # Integrated hazard Lambda_t = \int_0^t lambda_s ds
-        # Generate unit exponential thresholds
-        default_thresholds = rng.exponential(1.0, size=num_paths)
-        default_times = np.full(num_paths, np.nan)
-        cum_hazard = np.zeros(num_paths)
+        default_thresholds = rng.exponential(1.0, size=paths_count)
+        default_times = np.full(paths_count, np.nan)
+        cum_hazard = np.zeros(paths_count)
 
-        for step in range(num_steps):
+        for step in range(steps):
             lambda_curr = lambda_paths[:, step]
-            # Exact non-central chi-square sampling
             nc = lambda_curr * e_kdt / c
             chi2_samples = rng.noncentral_chisquare(df=d, nonc=nc)
             lambda_next = c * chi2_samples
             lambda_paths[:, step + 1] = lambda_next
 
-            # Trapezoidal integration of hazard rate
             dhazard = 0.5 * (lambda_curr + lambda_next) * dt
             new_cum = cum_hazard + dhazard
 
-            # Check for defaults during this step
             defaulted_mask = (cum_hazard < default_thresholds) & (new_cum >= default_thresholds)
             if np.any(defaulted_mask):
-                # Linear interpolation for default time within step
                 t_step_start = step * dt
                 frac = (default_thresholds[defaulted_mask] - cum_hazard[defaulted_mask]) / dhazard[
                     defaulted_mask

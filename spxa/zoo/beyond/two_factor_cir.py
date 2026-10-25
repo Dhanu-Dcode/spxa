@@ -180,18 +180,26 @@ class TwoFactorCIRProcess(Process):
 
     def simulate(
         self,
-        t_max: float,
-        num_steps: int,
+        t_max: Optional[float] = None,
+        num_steps: Optional[int] = None,
         num_paths: int = 1,
         seed: Optional[int] = None,
-    ) -> np.ndarray:
+        T: Optional[float] = None,
+        n_steps: Optional[int] = None,
+        n_paths: Optional[int] = None,
+        return_factors: bool = False,
+    ) -> Union[np.ndarray, tuple[np.ndarray, np.ndarray, np.ndarray]]:
         """Simulate short-rate paths using exact non-central chi-square increments for each factor."""
         if seed is not None:
             np.random.seed(seed)
 
-        dt = float(t_max) / num_steps
-        x_paths = np.zeros((num_paths, num_steps + 1))
-        y_paths = np.zeros((num_paths, num_steps + 1))
+        final_t = t_max if t_max is not None else (T if T is not None else 1.0)
+        steps = num_steps if num_steps is not None else (n_steps if n_steps is not None else 100)
+        paths_count = n_paths if n_paths is not None else num_paths
+
+        dt = float(final_t) / steps
+        x_paths = np.zeros((paths_count, steps + 1))
+        y_paths = np.zeros((paths_count, steps + 1))
         x_paths[:, 0] = self.x0
         y_paths[:, 0] = self.y0
 
@@ -205,10 +213,9 @@ class TwoFactorCIRProcess(Process):
         c_y = (self.sigma_y**2 / (4.0 * self.k_y)) * (1.0 - math.exp(-self.k_y * dt))
         exp_ky = math.exp(-self.k_y * dt)
 
-        for step in range(num_steps):
+        for step in range(steps):
             x_prev = x_paths[:, step]
             lambda_x = (4.0 * self.k_x * x_prev * exp_kx) / (self.sigma_x**2 * (1.0 - exp_kx))
-            # Sample non-central chi-squared
             x_next = c_x * np.random.noncentral_chisquare(df=d_x, nonc=np.maximum(0.0, lambda_x))
             x_paths[:, step + 1] = np.maximum(0.0, x_next)
 
@@ -217,7 +224,10 @@ class TwoFactorCIRProcess(Process):
             y_next = c_y * np.random.noncentral_chisquare(df=d_y, nonc=np.maximum(0.0, lambda_y))
             y_paths[:, step + 1] = np.maximum(0.0, y_next)
 
-        return x_paths + y_paths + self.phi
+        r_paths = x_paths + y_paths + self.phi
+        if return_factors:
+            return r_paths, x_paths, y_paths
+        return r_paths
 
 
 # Aliases

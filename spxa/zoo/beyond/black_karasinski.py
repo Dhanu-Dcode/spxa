@@ -369,21 +369,35 @@ class BlackKarasinskiProcess(Process):
 
     def simulate(
         self,
-        n_steps: int = 100,
+        n_steps: Optional[int] = None,
         dt: Optional[float] = None,
         time_horizon: Optional[float] = None,
-        n_paths: int = 1,
+        n_paths: Optional[int] = None,
         rng: Optional[np.random.Generator] = None,
+        T: Optional[float] = None,
+        *,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
+        t_max: Optional[float] = None,
     ) -> np.ndarray:
         r"""
         Simulate sample paths of the short rate :math:`r_t`.
-
-        Returns
-        -------
-        np.ndarray
-            Paths array of shape ``(n_paths, n_steps + 1)`` with :math:`r_t > 0`.
         """
         from spxa.sim.exact import sample_black_karasinski
+
+        final_steps = (
+            n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+        )
+        final_paths = (
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 1)
+        )
+        final_t = (
+            T
+            if T is not None
+            else (
+                time_horizon if time_horizon is not None else (t_max if t_max is not None else 1.0)
+            )
+        )
 
         return sample_black_karasinski(
             a=self._a,
@@ -391,30 +405,44 @@ class BlackKarasinskiProcess(Process):
             b=self._b,
             r0=self._r0,
             dt=dt,
-            n_steps=n_steps,
-            n_paths=n_paths,
-            T=time_horizon,
+            n_steps=final_steps,
+            n_paths=final_paths,
+            T=final_t,
             rng=rng,
             return_log_rate=False,
         )
 
     def simulate_joint(
         self,
-        n_steps: int = 100,
+        n_steps: Optional[int] = None,
         dt: Optional[float] = None,
         time_horizon: Optional[float] = None,
-        n_paths: int = 1,
+        n_paths: Optional[int] = None,
         rng: Optional[np.random.Generator] = None,
+        T: Optional[float] = None,
+        *,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
+        t_max: Optional[float] = None,
     ) -> Tuple[np.ndarray, np.ndarray]:
         r"""
         Simulate coupled paths of short rate :math:`r_t` and log-rate :math:`x_t = \ln(r_t)`.
-
-        Returns
-        -------
-        tuple[np.ndarray, np.ndarray]
-            Tuple ``(r_paths, x_paths)``, each of shape ``(n_paths, n_steps + 1)``.
         """
         from spxa.sim.exact import sample_black_karasinski
+
+        final_steps = (
+            n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+        )
+        final_paths = (
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 1)
+        )
+        final_t = (
+            T
+            if T is not None
+            else (
+                time_horizon if time_horizon is not None else (t_max if t_max is not None else 1.0)
+            )
+        )
 
         return sample_black_karasinski(
             a=self._a,
@@ -422,9 +450,9 @@ class BlackKarasinskiProcess(Process):
             b=self._b,
             r0=self._r0,
             dt=dt,
-            n_steps=n_steps,
-            n_paths=n_paths,
-            T=time_horizon,
+            n_steps=final_steps,
+            n_paths=final_paths,
+            T=final_t,
             rng=rng,
             return_log_rate=True,
         )

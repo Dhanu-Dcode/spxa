@@ -620,46 +620,44 @@ class HullWhiteProcess(Process):
 
     def simulate(
         self,
-        n_steps: int = 100,
+        n_steps: Optional[int] = None,
         dt: Optional[float] = None,
         time_horizon: Optional[float] = None,
-        n_paths: int = 1,
+        n_paths: Optional[int] = None,
         rng: Optional[np.random.Generator] = None,
         method: str = "exact",
+        T: Optional[float] = None,
+        *,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
+        t_max: Optional[float] = None,
     ) -> np.ndarray:
         r"""
         Simulate sample paths of the Hull-White short rate :math:`r_t`.
-
-        Parameters
-        ----------
-        n_steps :
-            Number of time steps.
-        dt :
-            Step size :math:`\Delta t`.
-        time_horizon :
-            Total time horizon :math:`T`.
-        n_paths :
-            Number of independent paths.
-        rng :
-            NumPy random generator.
-        method :
-            ``'exact'`` (Gaussian conditional transition with zero discretization error)
-            or ``'euler'``.
-
-        Returns
-        -------
-        np.ndarray
-            Array of shape ``(n_paths, n_steps + 1)`` with :math:`r(0) = r_0`.
         """
+        final_steps = (
+            n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+        )
+        final_paths = (
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 1)
+        )
+        final_t = (
+            T
+            if T is not None
+            else (
+                time_horizon if time_horizon is not None else (t_max if t_max is not None else 1.0)
+            )
+        )
+
         return sample_hull_white(
             a=self._a,
             sigma=self._sigma,
             b=self._b,
             r0=self._r0,
             dt=dt,
-            n_steps=n_steps,
-            n_paths=n_paths,
-            T=time_horizon,
+            n_steps=final_steps,
+            n_paths=final_paths,
+            T=final_t,
             rng=rng,
             method=method,
         )
