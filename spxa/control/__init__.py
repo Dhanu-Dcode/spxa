@@ -10,6 +10,12 @@ from spxa.control.execution import (
     AlmgrenChrissModel,
     OptimalExecution,
 )
+from spxa.control.hjb import (
+    FiniteDifferenceHJB,
+    HamiltonJacobiBellman,
+    HJBSolver,
+    ViscosityHJBSolver,
+)
 from spxa.control.lqg import (
     LinearQuadraticGaussian,
     LinearQuadraticRegulator,
@@ -46,4 +52,8 @@ __all__ = [
     "AvellanedaStoikov",
     "OptimalMarketMaking",
     "HighFrequencyMarketMaker",
+    "FiniteDifferenceHJB",
+    "HJBSolver",
+    "HamiltonJacobiBellman",
+    "ViscosityHJBSolver",
 ]
