@@ -297,33 +297,28 @@ class CGMY(Process):
         np.ndarray
             Shape (n_paths, n_steps + 1).
         """
-        from scipy import integrate  # type: ignore[import-untyped]
-
         rng = rng or np.random.default_rng()
         dt = T / n_steps
 
-        def cgmy_pdf(x: float, t: float) -> float:
-            def integrand(u: float) -> float:
-                cf = complex(self.char_func_exact(u=u, t=t))
-                return (cf * np.exp(-1j * u * x)).real
-
-            result, _ = integrate.quad(integrand, 0, 500, limit=300)
-            return result / np.pi
-
-        u_grid = np.linspace(-300, 300, 2000)
+        # Numerically invert characteristic function via Fourier FFT
+        u_max = max(2000.0, 100.0 * max(self.G, self.M))
+        N = 8192
+        u_grid = np.linspace(-u_max, u_max, N)
         du = u_grid[1] - u_grid[0]
         cf_vals = self.char_func_exact(u=u_grid, t=dt)
 
-        N = len(u_grid)
-        x_grid = np.fft.fftfreq(N, d=du / (2 * np.pi))
-        x_grid = np.fft.fftshift(x_grid)
+        dx = 2.0 * np.pi / (N * du)
+        x_grid = (np.arange(N) - N / 2.0) * dx
 
+        # Fourier inversion: 1/(2pi) int phi(u) e^{-iux} du = ifft(conj(phi)) * (N*du)/(2pi)
         pdf_fft = (
-            np.fft.fftshift(np.fft.ifft(np.fft.ifftshift(cf_vals))).real * du * N / (2 * np.pi)
+            np.fft.fftshift(np.fft.ifft(np.fft.ifftshift(np.conj(cf_vals)))).real
+            * (N * du)
+            / (2.0 * np.pi)
         )
-        pdf_fft = np.maximum(pdf_fft, 0)
-        cdf = np.cumsum(pdf_fft) * (x_grid[1] - x_grid[0])
-        cdf /= cdf[-1]
+        pdf_fft = np.maximum(pdf_fft, 0.0)
+        cdf = np.cumsum(pdf_fft) * dx
+        cdf = np.clip(cdf / (cdf[-1] + 1e-300), 0.0, 1.0)
 
         uniforms = rng.uniform(size=(n_paths, n_steps))
         increments = np.interp(uniforms, cdf, x_grid)

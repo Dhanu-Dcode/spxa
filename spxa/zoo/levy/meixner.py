@@ -225,7 +225,7 @@ class MeixnerProcess(Process):
         cosh_z = np.cosh(z)
         log_cosh = np.log(np.where(np.abs(cosh_z) > 1e-300, cosh_z, 1e-300 + 0j))
         log_ratio = np.log(cos_half + 0j) - log_cosh
-        exponent = 1j * self.m * u_arr + 2 * self.delta * t * log_ratio
+        exponent = 1j * self.m * t * u_arr + 2 * self.delta * t * log_ratio
         result = np.exp(exponent)
         return result if result.shape != (1,) else result[0]
 
