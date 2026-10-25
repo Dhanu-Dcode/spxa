@@ -416,10 +416,12 @@ class KouJumpDiffusion(Process):
         time_horizon: Optional[float] = None,
         n_paths: int = 1,
         rng: Optional[np.random.Generator] = None,
+        T: Optional[float] = None,
     ) -> np.ndarray:
         r"""
         Simulate exact sample paths of the Kou jump-diffusion process.
         """
+        horizon = T if T is not None else time_horizon
         return sample_kou(
             drift=self.drift,
             sigma=self.sigma,
@@ -430,7 +432,7 @@ class KouJumpDiffusion(Process):
             dt=dt,
             n_steps=n_steps,
             n_paths=n_paths,
-            T=time_horizon,
+            T=horizon,
             rng=rng,
         )
 
