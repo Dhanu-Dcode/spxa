@@ -107,4 +107,16 @@ Every process implemented in `spxa`. The exactness level, available cumulants, s
 
 ---
 
+## Stochastic Optimal Control Models (`spxa.control`)
+
+| Model | Category | Equation & Dynamic Structure | Exact Guarantees & Control Methods | Reference |
+|---|---|---|---|---|
+| `LinearQuadraticGaussian` (`LQG`, `LinearQuadraticRegulator`) | Linear-Quadratic Regulator | $dx_t = (A x_t + B u_t)dt + C dW_t$; quadratic state and control cost $\int_0^T (x^T Q x + u^T R u)dt + x_T^T M x_T$ | Backward matrix differential Riccati ODE solver $\dot{P} + A^T P + P A - P B R^{-1} B^T P + Q = 0$; continuous algebraic Riccati equation (CARE); exact state-feedback gain $u^* = -R^{-1}B^T P(t)x$; analytical value function $V(t, x) = x^T P(t) x + s(t)$ | Athans 1971; Fleming & Rishel 1975; Anderson & Moore 2007 |
+| `MertonPortfolioControl` (`MertonControl`, `MertonPortfolio`, `OptimalConsumptionInvestment`) | Optimal Asset Allocation & Consumption | $dW_t = [r W_t + \pi_t(\mu - r) - c_t]dt + \pi_t \sigma dW_t$; CRRA utility $\int_0^T e^{-\rho t} \frac{c^{1-\gamma}}{1-\gamma} dt + \epsilon e^{-\rho T} \frac{W_T^{1-\gamma}}{1-\gamma}$ | Constant Merton risky fraction $\alpha^* = \frac{\mu - r}{\gamma \sigma^2}$; finite-horizon consumption propensity $\kappa(t) = \frac{\nu}{1 + (\epsilon^{1/\gamma}\nu - 1)e^{-\nu(T - t)}}$; exact closed-form HJB verification; positive-preserving log-Euler simulation | Merton 1969, 1971; Karatzas & Shreve 1998 |
+| `AlmgrenChrissExecution` (`AlmgrenChriss`, `AlmgrenChrissModel`, `OptimalExecution`) | Optimal Order Execution | $dq_t = v_t dt$; $dS_t = \gamma v_t dt + \sigma dW_t$; $\tilde{S}_t = S_t + \eta v_t$; mean-variance shortfall objective $\mathbb{E}[\mathcal{S}] + \lambda \operatorname{Var}[\mathcal{S}]$ | Urgency parameter $\kappa = \sqrt{\lambda \sigma^2 / \eta}$; closed-form optimal inventory $q^*(t) = Q_0 \frac{\sinh(\kappa(T - t))}{\sinh(\kappa T)}$; trading speed $v^*(t) = -Q_0 \kappa \frac{\cosh(\kappa(T - t))}{\sinh(\kappa T)}$; analytical shortfall expectation and variance; TWAP risk-neutral limit; Pareto efficient execution frontier | Almgren & Chriss 2000; Bertsimas & Lo 1998 |
+| `AvellanedaStoikovMarketMaker` (`AvellanedaStoikov`, `OptimalMarketMaking`, `HighFrequencyMarketMaker`) | Limit Order Book Market Making | $dS_t = \sigma dW_t$; $dq_t = dN^b_t - dN^a_t$; $\lambda(\delta) = A e^{-k \delta}$; CARA terminal utility with inventory risk penalty $\gamma$ | Exact reservation price $R(s, q, t) = s - q \gamma \sigma^2 (T - t)$; optimal inventory-invariant total spread $s^*(t) = \frac{2}{\gamma}\ln(1 + \gamma/k) + \gamma \sigma^2 (T - t)$; inventory skew quoting; coupled jump-diffusion simulation | Avellaneda & Stoikov 2008; Guéant, Tapia, & Manziadi 2012 |
+| `FiniteDifferenceHJB` (`HJBSolver`, `HamiltonJacobiBellman`, `ViscosityHJBSolver`) | Nonlinear PDE Viscosity Solver | $\partial_t V - \rho V + \inf_{u \in \mathcal{U}} \{ \mu(t, x, u)\partial_x V + \frac{1}{2}\sigma^2(t, x, u)\partial_{xx} V + f(t, x, u) \} = 0$ | Monotone upwind spatial differencing; Barles-Souganidis viscosity solution convergence; policy optimization over arbitrary control sets $\mathcal{U}$; Neumann and Dirichlet boundary extrapolation; bivariate spline interpolation | Barles & Souganidis 1991; Kushner & Dupuis 2001 |
+
+---
+
 New process proposals: open an issue using the **Process Proposal** template.

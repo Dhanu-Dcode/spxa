@@ -4235,3 +4235,180 @@ plot_dag(
 ```
 Renders a hierarchical NetworkX + Matplotlib diagram of the composition tree, color-coded by `NodeKind` with directed edges and legend.
 
+---
+
+## Stochastic Optimal Control (`spxa.control`)
+
+Continuous-time stochastic optimal control module supporting exact dynamic programming, Riccati ODE integrations, closed-form Hamilton-Jacobi-Bellman (HJB) verification, and monotone finite-difference viscosity solvers.
+
+### Core Abstractions (`spxa.control.base`)
+
+#### `ControlProblem`
+```python
+class ControlProblem(abc.ABC):
+    def __init__(t_terminal: float = 1.0, discount_rate: float = 0.0)
+```
+Abstract base class for continuous-time stochastic optimal control problems:
+$$V(t, x) = \inf_{u \in \mathcal{U}} \mathbb{E}\left[ \int_t^T e^{-\rho (s - t)} f(s, x_s, u_s) ds + e^{-\rho (T - t)} g(x_T) \;\Big|\; x_t = x \right]$$
+
+Methods:
+- `optimal_control(t: float, x: np.ndarray | float) -> np.ndarray | float`: State-feedback optimal control policy $u^*(t, x)$.
+- `value_function(t: float, x: np.ndarray | float) -> np.ndarray | float`: Value function $V(t, x)$.
+- `running_cost(t: float, x: np.ndarray | float, u: np.ndarray | float) -> np.ndarray | float`: Instantaneous running cost $f(t, x, u)$.
+- `terminal_cost(x: np.ndarray | float) -> np.ndarray | float`: Terminal bequest / liquidation cost $g(x)$.
+- `drift(t: float, x: np.ndarray | float, u: np.ndarray | float) -> np.ndarray | float`: Controlled drift rate $\mu(t, x, u)$.
+- `diffusion(t: float, x: np.ndarray | float, u: np.ndarray | float) -> np.ndarray | float`: Controlled diffusion rate $\sigma(t, x, u)$.
+- `simulate(x0, num_steps=100, num_paths=1000, seed=None) -> ControlledTrajectory`: Monte Carlo forward simulation under optimal control.
+
+#### `ControlledTrajectory`
+```python
+@dataclass
+class ControlledTrajectory:
+    times: np.ndarray         # Shape (n_steps + 1,)
+    states: np.ndarray        # Shape (n_paths, n_steps + 1, dim_state)
+    controls: np.ndarray      # Shape (n_paths, n_steps, dim_control)
+    realized_costs: np.ndarray # Shape (n_paths,)
+```
+Container for simulated state-control paths, pathwise realized costs, and summary statistics (`mean_cost`, `std_cost`).
+
+---
+
+### Linear-Quadratic-Gaussian Control (`spxa.control.lqg`)
+
+#### `LinearQuadraticGaussian` (aliases: `LQG`, `LinearQuadraticRegulator`)
+```python
+LinearQuadraticGaussian(
+    a_matrix: np.ndarray,      # Drift matrix A, shape (d, d)
+    b_matrix: np.ndarray,      # Control matrix B, shape (d, m)
+    c_matrix: np.ndarray,      # Diffusion matrix C, shape (d, p)
+    q_matrix: np.ndarray,      # State running penalty Q, shape (d, d)
+    r_matrix: np.ndarray,      # Control penalty R, shape (m, m)
+    m_terminal: Optional[np.ndarray] = None, # Terminal state penalty M, shape (d, d)
+    t_terminal: float = 1.0,
+    n_riccati_grid: int = 500,
+)
+```
+Continuous-time multi-dimensional Linear-Quadratic-Gaussian regulator:
+$$dx_t = (A x_t + B u_t) dt + C dW_t$$
+$$\min_{u_t} \mathbb{E}\left[ \int_0^T (x_t^T Q x_t + u_t^T R u_t) dt + x_T^T M x_T \right]$$
+
+Features:
+- Solves backward continuous matrix differential Riccati ODE:
+  $$\frac{dP}{dt} + A^T P + P A - P B R^{-1} B^T P + Q = 0, \quad P(T) = M$$
+- Constant scalar offset ODE $\dot{s}(t) + \operatorname{Tr}(C^T P(t) C) = 0, s(T) = 0$.
+- `steady_state_riccati()`: Continuous Algebraic Riccati Equation (CARE) solver for infinite-horizon regulation.
+- Optimal state feedback control: $u^*(t, x) = - R^{-1} B^T P(t) x$.
+- Analytical quadratic value function: $V(t, x) = x^T P(t) x + s(t)$.
+
+---
+
+### Merton Optimal Portfolio & Consumption (`spxa.control.merton`)
+
+#### `MertonPortfolioControl` (aliases: `MertonControl`, `MertonPortfolio`, `OptimalConsumptionInvestment`)
+```python
+MertonPortfolioControl(
+    mu: float = 0.08,             # Risky asset drift mu > r
+    sigma: float = 0.20,          # Risky asset volatility sigma > 0
+    r: float = 0.03,              # Risk-free rate
+    gamma: float = 2.0,           # Relative risk aversion gamma > 0, != 1
+    rho: float = 0.05,            # Subjective discount rate rho > 0
+    epsilon_bequest: float = 1.0, # Terminal bequest weight epsilon >= 0
+    t_terminal: float = 5.0,
+)
+```
+Merton lifetime optimal portfolio asset allocation and consumption under CRRA utility:
+$$dW_t = [r W_t + \pi_t (\mu - r) - c_t] dt + \pi_t \sigma dW_t$$
+$$\max_{\pi, c} \mathbb{E}\left[ \int_0^T e^{-\rho t} \frac{c_t^{1-\gamma}}{1-\gamma} dt + \epsilon e^{-\rho T} \frac{W_T^{1-\gamma}}{1-\gamma} \right]$$
+
+Exact Analytics:
+- Merton ratio: $\alpha^* = \frac{\pi_t^*}{W_t} = \frac{\mu - r}{\gamma \sigma^2}$ (constant over time and wealth).
+- Optimal consumption propensity $\kappa(t) = c_t^* / W_t = \frac{\nu}{1 + (\epsilon^{1/\gamma} \nu - 1) e^{-\nu (T - t)}}$.
+- Effective discount rate: $\nu = \frac{\rho - (1 - \gamma)\left(r + \frac{(\mu - r)^2}{2\gamma \sigma^2}\right)}{\gamma}$.
+- Closed-form HJB value function: $V(t, W) = h(t)^\gamma \frac{W^{1-\gamma}}{1-\gamma}$, where $h(t) = 1 / \kappa(t)$.
+- Positive-preserving log-Euler Monte Carlo path simulator.
+
+---
+
+### Almgren-Chriss Optimal Execution (`spxa.control.execution`)
+
+#### `AlmgrenChrissExecution` (aliases: `AlmgrenChriss`, `AlmgrenChrissModel`, `OptimalExecution`)
+```python
+AlmgrenChrissExecution(
+    total_shares: float = 10000.0, # Initial order size Q_0
+    t_terminal: float = 1.0,       # Execution time window T
+    sigma: float = 0.30,           # Asset volatility sigma
+    eta: float = 2.5e-4,           # Temporary impact coefficient eta > 0
+    gamma_impact: float = 2.5e-5,  # Permanent impact coefficient gamma >= 0
+    risk_aversion: float = 1e-3,   # Risk aversion lambda >= 0 (0 recovers TWAP)
+    s0: float = 100.0,             # Spot price S_0
+)
+```
+Continuous-time optimal execution of large blocks under temporary and permanent price impact:
+$$dq_t = v_t dt, \quad dS_t = \gamma v_t dt + \sigma dW_t, \quad \tilde{S}_t = S_t + \eta v_t$$
+$$\min_{v_t} \mathbb{E}[\mathcal{S}] + \lambda \operatorname{Var}[\mathcal{S}]$$
+
+Exact Analytics:
+- Urgency parameter: $\kappa = \sqrt{\frac{\lambda \sigma^2}{\eta}}$.
+- Optimal inventory trajectory: $q^*(t) = Q_0 \frac{\sinh(\kappa (T - t))}{\sinh(\kappa T)}$.
+- Optimal trading velocity: $v^*(t) = -Q_0 \kappa \frac{\cosh(\kappa (T - t))}{\sinh(\kappa T)}$.
+- Analytical expected shortfall $\mathbb{E}[\mathcal{S}]$ and shortfall variance $\operatorname{Var}[\mathcal{S}]$.
+- `efficient_frontier(n_points=50)`: Generates Pareto-optimal $(\sigma_{\mathcal{S}}, \mathbb{E}[\mathcal{S}])$ execution frontier.
+
+---
+
+### Avellaneda-Stoikov Market Making (`spxa.control.market_making`)
+
+#### `AvellanedaStoikovMarketMaker` (aliases: `AvellanedaStoikov`, `OptimalMarketMaking`, `HighFrequencyMarketMaker`)
+```python
+AvellanedaStoikovMarketMaker(
+    t_terminal: float = 1.0,      # Trading session length
+    sigma: float = 0.20,          # Mid-price volatility sigma
+    gamma_risk: float = 0.1,      # Inventory risk penalty gamma > 0
+    intensity_a: float = 140.0,   # Fill intensity scale A > 0
+    intensity_k: float = 1.5,     # Order book liquidity decay k > 0
+    max_inventory: int = 10,      # Inventory boundary capacity |q| <= Q_max
+    s0: float = 100.0,
+)
+```
+High-frequency limit order book quoting with inventory risk control:
+$$dS_t = \sigma dW_t, \quad dq_t = dN^b_t - dN^a_t, \quad \lambda(\delta) = A e^{-k \delta}$$
+
+Exact Analytics:
+- Reservation price: $R(s, q, t) = s - q \gamma \sigma^2 (T - t)$.
+- Optimal half-spreads:
+  $$\delta^a(q, t) = \frac{1}{\gamma} \ln\left(1 + \frac{\gamma}{k}\right) - \frac{2q - 1}{2} \gamma \sigma^2 (T - t)$$
+  $$\delta^b(q, t) = \frac{1}{\gamma} \ln\left(1 + \frac{\gamma}{k}\right) + \frac{2q + 1}{2} \gamma \sigma^2 (T - t)$$
+- Total optimal bid-ask spread: $s^*(t) = \frac{2}{\gamma} \ln\left(1 + \frac{\gamma}{k}\right) + \gamma \sigma^2 (T - t)$ (invariant to inventory $q$).
+- Inventory skew: automatically shades bid/ask quotes downward when long ($q > 0$) to dump inventory.
+- Coupled jump-diffusion simulation generating Brownian mid-prices alongside Poisson limit order fills.
+
+---
+
+### Finite-Difference HJB Viscosity Solver (`spxa.control.hjb`)
+
+#### `FiniteDifferenceHJB` (aliases: `HJBSolver`, `HamiltonJacobiBellman`, `ViscosityHJBSolver`)
+```python
+FiniteDifferenceHJB(
+    x_min: float = -2.0,
+    x_max: float = 2.0,
+    n_space: int = 101,
+    t_terminal: float = 1.0,
+    n_time: int = 100,
+    discount_rate: float = 0.0,
+    control_candidates: Optional[Sequence[float]] = None,
+    mode: str = "minimize",       # 'minimize' or 'maximize'
+    boundary: str = "neumann",    # 'neumann' or 'dirichlet'
+)
+```
+Monotone, upwind finite-difference viscosity solver for general 1D nonlinear Hamilton-Jacobi-Bellman PDEs:
+$$\partial_t V - \rho V + \inf_{u \in \mathcal{U}} \left\{ \mu(t, x, u) \partial_x V + \frac{1}{2}\sigma^2(t, x, u) \partial_{xx} V + f(t, x, u) \right\} = 0, \quad V(T, x) = g(x)$$
+
+Features:
+- Guaranteed Barles-Souganidis convergence to the unique viscosity solution.
+- Directional upwind spatial differencing ensuring monotonicity (M-matrix discrete maximum principle).
+- Vectorized policy optimization over control set $\mathcal{U}$.
+- Linear Neumann / Dirichlet boundary extrapolation.
+- `solve(drift, diffusion, running_cost, terminal_cost)` & `solve_problem(problem)` backward PDE integration.
+- Bivariate cubic spline interpolator `value(t, x)` and optimal feedback lookup `optimal_control(t, x)`.
+
+
