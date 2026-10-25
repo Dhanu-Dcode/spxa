@@ -301,10 +301,12 @@ class SquaredBesselProcess(Process):
         time_horizon: Optional[float] = None,
         n_paths: int = 1,
         rng: Optional[np.random.Generator] = None,
+        T: Optional[float] = None,
     ) -> np.ndarray:
         r"""
         Simulate exact sample paths of :math:`\mathrm{BESQ}^\delta(x_0)`.
         """
+        horizon = T if T is not None else time_horizon
         from spxa.sim.exact import sample_besq
 
         return sample_besq(
@@ -313,7 +315,7 @@ class SquaredBesselProcess(Process):
             dt=dt,
             n_steps=n_steps,
             n_paths=n_paths,
-            T=time_horizon,
+            T=horizon,
             rng=rng,
         )
 
@@ -449,10 +451,12 @@ class BesselProcess(Process):
         time_horizon: Optional[float] = None,
         n_paths: int = 1,
         rng: Optional[np.random.Generator] = None,
+        T: Optional[float] = None,
     ) -> np.ndarray:
         r"""
         Simulate exact sample paths of :math:`\mathrm{BES}^\delta(r_0)`.
         """
+        horizon = T if T is not None else time_horizon
         from spxa.sim.exact import sample_bessel
 
         return sample_bessel(
@@ -461,7 +465,7 @@ class BesselProcess(Process):
             dt=dt,
             n_steps=n_steps,
             n_paths=n_paths,
-            T=time_horizon,
+            T=horizon,
             rng=rng,
         )
 
