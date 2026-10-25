@@ -6,6 +6,16 @@ All notable changes to spxa are documented here. Follows [Keep a Changelog](http
 
 ### Added
 
+- `zoo/beyond/cev_heston.py` — CEV-Heston local-stochastic volatility process (`CEVHestonProcess`, `CEVHeston`, `HestonCEV`, `SLVCEV`):
+  Combines Constant Elasticity of Variance (CEV) local volatility backbone $S_t^\gamma$ with CIR mean-reverting variance diffusion, exact Feller ratios, exact Heston affine characteristic function limit at $\gamma = 1$, European options via Fourier inversion, and full-truncation Euler simulation.
+- `zoo/beyond/cheyette.py` — Cheyette Quasi-Gaussian Markovian Heath-Jarrow-Morton process (`CheyetteProcess`, `Cheyette`, `CheyetteModel`, `QuasiGaussianHJM`):
+  Finite-dimensional Markovian realization of HJM with exponential volatility decay $\sigma e^{-\kappa(T - t)}$, exact deterministic auxiliary variance state $y(t) = \frac{\sigma^2}{2\kappa}(1 - e^{-2\kappa t})$, closed-form zero-coupon bond pricing $P(t, T)$, Jamshidian European bond option formulas, and bivariate simulation.
+- `zoo/beyond/duffie_singleton.py` — Duffie-Singleton hazard-rate default intensity credit model (`DuffieSingletonProcess`, `DuffieSingleton`, `DefaultIntensityDiffusion`, `HazardRateDiffusion`):
+  Square-root default intensity diffusion $\lambda_t$ under Recovery of Market Value (RMV), exact closed-form survival probability $S(0, T) = A(T)e^{-B(T)\lambda_0}$, defaultable discount bond pricing, analytical credit spreads, CDS par spread calculation, and exact non-central chi-square simulation with Poisson default times.
+- `zoo/beyond/telegraph.py` — Kac's Telegraph process / persistent random walk (`TelegraphProcess`, `Telegraph`, `KacTelegraph`, `PersistentRandomWalk`):
+  Stochastic motion with finite propagation speed $c$ and Poisson direction reversals $\lambda$, hyperbolic wave equation density, compact support $[X_0 - ct, X_0 + ct]$, exact variance transition from ballistic ($t^2$) to diffusive ($t$) regimes, analytical characteristic function, and event-driven simulation without discretization error.
+- `zoo/beyond/quadratic_rough_heston.py` — Quadratic Rough Heston model with Zumbach volatility feedback (`QuadraticRoughHestonProcess`, `QuadraticRoughHeston`, `QRHeston`, `RoughZumbach`):
+  Instantaneous variance as a quadratic polynomial of a rough Volterra process $V_t = a(Z_t - b)^2 + c$, generating the structural Zumbach effect and leverage skew, power-law ATM implied volatility skew blow-up $|\partial \sigma_{\mathrm{IV}} / \partial \ln K| \sim T^{H - 1/2}$, and fractional convolution simulation.
 - `zoo/beyond/two_factor_cir.py` — Two-Factor Cox-Ingersoll-Ross (CIR2++) short-rate process (`TwoFactorCIRProcess`, `TwoFactorCIR`, `CIR2PlusPlus`):
   Two independent CIR state variables driving short rate $r(t) = x(t) + y(t) + \phi$, exact zero-coupon bond pricing $P(t, T) = A_x(\tau)A_y(\tau)e^{-B_x(\tau)x_t - B_y(\tau)y_t - \phi\tau}$, yield curve analytics, and exact non-central chi-square path simulation without discretization error.
 - `zoo/beyond/shifted_cir.py` — Shifted Cox-Ingersoll-Ross (CIR++) short-rate process (`ShiftedCIRProcess`, `ShiftedCIR`, `CIRPlusPlus`):

@@ -75,6 +75,11 @@ the running library. All signatures are exact.
    - [KestenProcess](#kestenprocess)
    - [HyperbolicDiffusion](#hyperbolicdiffusion)
    - [QuadraticDiffusion](#quadraticdiffusion)
+   - [CEVHestonProcess](#cevhestonprocess)
+   - [CheyetteProcess](#cheyetteprocess)
+   - [DuffieSingletonProcess](#duffiesingletonprocess)
+   - [TelegraphProcess](#telegraphprocess)
+   - [QuadraticRoughHestonProcess](#quadraticroughhestonprocess)
    - [SquaredBesselProcess](#squaredbesselprocess)
    - [BesselProcess](#besselprocess)
    - [OrnsteinUhlenbeck](#ornsteinuhlenbeck)
@@ -275,6 +280,26 @@ spxa.HyperbolicInvariantDiffusion
 spxa.QuadraticDiffusion
 spxa.QuadraticPearsonDiffusion
 spxa.WongDiffusion
+spxa.CEVHeston
+spxa.CEVHestonProcess
+spxa.HestonCEV
+spxa.SLVCEV
+spxa.Cheyette
+spxa.CheyetteModel
+spxa.CheyetteProcess
+spxa.QuasiGaussianHJM
+spxa.DuffieSingleton
+spxa.DuffieSingletonProcess
+spxa.DefaultIntensityDiffusion
+spxa.HazardRateDiffusion
+spxa.Telegraph
+spxa.TelegraphProcess
+spxa.KacTelegraph
+spxa.PersistentRandomWalk
+spxa.QuadraticRoughHeston
+spxa.QuadraticRoughHestonProcess
+spxa.QRHeston
+spxa.RoughZumbach
 spxa.BES
 spxa.BESQ
 spxa.Bessel
@@ -2580,6 +2605,112 @@ $$dX_t = (a + b X_t) dt + \sqrt{c + d X_t + e X_t^2} dW_t$$
 - `stationary_second_moment()` / `stationary_variance()` — exact second moment from eigenvalue $\lambda_2 = 2b + e$
 - `variance(t)` — conditional variance evolution
 - `simulate(t_max, num_steps, num_paths, seed)` — Milstein discretization with variance derivative correction
+
+---
+
+### CEVHestonProcess
+
+```python
+from spxa import CEVHestonProcess, CEVHeston, HestonCEV, SLVCEV
+
+cevh = CEVHestonProcess(
+    s0=100.0, v0=0.04, gamma=0.8, kappa=2.0, theta=0.04, sigma_v=0.3, rho=-0.6
+)
+```
+
+The CEV-Heston local-stochastic volatility process couples Constant Elasticity of Variance (CEV) local volatility with Heston square-root variance:
+$$dS_t = (r - q) S_t dt + \sqrt{V_t} S_t^\gamma dW_t^S$$
+$$dV_t = \kappa (\theta - V_t) dt + \sigma_v \sqrt{V_t} dW_t^V$$
+
+**Exact Analytics:**
+- `feller_ratio` — exact Feller boundary condition $2 \kappa \theta / \sigma_v^2$
+- `expected_variance(t)` / `variance_of_variance(t)` — exact CIR variance moments
+- `characteristic_function_heston(u, t)` — exact continuous affine characteristic function at $\gamma = 1.0$ limit
+- `european_call(strike, maturity)` / `european_put(strike, maturity)` — Fourier inversion pricing with put-call parity
+- `simulate(t_max, num_steps, num_paths, seed)` — full-truncation Euler simulation preserving non-negativity
+
+---
+
+### CheyetteProcess
+
+```python
+from spxa import CheyetteProcess, Cheyette, CheyetteModel, QuasiGaussianHJM
+
+cheyette = CheyetteProcess(kappa=0.6, sigma=0.015, r0=0.03)
+```
+
+The Cheyette (1992) model is the finite-dimensional Markovian realization of Heath-Jarrow-Morton (HJM) with separable volatility:
+$$dx_t = (y_t - \kappa x_t) dt + \sigma dW_t, \quad x_0 = 0$$
+$$dy_t = (\sigma^2 - 2 \kappa y_t) dt, \quad y_0 = 0$$
+$$r_t = r_0 + x_t$$
+
+**Exact Analytics:**
+- `g_factor(t, T)` — volatility integration factor $G(t, T) = (1 - e^{-\kappa(T - t)}) / \kappa$
+- `y_deterministic(t)` — exact deterministic auxiliary variance state $y_t = \frac{\sigma^2}{2\kappa}(1 - e^{-2\kappa t})$
+- `zero_coupon_bond(tau)` — exact bond price $P(t, T) = \exp(-r_0 \tau - G(\tau) x_t - \frac{1}{2} G(\tau)^2 y_t)$
+- `yield_curve(tau)` / `forward_rate(tau)` — exact term structure analytics
+- `european_bond_call(maturity, bond_maturity, strike)` — Jamshidian closed-form bond option pricing
+- `simulate(t_max, num_steps, num_paths, seed)` — bivariate Gaussian state simulation
+
+---
+
+### DuffieSingletonProcess
+
+```python
+from spxa import DuffieSingletonProcess, DuffieSingleton, DefaultIntensityDiffusion, HazardRateDiffusion
+
+ds = DuffieSingletonProcess(kappa=0.8, theta=0.03, sigma=0.1, lambda0=0.02, recovery=0.40)
+```
+
+The Duffie-Singleton (1999) default intensity credit model under Recovery of Market Value (RMV):
+$$d\lambda_t = \kappa (\theta - \lambda_t) dt + \sigma \sqrt{\lambda_t} dW_t$$
+$$R_t = r + (1 - R) \lambda_t$$
+
+**Exact Analytics:**
+- `survival_probability(tau)` — exact survival probability $S(0, \tau) = A(\tau) e^{-B(\tau) \lambda_0}$ via CIR Laplace transform
+- `defaultable_bond(tau)` — default-adjusted zero-coupon discount bond pricing under RMV
+- `credit_spread(tau)` — zero-coupon credit spread curve
+- `cds_par_spread(tau)` — analytical Credit Default Swap (CDS) par spread
+- `simulate(t_max, num_steps, num_paths, seed)` — exact non-central chi-square simulation with exact Poisson default times
+
+---
+
+### TelegraphProcess
+
+```python
+from spxa import TelegraphProcess, Telegraph, KacTelegraph, PersistentRandomWalk
+
+telegraph = TelegraphProcess(c=1.5, lambd=1.0, x0=0.0)
+```
+
+Kac's Telegraph process describes particle motion on $\mathbb{R}$ with strictly finite propagation velocity $c > 0$ and Poisson direction reversals:
+$$\frac{\partial^2 p}{\partial t^2} + 2\lambda \frac{\partial p}{\partial t} = c^2 \frac{\partial^2 p}{\partial x^2}$$
+
+**Exact Analytics:**
+- `support(t)` — strictly compact support $[X_0 - c t, X_0 + c t]$
+- `boundary_mass(t)` — ballistic wave probability mass $\frac{1}{2} e^{-\lambda t}$
+- `variance(t)` — exact variance exhibiting ballistic scaling ($t^2$) at short times and diffusive scaling ($t$) at long times
+- `characteristic_function(u, t)` — exact continuous characteristic function
+- `simulate(t_max, num_steps, num_paths, seed)` — exact event-driven Poisson simulation with zero discretization error
+
+---
+
+### QuadraticRoughHestonProcess
+
+```python
+from spxa import QuadraticRoughHestonProcess, QuadraticRoughHeston, QRHeston, RoughZumbach
+
+qrh = QuadraticRoughHestonProcess(hurst=0.1, lam=1.0, nu=0.3, a=1.0, b=0.0, c=0.01, z0=0.15)
+```
+
+Quadratic Rough Heston model (Gatheral & Keller-Ressel 2019) generating the Zumbach volatility feedback effect:
+$$Z_t = Z_0 + \int_0^t \frac{(t-s)^{\alpha - 1}}{\Gamma(\alpha)} [ \lambda(\theta - Z_s) ds + \nu \sqrt{V_s} dW_s ]$$
+$$V_t = a (Z_t - b)^2 + c$$
+
+**Exact Analytics:**
+- `initial_variance` / `zumbach_feedback_factor` — structural volatility and leverage asymmetry $\Xi = 2a(Z_0 - b)$
+- `asymptotic_atm_skew(tau)` — power-law at-the-money implied volatility skew scaling $|\partial \sigma_{\mathrm{IV}} / \partial \ln K| \propto \tau^{H - 0.5}$
+- `simulate(t_max, num_steps, num_paths, seed)` — fractional convolution Adams-Bashforth simulation
 
 ---
 

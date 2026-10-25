@@ -198,6 +198,36 @@ from spxa.zoo.beyond.quadratic_diffusion import (
     QuadraticPearsonDiffusion,
     WongDiffusion,
 )
+from spxa.zoo.beyond.cev_heston import (
+    CEVHeston,
+    CEVHestonProcess,
+    HestonCEV,
+    SLVCEV,
+)
+from spxa.zoo.beyond.cheyette import (
+    Cheyette,
+    CheyetteModel,
+    CheyetteProcess,
+    QuasiGaussianHJM,
+)
+from spxa.zoo.beyond.duffie_singleton import (
+    DefaultIntensityDiffusion,
+    DuffieSingleton,
+    DuffieSingletonProcess,
+    HazardRateDiffusion,
+)
+from spxa.zoo.beyond.telegraph import (
+    KacTelegraph,
+    PersistentRandomWalk,
+    Telegraph,
+    TelegraphProcess,
+)
+from spxa.zoo.beyond.quadratic_rough_heston import (
+    QRHeston,
+    QuadraticRoughHeston,
+    QuadraticRoughHestonProcess,
+    RoughZumbach,
+)
 
 from .mmpp import MarkovModulatedPoissonProcess
 
@@ -340,6 +370,26 @@ __all__ = [
     "QuadraticDiffusion",
     "QuadraticPearsonDiffusion",
     "WongDiffusion",
+    "CEVHeston",
+    "CEVHestonProcess",
+    "HestonCEV",
+    "SLVCEV",
+    "Cheyette",
+    "CheyetteModel",
+    "CheyetteProcess",
+    "QuasiGaussianHJM",
+    "DuffieSingleton",
+    "DuffieSingletonProcess",
+    "DefaultIntensityDiffusion",
+    "HazardRateDiffusion",
+    "Telegraph",
+    "TelegraphProcess",
+    "KacTelegraph",
+    "PersistentRandomWalk",
+    "QuadraticRoughHeston",
+    "QuadraticRoughHestonProcess",
+    "QRHeston",
+    "RoughZumbach",
     "Vasicek",
     "VasicekProcess",
     "MarkovModulatedPoissonProcess",
