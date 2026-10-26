@@ -62,6 +62,51 @@ class Node:
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__}(id={self.node_id}, name='{self.name}', type={self.node_type.value})>"
 
+    def _ensure_node(self, other: Any) -> Node:
+        if isinstance(other, Node):
+            return other
+        return ConstantNode(value=other)
+
+    def __add__(self, other: Any) -> Node:
+        from spxa.graph.math_ops import AddNode
+        return AddNode(self, self._ensure_node(other))
+
+    def __radd__(self, other: Any) -> Node:
+        from spxa.graph.math_ops import AddNode
+        return AddNode(self._ensure_node(other), self)
+
+    def __sub__(self, other: Any) -> Node:
+        from spxa.graph.math_ops import SubNode
+        return SubNode(self, self._ensure_node(other))
+
+    def __rsub__(self, other: Any) -> Node:
+        from spxa.graph.math_ops import SubNode
+        return SubNode(self._ensure_node(other), self)
+
+    def __mul__(self, other: Any) -> Node:
+        from spxa.graph.math_ops import MulNode
+        return MulNode(self, self._ensure_node(other))
+
+    def __rmul__(self, other: Any) -> Node:
+        from spxa.graph.math_ops import MulNode
+        return MulNode(self._ensure_node(other), self)
+
+    def __truediv__(self, other: Any) -> Node:
+        from spxa.graph.math_ops import DivNode
+        return DivNode(self, self._ensure_node(other))
+
+    def __rtruediv__(self, other: Any) -> Node:
+        from spxa.graph.math_ops import DivNode
+        return DivNode(self._ensure_node(other), self)
+
+    def __pow__(self, other: Any) -> Node:
+        from spxa.graph.math_ops import PowNode
+        return PowNode(self, self._ensure_node(other))
+
+    def __neg__(self) -> Node:
+        from spxa.graph.math_ops import NegNode
+        return NegNode(self)
+
 
 class ConstantNode(Node):
     r"""Node holding a fixed, immutable numerical constant."""
