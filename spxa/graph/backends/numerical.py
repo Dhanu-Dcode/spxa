@@ -36,15 +36,16 @@ class NumericalBackend(Backend):
         alpha: float = 1.5,
         u_max: float = 100.0,
     ) -> float:
-        r"""Price European call option via Carr-Madan Fourier inversion of characteristic function."""
-        # Carr-Madan damped transform: psi(u) = e^{-rT} * phi(u - i(alpha+1)) / (alpha^2 + alpha - u^2 + i(2alpha+1)u)
+        r"""Price European call option via Carr-Madan Fourier inversion of log-return characteristic function."""
+        log_k = float(np.log(k / s0))
+
         def integrand(u: float) -> float:
             u_complex = u - 1j * (alpha + 1.0)
             phi = char_func_node.op_fn(u_complex, t)
             denom = alpha**2 + alpha - u**2 + 1j * (2.0 * alpha + 1.0) * u
             psi = np.exp(-r * t) * phi / denom
-            return float(np.real(np.exp(-1j * u * np.log(k)) * psi))
+            return float(np.real(np.exp(-1j * u * log_k) * psi))
 
         val, _ = quad(integrand, 0.0, u_max, limit=200)
-        c_price = (np.exp(-alpha * np.log(k)) / np.pi) * val
+        c_price = s0 * (np.exp(-alpha * log_k) / np.pi) * val
         return float(np.maximum(c_price, s0 - k * np.exp(-r * t)))
