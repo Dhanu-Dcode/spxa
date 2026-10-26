@@ -176,3 +176,36 @@ class CumulantGeneratingFunctionNode(OperatorNode):
             name=name,
             output_descriptor=PortDescriptor(name="cgf", dtype=DType.FLOAT64),
         )
+
+
+class GeneratorApplicationNode(OperatorNode):
+    r"""Infinitesimal generator application node :math:`z = \mathcal{A} f(x)`."""
+
+    def __init__(
+        self,
+        process_node: StochasticProcessNode,
+        func: Callable[[float], float],
+        x_node: Node,
+        name: Optional[str] = None,
+        eps: float = 1e-4,
+    ) -> None:
+        def gen_eval(x_val: Any) -> Any:
+            x = float(x_val)
+            b = float(process_node.drift(0.0, np.array([x]))[0])
+            sig = float(process_node.diffusion(0.0, np.array([x]))[0])
+
+            # Numerical central difference derivatives
+            f_p = func(x + eps)
+            f_m = func(x - eps)
+            f_c = func(x)
+            f_prime = (f_p - f_m) / (2.0 * eps)
+            f_double = (f_p - 2.0 * f_c + f_m) / (eps**2)
+
+            return b * f_prime + 0.5 * (sig**2) * f_double
+
+        super().__init__(
+            op_fn=gen_eval,
+            inputs=[x_node],
+            name=name or f"Generator_{process_node.name}",
+            output_descriptor=PortDescriptor(name="gen_val", dtype=DType.FLOAT64),
+        )
