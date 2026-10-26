@@ -100,6 +100,22 @@ class GraphCompiler:
 
         return simplified
 
+    def optimize_all(self, max_passes: int = 5) -> Dict[str, int]:
+        r"""Run full optimization pipeline until fixpoint or max_passes reached."""
+        stats = {"constant_folding": 0, "cse": 0, "algebraic": 0, "dead_code": 0}
+        for _ in range(max_passes):
+            cf = self.constant_folding()
+            cse = self.common_subexpression_elimination()
+            alg = self.algebraic_simplification()
+            dc = self.dead_code_elimination()
+            stats["constant_folding"] += cf
+            stats["cse"] += cse
+            stats["algebraic"] += alg
+            stats["dead_code"] += dc
+            if cf == 0 and cse == 0 and alg == 0 and dc == 0:
+                break
+        return stats
+
     def _replace_node(self, old_node: Node, new_node: Node) -> None:
         r"""Replace old_node with new_node across the graph."""
         self.graph.nodes[new_node.node_id] = new_node
