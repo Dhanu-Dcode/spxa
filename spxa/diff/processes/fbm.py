@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Tuple
 
 from spxa.diff.config import require_jax
 from spxa.diff.prng import generate_normal
 
 try:
-    import jax
     import jax.numpy as jnp
 except ImportError:
     pass
@@ -18,11 +17,7 @@ def fbm_autocovariance(n: int, hurst: float | Any) -> Any:
     r"""Compute autocovariance sequence :math:`\gamma(k) = \frac{1}{2} (|k-1|^{2H} - 2|k|^{2H} + |k+1|^{2H})`."""
     k = jnp.arange(n)
     two_h = 2.0 * hurst
-    gamma = 0.5 * (
-        jnp.abs(k - 1) ** two_h
-        - 2.0 * (jnp.abs(k) ** two_h)
-        + jnp.abs(k + 1) ** two_h
-    )
+    gamma = 0.5 * (jnp.abs(k - 1) ** two_h - 2.0 * (jnp.abs(k) ** two_h) + jnp.abs(k + 1) ** two_h)
     return gamma
 
 

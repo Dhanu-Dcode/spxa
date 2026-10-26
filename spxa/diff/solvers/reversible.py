@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 from spxa.diff.config import require_jax
 from spxa.diff.prng import generate_normal

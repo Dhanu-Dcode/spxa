@@ -1,12 +1,13 @@
 """Tests for 1D differentiable continuous diffusion processes."""
 
-import jax
-import jax.numpy as jnp
 import pytest
 
-from spxa.diff.processes.bessel import DifferentiableBessel, DifferentiableBESQ
+pytest.importorskip("jax")
+
+import jax.numpy as jnp
+
+from spxa.diff.processes.bessel import DifferentiableBESQ
 from spxa.diff.processes.bilinear import DifferentiableBilinear
-from spxa.diff.processes.brownian import DifferentiableGBM
 from spxa.diff.processes.cev import DifferentiableCEV
 from spxa.diff.processes.cir import DifferentiableCIR
 from spxa.diff.processes.ornstein_uhlenbeck import DifferentiableOU

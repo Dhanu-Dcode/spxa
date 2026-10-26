@@ -1,8 +1,11 @@
 """Tests for differentiable rough volatility and fractional Brownian motion."""
 
+import pytest
+
+pytest.importorskip("jax")
+
 import jax
 import jax.numpy as jnp
-import pytest
 
 from spxa.diff.processes.fbm import simulate_diff_fbm
 from spxa.diff.processes.rough_heston import simulate_diff_rough_heston

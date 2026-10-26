@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Dict
 
 from spxa.diff.config import require_jax
 
 try:
-    import jax
     import jax.numpy as jnp
 except ImportError:
     pass

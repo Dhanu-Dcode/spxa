@@ -2,6 +2,8 @@
 
 import pytest
 
+pytest.importorskip("jax")
+
 from spxa.diff.config import (
     default_backend,
     enable_x64,

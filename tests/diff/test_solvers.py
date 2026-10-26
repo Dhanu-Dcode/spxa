@@ -1,17 +1,17 @@
 """Tests for differentiable numerical SDE solvers."""
 
+import pytest
+
+pytest.importorskip("jax")
+
 import jax
 import jax.numpy as jnp
-import pytest
 
 from spxa.diff.processes.brownian import DifferentiableGBM
 from spxa.diff.prng import make_key
 from spxa.diff.solvers import (
     solve_euler_maruyama,
-    solve_milstein,
-    solve_reversible_heun,
     solve_sde,
-    solve_srk,
 )
 
 

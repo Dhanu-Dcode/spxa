@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Dict
 
-from spxa.diff.config import require_jax
 from spxa.diff.sde_base import DifferentiableSDE
 from spxa.diff.solvers.euler_maruyama import solve_euler_maruyama
 
 try:
-    import jax
     import jax.numpy as jnp
     from jax.scipy.special import erf
 except ImportError:
@@ -26,7 +24,9 @@ def bs_call_price(s0: Any, strike: Any, maturity: Any, rate: Any, sigma: Any) ->
     sqrt_t = jnp.sqrt(maturity)
     d1 = (jnp.log(s0 / strike) + (rate + 0.5 * sigma**2) * maturity) / (sigma * sqrt_t)
     d2 = d1 - sigma * sqrt_t
-    return s0 * _standard_normal_cdf(d1) - strike * jnp.exp(-rate * maturity) * _standard_normal_cdf(d2)
+    return s0 * _standard_normal_cdf(d1) - strike * jnp.exp(
+        -rate * maturity
+    ) * _standard_normal_cdf(d2)
 
 
 def bs_put_price(s0: Any, strike: Any, maturity: Any, rate: Any, sigma: Any) -> Any:
@@ -34,7 +34,9 @@ def bs_put_price(s0: Any, strike: Any, maturity: Any, rate: Any, sigma: Any) -> 
     sqrt_t = jnp.sqrt(maturity)
     d1 = (jnp.log(s0 / strike) + (rate + 0.5 * sigma**2) * maturity) / (sigma * sqrt_t)
     d2 = d1 - sigma * sqrt_t
-    return strike * jnp.exp(-rate * maturity) * _standard_normal_cdf(-d2) - s0 * _standard_normal_cdf(-d1)
+    return strike * jnp.exp(-rate * maturity) * _standard_normal_cdf(
+        -d2
+    ) - s0 * _standard_normal_cdf(-d1)
 
 
 def mc_european_call_price(

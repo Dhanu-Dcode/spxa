@@ -1,8 +1,10 @@
 """Tests for differentiable stochastic volatility systems (Heston, SABR, 3/2)."""
 
-import jax
-import jax.numpy as jnp
 import pytest
+
+pytest.importorskip("jax")
+
+import jax.numpy as jnp
 
 from spxa.diff.processes.heston import DifferentiableHeston
 from spxa.diff.processes.sabr import DifferentiableSABR

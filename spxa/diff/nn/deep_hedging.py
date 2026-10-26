@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, List, Tuple
 
 from spxa.diff.config import require_jax
-from spxa.diff.nn.mlp import init_mlp_params, mlp_forward
+from spxa.diff.nn.mlp import mlp_forward
 
 try:
     import jax

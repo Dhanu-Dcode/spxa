@@ -1,8 +1,10 @@
 """Tests for Greeks sensitivity calculation across Pathwise, LRM, Malliavin, and Hessian."""
 
-import jax
-import jax.numpy as jnp
 import pytest
+
+pytest.importorskip("jax")
+
+import jax.numpy as jnp
 
 from spxa.diff.greeks.hessian import compute_higher_order_greeks
 from spxa.diff.greeks.lrm import compute_lrm_greeks_gbm
@@ -18,7 +20,8 @@ def test_pathwise_greeks():
     params = {"mu": 0.05, "sigma": 0.2, "x0": 100.0}
 
     # European call payoff (S_T - 100)+
-    payoff_fn = lambda x: jnp.maximum(x[..., 0] - 100.0, 0.0)
+    def payoff_fn(x):
+        return jnp.maximum(x[..., 0] - 100.0, 0.0)
 
     price, grads = compute_pathwise_greeks(
         payoff_fn=payoff_fn,
@@ -39,8 +42,10 @@ def test_pathwise_greeks():
 
 def test_lrm_and_malliavin_greeks():
     key = make_key(1010)
+
     # Digital call payoff: 1_{S_T >= 100}
-    payoff_digital = lambda s: jnp.where(s >= 100.0, 1.0, 0.0)
+    def payoff_digital(s):
+        return jnp.where(s >= 100.0, 1.0, 0.0)
 
     price_lrm, grads_lrm = compute_lrm_greeks_gbm(
         payoff_fn=payoff_digital,
@@ -56,7 +61,9 @@ def test_lrm_and_malliavin_greeks():
     assert "delta" in grads_lrm and grads_lrm["delta"] > 0.0
 
     # Malliavin
-    payoff_call = lambda s: jnp.maximum(s - 100.0, 0.0)
+    def payoff_call(s):
+        return jnp.maximum(s - 100.0, 0.0)
+
     price_mal, delta_mal, gamma_mal = compute_malliavin_greeks_gbm(
         payoff_fn=payoff_call,
         s0=100.0,
@@ -75,7 +82,9 @@ def test_hessian_greeks():
     key = make_key(1111)
     sde = DifferentiableGBM()
     params = {"mu": 0.05, "sigma": 0.2, "x0": 100.0}
-    payoff_fn = lambda x: jnp.maximum(x[..., 0] - 100.0, 0.0)
+
+    def payoff_fn(x):
+        return jnp.maximum(x[..., 0] - 100.0, 0.0)
 
     val, first_order, second_order = compute_higher_order_greeks(
         payoff_fn=payoff_fn,

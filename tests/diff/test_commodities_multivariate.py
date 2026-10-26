@@ -1,8 +1,10 @@
 """Tests for differentiable commodity and multivariate diffusion processes."""
 
-import jax
-import jax.numpy as jnp
 import pytest
+
+pytest.importorskip("jax")
+
+import jax.numpy as jnp
 
 from spxa.diff.processes.multivariate_ou import DifferentiableVectorOU
 from spxa.diff.processes.schwartz import (
@@ -25,7 +27,16 @@ def test_schwartz_and_vector_ou():
 
     # Schwartz 2-Factor
     sch2 = DifferentiableSchwartz2Factor()
-    p2 = {"r": 0.05, "kappa": 1.2, "alpha": 0.08, "sigma1": 0.25, "sigma2": 0.35, "rho": 0.3, "s0": 50.0, "delta0": 0.05}
+    p2 = {
+        "r": 0.05,
+        "kappa": 1.2,
+        "alpha": 0.08,
+        "sigma1": 0.25,
+        "sigma2": 0.35,
+        "rho": 0.3,
+        "s0": 50.0,
+        "delta0": 0.05,
+    }
     traj2, key = solve_euler_maruyama(sch2, p2, (0.0, 1.0), 30, 50, key)
     assert traj2.shape == (50, 31, 2)
     assert jnp.all(traj2[..., 0] > 0.0)

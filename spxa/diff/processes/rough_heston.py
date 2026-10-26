@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 from spxa.diff.config import require_jax
 from spxa.diff.prng import generate_normal
@@ -56,7 +56,9 @@ def simulate_diff_rough_heston(
     dw_v = jnp.sqrt(dt) * (rho * z1 + jnp.sqrt(jnp.maximum(1.0 - rho**2, 1e-12)) * z2)
 
     # Sequential Volterra convolution via lax.scan
-    def step_fn(carry: Tuple[Any, Any, Any], elem: Tuple[Any, Any, Any]) -> Tuple[Tuple[Any, Any, Any], Tuple[Any, Any]]:
+    def step_fn(
+        carry: Tuple[Any, Any, Any], elem: Tuple[Any, Any, Any]
+    ) -> Tuple[Tuple[Any, Any, Any], Tuple[Any, Any]]:
         step_idx, v_hist, s_curr = carry
         w_curr, dw_s_curr, dw_v_curr = elem
 

@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Tuple
 
 from spxa.diff.config import require_jax
-from spxa.diff.prng import generate_normal
 
 try:
     import jax
@@ -65,7 +64,9 @@ def compute_malliavin_greeks_gbm(
     weight_delta = w_t / (s0 * sigma * t_total)
     delta_val = float(discount * jnp.mean(payoffs * weight_delta))
 
-    weight_gamma = (w_t**2 - sigma * t_total * w_t - t_total) / ((s0**2) * (sigma**2) * (t_total**2))
+    weight_gamma = (w_t**2 - sigma * t_total * w_t - t_total) / (
+        (s0**2) * (sigma**2) * (t_total**2)
+    )
     gamma_val = float(discount * jnp.mean(payoffs * weight_gamma))
 
     return price, delta_val, gamma_val

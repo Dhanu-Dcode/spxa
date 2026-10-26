@@ -1,8 +1,10 @@
 """Tests for differentiable jump-diffusion and point processes."""
 
-import jax
-import jax.numpy as jnp
 import pytest
+
+pytest.importorskip("jax")
+
+import jax.numpy as jnp
 
 from spxa.diff.processes.bates import DifferentiableBates
 from spxa.diff.processes.hawkes import DifferentiableHawkes
@@ -24,7 +26,15 @@ def test_jump_diffusions():
 
     # Kou
     kou = DifferentiableKou()
-    p_kou = {"r": 0.05, "sigma": 0.2, "lambda_j": 0.2, "p_up": 0.4, "eta1": 10.0, "eta2": 5.0, "x0": 100.0}
+    p_kou = {
+        "r": 0.05,
+        "sigma": 0.2,
+        "lambda_j": 0.2,
+        "p_up": 0.4,
+        "eta1": 10.0,
+        "eta2": 5.0,
+        "x0": 100.0,
+    }
     traj_k, key = solve_euler_maruyama(kou, p_kou, (0.0, 1.0), 30, 50, key)
     assert traj_k.shape == (50, 31, 1)
     assert jnp.all(traj_k > 0.0)

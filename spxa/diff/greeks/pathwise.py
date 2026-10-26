@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Tuple
 
 from spxa.diff.config import require_jax
 from spxa.diff.sde_base import DifferentiableSDE

@@ -4,14 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from spxa.diff.config import require_jax
 from spxa.diff.sde_base import DifferentiableSDE
-
-try:
-    import jax
-    import jax.numpy as jnp
-except ImportError:
-    pass
 
 
 class DifferentiableBilinear(DifferentiableSDE):

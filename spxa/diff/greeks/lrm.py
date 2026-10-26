@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Tuple
 
 from spxa.diff.config import require_jax
 
@@ -36,10 +36,9 @@ def compute_lrm_greeks_gbm(
     require_jax()
     key_sample, _ = jax.random.split(key)
 
-    # Sample terminal log-prices ln(S_T) ~ N(mu, var)
+    # Sample terminal log-prices ln(S_T) ~ N(mu, std^2)
     mu = jnp.log(s0) + (r - 0.5 * sigma**2) * t
     std = sigma * jnp.sqrt(t)
-    var = std**2
 
     z = jax.random.normal(key_sample, shape=(n_paths,))
     log_st = mu + std * z

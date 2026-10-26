@@ -1,8 +1,10 @@
 """Tests for differentiable pricer and end-to-end calibrator."""
 
-import jax
-import jax.numpy as jnp
 import pytest
+
+pytest.importorskip("jax")
+
+import jax.numpy as jnp
 
 from spxa.diff.calibrator import calibrate_parameters
 from spxa.diff.pricer import (

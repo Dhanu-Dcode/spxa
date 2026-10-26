@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict
 
 from spxa.diff.config import require_jax
 from spxa.diff.nn.mlp import init_mlp_params, mlp_forward
