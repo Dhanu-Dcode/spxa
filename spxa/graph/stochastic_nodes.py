@@ -57,3 +57,77 @@ class StochasticProcessNode(Node):
     def diffusion(self, t: float, x: np.ndarray, **param_vals: Any) -> np.ndarray:
         r"""Diffusion dispersion matrix :math:`\sigma(t, x)`."""
         raise NotImplementedError
+
+
+class BrownianMotionNode(StochasticProcessNode):
+    r"""Arithmetic Brownian motion with drift: :math:`dX_t = \mu dt + \sigma dW_t`."""
+
+    def __init__(
+        self,
+        mu: Union[float, Node],
+        sigma: Union[float, Node],
+        name: str = "BrownianMotion",
+    ) -> None:
+        mu_node = mu if isinstance(mu, Node) else ParameterNode(mu, f"{name}_mu")
+        sigma_node = (
+            sigma
+            if isinstance(sigma, Node)
+            else ParameterNode(
+                sigma,
+                f"{name}_sigma",
+                bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE),
+            )
+        )
+        super().__init__(
+            name=name,
+            state_dim=1,
+            noise_dim=1,
+            process_type="levy",
+            parameters={"mu": mu_node, "sigma": sigma_node},
+        )
+
+    def drift(self, t: float, x: np.ndarray, **param_vals: Any) -> np.ndarray:
+        mu = param_vals.get("mu", self.params["mu"].forward())
+        return np.full_like(x, mu)
+
+    def diffusion(self, t: float, x: np.ndarray, **param_vals: Any) -> np.ndarray:
+        sigma = param_vals.get("sigma", self.params["sigma"].forward())
+        return np.full_like(x, sigma)
+
+
+class GeometricBrownianMotionNode(StochasticProcessNode):
+    r"""Geometric Brownian motion: :math:`dS_t = \mu S_t dt + \sigma S_t dW_t`."""
+
+    def __init__(
+        self,
+        s0: Union[float, Node],
+        mu: Union[float, Node],
+        sigma: Union[float, Node],
+        name: str = "GBM",
+    ) -> None:
+        s0_node = s0 if isinstance(s0, Node) else ParameterNode(s0, f"{name}_s0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        mu_node = mu if isinstance(mu, Node) else ParameterNode(mu, f"{name}_mu")
+        sigma_node = (
+            sigma
+            if isinstance(sigma, Node)
+            else ParameterNode(
+                sigma,
+                f"{name}_sigma",
+                bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE),
+            )
+        )
+        super().__init__(
+            name=name,
+            state_dim=1,
+            noise_dim=1,
+            process_type="diffusion",
+            parameters={"s0": s0_node, "mu": mu_node, "sigma": sigma_node},
+        )
+
+    def drift(self, t: float, x: np.ndarray, **param_vals: Any) -> np.ndarray:
+        mu = param_vals.get("mu", self.params["mu"].forward())
+        return mu * x
+
+    def diffusion(self, t: float, x: np.ndarray, **param_vals: Any) -> np.ndarray:
+        sigma = param_vals.get("sigma", self.params["sigma"].forward())
+        return sigma * x
