@@ -251,3 +251,91 @@ class CEVNode(StochasticProcessNode):
         sigma = param_vals.get("sigma", self.params["sigma"].forward())
         gamma = param_vals.get("gamma", self.params["gamma"].forward())
         return sigma * (np.maximum(x, 1e-12) ** gamma)
+
+
+class HestonNode(StochasticProcessNode):
+    r"""Heston stochastic volatility model node:
+
+    .. math::
+        dS_t = \mu S_t dt + \sqrt{V_t} S_t dW_t^S \\
+        dV_t = \kappa (\theta - V_t) dt + \xi \sqrt{V_t} dW_t^V, \quad d\langle W^S, W^V \rangle = \rho dt
+    """
+
+    def __init__(
+        self,
+        s0: Union[float, Node],
+        v0: Union[float, Node],
+        mu: Union[float, Node],
+        kappa: Union[float, Node],
+        theta: Union[float, Node],
+        xi: Union[float, Node],
+        rho: Union[float, Node],
+        name: str = "Heston",
+    ) -> None:
+        s0_n = s0 if isinstance(s0, Node) else ParameterNode(s0, f"{name}_s0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        v0_n = v0 if isinstance(v0, Node) else ParameterNode(v0, f"{name}_v0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        mu_n = mu if isinstance(mu, Node) else ParameterNode(mu, f"{name}_mu")
+        kappa_n = kappa if isinstance(kappa, Node) else ParameterNode(kappa, f"{name}_kappa", bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE))
+        theta_n = theta if isinstance(theta, Node) else ParameterNode(theta, f"{name}_theta", bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE))
+        xi_n = xi if isinstance(xi, Node) else ParameterNode(xi, f"{name}_xi", bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE))
+        rho_n = rho if isinstance(rho, Node) else ParameterNode(rho, f"{name}_rho", bounds=ParameterBounds(lower=-1.0, upper=1.0, domain=DomainType.CORRELATION))
+        super().__init__(
+            name=name,
+            state_dim=2,
+            noise_dim=2,
+            process_type="stochastic_volatility",
+            parameters={
+                "s0": s0_n,
+                "v0": v0_n,
+                "mu": mu_n,
+                "kappa": kappa_n,
+                "theta": theta_n,
+                "xi": xi_n,
+                "rho": rho_n,
+            },
+        )
+
+    def drift(self, t: float, x: np.ndarray, **param_vals: Any) -> np.ndarray:
+        s, v = x[0], x[1]
+        mu = param_vals.get("mu", self.params["mu"].forward())
+        kappa = param_vals.get("kappa", self.params["kappa"].forward())
+        theta = param_vals.get("theta", self.params["theta"].forward())
+        return np.array([mu * s, kappa * (theta - v)])
+
+    def diffusion(self, t: float, x: np.ndarray, **param_vals: Any) -> np.ndarray:
+        s, v = x[0], max(float(x[1]), 0.0)
+        xi = param_vals.get("xi", self.params["xi"].forward())
+        rho = param_vals.get("rho", self.params["rho"].forward())
+        # Cholesky of [[1, rho], [rho, 1]] is [[1, 0], [rho, sqrt(1-rho^2)]]
+        sig_s = np.sqrt(v) * s
+        sig_v = xi * np.sqrt(v)
+        return np.array([
+            [sig_s, 0.0],
+            [sig_v * rho, sig_v * np.sqrt(max(1.0 - rho**2, 0.0))],
+        ])
+
+
+class SABRNode(StochasticProcessNode):
+    r"""Hagan SABR stochastic volatility model node."""
+
+    def __init__(
+        self,
+        f0: Union[float, Node],
+        alpha0: Union[float, Node],
+        beta: Union[float, Node],
+        nu: Union[float, Node],
+        rho: Union[float, Node],
+        name: str = "SABR",
+    ) -> None:
+        f0_n = f0 if isinstance(f0, Node) else ParameterNode(f0, f"{name}_f0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        alpha0_n = alpha0 if isinstance(alpha0, Node) else ParameterNode(alpha0, f"{name}_alpha0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        beta_n = beta if isinstance(beta, Node) else ParameterNode(beta, f"{name}_beta", bounds=ParameterBounds(lower=0.0, upper=1.0, domain=DomainType.UNIT_INTERVAL))
+        nu_n = nu if isinstance(nu, Node) else ParameterNode(nu, f"{name}_nu", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        rho_n = rho if isinstance(rho, Node) else ParameterNode(rho, f"{name}_rho", bounds=ParameterBounds(lower=-1.0, upper=1.0, domain=DomainType.CORRELATION))
+        super().__init__(
+            name=name,
+            state_dim=2,
+            noise_dim=2,
+            process_type="stochastic_volatility",
+            parameters={"f0": f0_n, "alpha0": alpha0_n, "beta": beta_n, "nu": nu_n, "rho": rho_n},
+        )
