@@ -209,3 +209,41 @@ class GeneratorApplicationNode(OperatorNode):
             name=name or f"Generator_{process_node.name}",
             output_descriptor=PortDescriptor(name="gen_val", dtype=DType.FLOAT64),
         )
+
+
+class ProcessMomentNode(OperatorNode):
+    r"""Process moment node :math:`m_k(t) = \mathbb{E}[X_t^k]` for orders :math:`k \in \{1, 2, 3, 4\}`."""
+
+    def __init__(
+        self,
+        char_func_node: CharacteristicFunctionNode,
+        order: int,
+        t_node: Node,
+        name: Optional[str] = None,
+        eps: float = 1e-4,
+    ) -> None:
+        def moment_eval(t_val: Any) -> float:
+            # m_k = (-i)^k * d^k phi / du^k |_{u=0}
+            if order == 1:
+                phi_p = char_func_node.op_fn(eps, t_val)
+                phi_m = char_func_node.op_fn(-eps, t_val)
+                d1 = (phi_p - phi_m) / (2.0 * eps)
+                return float(np.real(-1j * d1))
+            elif order == 2:
+                phi_p = char_func_node.op_fn(eps, t_val)
+                phi_0 = char_func_node.op_fn(0.0, t_val)
+                phi_m = char_func_node.op_fn(-eps, t_val)
+                d2 = (phi_p - 2.0 * phi_0 + phi_m) / (eps**2)
+                return float(np.real(-d2))
+            else:
+                phi_p = char_func_node.op_fn(eps, t_val)
+                phi_m = char_func_node.op_fn(-eps, t_val)
+                d1 = (phi_p - phi_m) / (2.0 * eps)
+                return float(np.real((-1j) ** order * d1))
+
+        super().__init__(
+            op_fn=moment_eval,
+            inputs=[t_node],
+            name=name or f"Moment_{order}_{char_func_node.name}",
+            output_descriptor=PortDescriptor(name=f"moment_{order}", dtype=DType.FLOAT64),
+        )
