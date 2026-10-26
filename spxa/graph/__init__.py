@@ -4,6 +4,18 @@ Shared Computational Graph Engine for Stochastic Modeling, Analytics, Autodiff &
 
 from __future__ import annotations
 
+from spxa.graph.adapters import (
+    CalculusGeneratorAdapter,
+    CopulaAdapter,
+    DifferentiableSDEAdapter,
+    GraphAdapterRegistry,
+    RiskInstrumentAdapter,
+    UniversalProcessNode,
+    adapt_portfolio,
+    as_graph_node,
+    install_graph_extensions,
+    to_graph,
+)
 from spxa.graph.autodiff.dual import DualNumber
 from spxa.graph.autodiff.hessian import compute_graph_hessian
 from spxa.graph.autodiff.smoothers import SmoothIndicatorNode, SoftplusNode
@@ -196,4 +208,15 @@ __all__ = [
     "apply_macro_scenario",
     "NettingExposureNode",
     "GraphCVANode",
+    # Universal Adapters & Implementation Layer
+    "GraphAdapterRegistry",
+    "to_graph",
+    "as_graph_node",
+    "UniversalProcessNode",
+    "DifferentiableSDEAdapter",
+    "RiskInstrumentAdapter",
+    "adapt_portfolio",
+    "CalculusGeneratorAdapter",
+    "CopulaAdapter",
+    "install_graph_extensions",
 ]
