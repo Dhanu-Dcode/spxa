@@ -8,6 +8,9 @@ from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
+from scipy.special import erf, gamma
+from scipy.stats import norm
+
 from spxa.graph.node import ConstantNode, Node, NodeType, OperatorNode, PortDescriptor
 from spxa.graph.types import DType
 
@@ -194,4 +197,56 @@ class TanhNode(OperatorNode):
             inputs=[x],
             name=name or f"Tanh_{x.name}",
             vjp_fn=lambda grad_out, a: (grad_out * (1.0 - np.tanh(a) ** 2),),
+        )
+
+
+class NormalCDFNode(OperatorNode):
+    r"""Standard normal cumulative distribution function :math:`z = \Phi(x)`."""
+
+    def __init__(self, x: Node, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a: norm.cdf(a),
+            inputs=[x],
+            name=name or f"NormCDF_{x.name}",
+            vjp_fn=lambda grad_out, a: (grad_out * norm.pdf(a),),
+        )
+
+
+class NormalPDFNode(OperatorNode):
+    r"""Standard normal probability density function :math:`z = \phi(x)`."""
+
+    def __init__(self, x: Node, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a: norm.pdf(a),
+            inputs=[x],
+            name=name or f"NormPDF_{x.name}",
+            vjp_fn=lambda grad_out, a: (-grad_out * a * norm.pdf(a),),
+        )
+
+
+class ErfNode(OperatorNode):
+    r"""Gauss error function node :math:`z = \text{erf}(x)`."""
+
+    def __init__(self, x: Node, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a: erf(a),
+            inputs=[x],
+            name=name or f"Erf_{x.name}",
+            vjp_fn=lambda grad_out, a: (
+                grad_out * (2.0 / np.sqrt(np.pi)) * np.exp(-(a**2)),
+            ),
+        )
+
+
+class GammaNode(OperatorNode):
+    r"""Euler Gamma function node :math:`z = \Gamma(x)`."""
+
+    def __init__(self, x: Node, name: Optional[str] = None) -> None:
+        from scipy.special import polygamma
+
+        super().__init__(
+            op_fn=lambda a: gamma(a),
+            inputs=[x],
+            name=name or f"Gamma_{x.name}",
+            vjp_fn=lambda grad_out, a: (grad_out * gamma(a) * polygamma(0, a),),
         )
