@@ -68,3 +68,60 @@ class PortDescriptor:
     domain: DomainType = DomainType.REAL
     description: str = ""
     is_differentiable: bool = True
+
+
+@dataclass
+class ParameterBounds:
+    r"""Parameter bounds, domain requirements, and constraints."""
+
+    lower: Optional[float] = None
+    upper: Optional[float] = None
+    domain: DomainType = DomainType.REAL
+    strict_lower: bool = False
+    strict_upper: bool = False
+    description: str = ""
+
+    def validate(self, value: float) -> bool:
+        r"""Check if value satisfies boundary constraints."""
+        val = float(value)
+        if self.lower is not None:
+            if self.strict_lower and val <= self.lower:
+                return False
+            if not self.strict_lower and val < self.lower:
+                return False
+        if self.upper is not None:
+            if self.strict_upper and val >= self.upper:
+                return False
+            if not self.strict_upper and val > self.upper:
+                return False
+        if self.domain == DomainType.POSITIVE and val <= 0:
+            return False
+        if self.domain == DomainType.NON_NEGATIVE and val < 0:
+            return False
+        if self.domain == DomainType.UNIT_INTERVAL and (val < 0 or val > 1):
+            return False
+        if self.domain == DomainType.CORRELATION and (val < -1.0 or val > 1.0):
+            return False
+        return True
+
+    def clip(self, value: float, eps: float = 1e-7) -> float:
+        r"""Project value into the admissible domain."""
+        val = float(value)
+        low = self.lower
+        high = self.upper
+        if self.domain == DomainType.POSITIVE:
+            low = max(eps, low) if low is not None else eps
+        elif self.domain == DomainType.NON_NEGATIVE:
+            low = max(0.0, low) if low is not None else 0.0
+        elif self.domain == DomainType.UNIT_INTERVAL:
+            low = max(0.0, low) if low is not None else 0.0
+            high = min(1.0, high) if high is not None else 1.0
+        elif self.domain == DomainType.CORRELATION:
+            low = max(-1.0 + eps, low) if low is not None else -1.0 + eps
+            high = min(1.0 - eps, high) if high is not None else 1.0 - eps
+
+        if low is not None and val < low:
+            val = low
+        if high is not None and val > high:
+            val = high
+        return val
