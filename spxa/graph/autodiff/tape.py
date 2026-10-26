@@ -94,3 +94,22 @@ class GradientTape:
             for j, src in enumerate(sources):
                 jac[i, j] = float(grads.get(src, 0.0))
         return jac
+
+
+def value_and_grad(
+    graph: ComputationalGraph,
+    target_output: str,
+    param_names: Optional[List[str]] = None,
+) -> Tuple[float, Dict[str, float]]:
+    r"""Compute target output value and its gradient with respect to named parameters."""
+    tape = GradientTape(graph)
+    params = graph.get_parameters()
+    if param_names is None:
+        param_list = list(params.values())
+    else:
+        param_list = [params[name] for name in param_names if name in params]
+
+    val = float(graph.evaluate(return_outputs_only=True)[target_output])
+    grads = tape.gradient(target_output, sources=param_list)
+    grad_dict = {node.name: float(grads[node]) for node in param_list}
+    return val, grad_dict
