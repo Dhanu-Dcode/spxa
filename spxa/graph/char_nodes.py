@@ -124,3 +124,31 @@ class CharacteristicFunctionNode(OperatorNode):
             name=name or f"CharFunc_{process_node.name}",
             output_descriptor=PortDescriptor(name="phi", dtype=DType.COMPLEX128),
         )
+
+
+class AffineCharacteristicNode(OperatorNode):
+    r"""Affine characteristic transform node :math:`\phi(u, t, x) = \exp(A(t, u) + B(t, u) x)`."""
+
+    def __init__(
+        self,
+        a_fn: Callable[[float, Any], Any],
+        b_fn: Callable[[float, Any], Any],
+        u_node: Node,
+        t_node: Node,
+        x_node: Node,
+        name: str = "AffineCharFunc",
+    ) -> None:
+        def affine_eval(u_val: Any, t_val: Any, x_val: Any) -> Any:
+            u = np.asarray(u_val, dtype=complex)
+            t = float(t_val)
+            x = np.asarray(x_val, dtype=float)
+            a = a_fn(t, u)
+            b = b_fn(t, u)
+            return np.exp(a + b * x)
+
+        super().__init__(
+            op_fn=affine_eval,
+            inputs=[u_node, t_node, x_node],
+            name=name,
+            output_descriptor=PortDescriptor(name="phi", dtype=DType.COMPLEX128),
+        )
