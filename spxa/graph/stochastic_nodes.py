@@ -178,3 +178,76 @@ class VasicekNode(OrnsteinUhlenbeckNode):
         name: str = "Vasicek",
     ) -> None:
         super().__init__(kappa=kappa, theta=theta, sigma=sigma, x0=r0, name=name)
+
+
+class CIRNode(StochasticProcessNode):
+    r"""Cox-Ingersoll-Ross process: :math:`dr_t = \kappa (\theta - r_t) dt + \sigma \sqrt{r_t} dW_t`."""
+
+    def __init__(
+        self,
+        kappa: Union[float, Node],
+        theta: Union[float, Node],
+        sigma: Union[float, Node],
+        r0: Union[float, Node] = 0.04,
+        name: str = "CIR",
+    ) -> None:
+        kappa_n = kappa if isinstance(kappa, Node) else ParameterNode(kappa, f"{name}_kappa", bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE))
+        theta_n = theta if isinstance(theta, Node) else ParameterNode(theta, f"{name}_theta", bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE))
+        sigma_n = sigma if isinstance(sigma, Node) else ParameterNode(sigma, f"{name}_sigma", bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE))
+        r0_n = r0 if isinstance(r0, Node) else ConstantNode(r0, f"{name}_r0")
+        super().__init__(
+            name=name,
+            state_dim=1,
+            noise_dim=1,
+            process_type="diffusion",
+            parameters={"kappa": kappa_n, "theta": theta_n, "sigma": sigma_n, "r0": r0_n},
+        )
+
+    def drift(self, t: float, x: np.ndarray, **param_vals: Any) -> np.ndarray:
+        kappa = param_vals.get("kappa", self.params["kappa"].forward())
+        theta = param_vals.get("theta", self.params["theta"].forward())
+        return kappa * (theta - x)
+
+    def diffusion(self, t: float, x: np.ndarray, **param_vals: Any) -> np.ndarray:
+        sigma = param_vals.get("sigma", self.params["sigma"].forward())
+        return sigma * np.sqrt(np.maximum(x, 0.0))
+
+    @property
+    def feller_ratio(self) -> float:
+        kappa = self.params["kappa"].forward()
+        theta = self.params["theta"].forward()
+        sigma = self.params["sigma"].forward()
+        return float(2.0 * kappa * theta / (sigma**2))
+
+
+class CEVNode(StochasticProcessNode):
+    r"""Constant Elasticity of Variance (CEV) process: :math:`dS_t = \mu S_t dt + \sigma S_t^\gamma dW_t`."""
+
+    def __init__(
+        self,
+        s0: Union[float, Node],
+        mu: Union[float, Node],
+        sigma: Union[float, Node],
+        gamma: Union[float, Node],
+        name: str = "CEV",
+    ) -> None:
+        s0_n = s0 if isinstance(s0, Node) else ParameterNode(s0, f"{name}_s0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        mu_n = mu if isinstance(mu, Node) else ParameterNode(mu, f"{name}_mu")
+        sigma_n = sigma if isinstance(sigma, Node) else ParameterNode(sigma, f"{name}_sigma", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        gamma_n = gamma if isinstance(gamma, Node) else ParameterNode(gamma, f"{name}_gamma", bounds=ParameterBounds(lower=0.0, domain=DomainType.NON_NEGATIVE))
+        super().__init__(
+            name=name,
+            state_dim=1,
+            noise_dim=1,
+            process_type="diffusion",
+            parameters={"s0": s0_n, "mu": mu_n, "sigma": sigma_n, "gamma": gamma_n},
+        )
+
+    def drift(self, t: float, x: np.ndarray, **param_vals: Any) -> np.ndarray:
+        mu = param_vals.get("mu", self.params["mu"].forward())
+        return mu * x
+
+    def diffusion(self, t: float, x: np.ndarray, **param_vals: Any) -> np.ndarray:
+        sigma = param_vals.get("sigma", self.params["sigma"].forward())
+        gamma = param_vals.get("gamma", self.params["gamma"].forward())
+        return sigma * (np.maximum(x, 1e-12) ** gamma)
