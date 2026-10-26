@@ -135,3 +135,63 @@ class AbsNode(OperatorNode):
             name=name or f"Abs_{x.name}",
             vjp_fn=lambda grad_out, a: (grad_out * np.sign(a),),
         )
+
+
+class SinNode(OperatorNode):
+    r"""Sine node :math:`z = \sin(x)`."""
+
+    def __init__(self, x: Node, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a: np.sin(a),
+            inputs=[x],
+            name=name or f"Sin_{x.name}",
+            vjp_fn=lambda grad_out, a: (grad_out * np.cos(a),),
+        )
+
+
+class CosNode(OperatorNode):
+    r"""Cosine node :math:`z = \cos(x)`."""
+
+    def __init__(self, x: Node, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a: np.cos(a),
+            inputs=[x],
+            name=name or f"Cos_{x.name}",
+            vjp_fn=lambda grad_out, a: (-grad_out * np.sin(a),),
+        )
+
+
+class SinhNode(OperatorNode):
+    r"""Hyperbolic sine node :math:`z = \sinh(x)`."""
+
+    def __init__(self, x: Node, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a: np.sinh(a),
+            inputs=[x],
+            name=name or f"Sinh_{x.name}",
+            vjp_fn=lambda grad_out, a: (grad_out * np.cosh(a),),
+        )
+
+
+class CoshNode(OperatorNode):
+    r"""Hyperbolic cosine node :math:`z = \cosh(x)`."""
+
+    def __init__(self, x: Node, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a: np.cosh(a),
+            inputs=[x],
+            name=name or f"Cosh_{x.name}",
+            vjp_fn=lambda grad_out, a: (grad_out * np.sinh(a),),
+        )
+
+
+class TanhNode(OperatorNode):
+    r"""Hyperbolic tangent node :math:`z = \tanh(x)`."""
+
+    def __init__(self, x: Node, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a: np.tanh(a),
+            inputs=[x],
+            name=name or f"Tanh_{x.name}",
+            vjp_fn=lambda grad_out, a: (grad_out * (1.0 - np.tanh(a) ** 2),),
+        )
