@@ -409,10 +409,13 @@ class RegimeSwitchingGBM(Process):
         time_horizon: Optional[float] = None,
         n_paths: int = 1,
         rng: Optional[np.random.Generator] = None,
+        *,
+        T: Optional[float] = None,  # noqa: N803
     ) -> np.ndarray:
         """Simulate sample paths of asset price :math:`S_t`."""
         from spxa.sim.exact import sample_regime_switching_gbm
 
+        horizon = time_horizon if time_horizon is not None else T
         return sample_regime_switching_gbm(
             mu=self._mu,
             sigma=self._sigma,
@@ -422,7 +425,7 @@ class RegimeSwitchingGBM(Process):
             dt=dt,
             n_steps=n_steps,
             n_paths=n_paths,
-            T=time_horizon,
+            T=horizon,
             rng=rng,
             return_regimes=False,
         )
@@ -434,9 +437,26 @@ class RegimeSwitchingGBM(Process):
         time_horizon: Optional[float] = None,
         n_paths: int = 1,
         rng: Optional[np.random.Generator] = None,
+        *,
+        T: Optional[float] = None,  # noqa: N803
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Simulate coupled paths of asset price :math:`S_t` and regime states :math:`Y_t`."""
         from spxa.sim.exact import sample_regime_switching_gbm
+
+        horizon = time_horizon if time_horizon is not None else T
+        return sample_regime_switching_gbm(
+            mu=self._mu,
+            sigma=self._sigma,
+            transition_rates=self._q,
+            s0=self._s0,
+            initial_regime=self._initial_regime,
+            dt=dt,
+            n_steps=n_steps,
+            n_paths=n_paths,
+            T=horizon,
+            rng=rng,
+            return_regimes=True,
+        )
 
         return sample_regime_switching_gbm(
             mu=self._mu,

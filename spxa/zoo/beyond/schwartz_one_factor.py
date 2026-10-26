@@ -321,24 +321,42 @@ class SchwartzOneFactor(Process):
 
     def simulate(
         self,
-        t_grid: np.ndarray,
+        t_grid: Optional[np.ndarray] = None,
         n_paths: int = 1,
         rng: Optional[np.random.Generator] = None,
+        *,
+        n_steps: Optional[int] = None,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
+        seed: Optional[int] = None,
+        T: Optional[float] = None,  # noqa: N803
     ) -> np.ndarray:
         r"""
         Exact vectorized simulation of Schwartz one-factor commodity price paths.
         """
-        t_grid = np.asarray(t_grid, dtype=np.float64)
+        paths_count = num_paths if num_paths is not None else n_paths
+        steps = num_steps if num_steps is not None else (n_steps if n_steps is not None else 100)
+        final_t = T if T is not None else 1.0
+
+        if rng is None:
+            if seed is not None:
+                rng = np.random.default_rng(seed)
+            else:
+                rng = np.random.default_rng()
+
+        if t_grid is None:
+            t_grid = np.linspace(0.0, final_t, steps + 1)
+        else:
+            t_grid = np.asarray(t_grid, dtype=np.float64)
+
         if t_grid.ndim != 1 or len(t_grid) < 2:
             raise ValueError("t_grid must be a 1-D array with at least 2 points")
-        if rng is None:
-            rng = np.random.default_rng()
 
-        n_steps = len(t_grid)
-        log_paths = np.zeros((n_paths, n_steps), dtype=np.float64)
+        n_steps_len = len(t_grid)
+        log_paths = np.zeros((paths_count, n_steps_len), dtype=np.float64)
         log_paths[:, 0] = math.log(self.s0)
 
-        for i in range(1, n_steps):
+        for i in range(1, n_steps_len):
             dt = t_grid[i] - t_grid[i - 1]
             if dt <= 0:
                 raise ValueError("t_grid must be strictly increasing")
@@ -349,7 +367,7 @@ class SchwartzOneFactor(Process):
                 (self.sigma**2 / (2.0 * self.kappa)) * (1.0 - math.exp(-2.0 * self.kappa * dt))
             )
 
-            z = rng.standard_normal(size=n_paths)
+            z = rng.standard_normal(size=paths_count)
             log_paths[:, i] = cond_mean + cond_std * z
 
         return np.exp(log_paths)

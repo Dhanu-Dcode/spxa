@@ -487,10 +487,13 @@ class SchwartzTwoFactor(Process):
         time_horizon: Optional[float] = None,
         n_paths: int = 1,
         rng: Optional[np.random.Generator] = None,
+        *,
+        T: Optional[float] = None,  # noqa: N803
     ) -> np.ndarray:
         """Simulate sample paths of commodity spot price :math:`S_t`."""
         from spxa.sim.exact import sample_schwartz_two_factor
 
+        horizon = time_horizon if time_horizon is not None else T
         return sample_schwartz_two_factor(
             s0=self._s0,
             delta0=self._delta0,
@@ -503,7 +506,7 @@ class SchwartzTwoFactor(Process):
             dt=dt,
             n_steps=n_steps,
             n_paths=n_paths,
-            T=time_horizon,
+            T=horizon,
             rng=rng,
             return_yield=False,
         )
@@ -515,10 +518,13 @@ class SchwartzTwoFactor(Process):
         time_horizon: Optional[float] = None,
         n_paths: int = 1,
         rng: Optional[np.random.Generator] = None,
+        *,
+        T: Optional[float] = None,  # noqa: N803
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Simulate joint sample paths of spot prices :math:`S_t` and convenience yields :math:`\\delta_t`."""
         from spxa.sim.exact import sample_schwartz_two_factor
 
+        horizon = time_horizon if time_horizon is not None else T
         return sample_schwartz_two_factor(
             s0=self._s0,
             delta0=self._delta0,
@@ -531,7 +537,7 @@ class SchwartzTwoFactor(Process):
             dt=dt,
             n_steps=n_steps,
             n_paths=n_paths,
-            T=time_horizon,
+            T=horizon,
             rng=rng,
             return_yield=True,
         )
