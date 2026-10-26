@@ -64,7 +64,7 @@ class GraphCalibrator:
             jac=True,
             method=method,
             bounds=bounds if any(b != (None, None) for b in bounds) else None,
-            options={"maxiter": max_iter, "disp": False},
+            options={"maxiter": max_iter},
             tol=tol,
         )
 
