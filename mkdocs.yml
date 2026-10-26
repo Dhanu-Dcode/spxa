@@ -67,6 +67,7 @@ nav:
       - Physics applications: tutorials/03_physics_applications.ipynb
   - API reference: api.md
   - Differentiable SDEs: diff.md
+  - Portfolio & Risk: risk.md
   - Process registry: https://github.com/Nityahapani/spxa/blob/main/PROCESS_REGISTRY.md
   - Contributing: contributing.md
   - Changelog: changelog.md
