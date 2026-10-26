@@ -44,6 +44,24 @@ class GraphCompiler:
 
         return folded_count
 
+    def common_subexpression_elimination(self) -> int:
+        r"""Eliminate duplicate equivalent operator nodes that share identical operations and inputs."""
+        order = self.graph.topological_sort()
+        seen: Dict[Tuple[str, Tuple[int, ...]], Node] = {}
+        eliminated = 0
+
+        for node in order:
+            if isinstance(node, OperatorNode) and not isinstance(node, OutputNode):
+                key = (node.__class__.__name__, tuple(inp.node_id for inp in node.inputs))
+                if key in seen:
+                    master_node = seen[key]
+                    self._replace_node(node, master_node)
+                    eliminated += 1
+                else:
+                    seen[key] = node
+
+        return eliminated
+
     def _replace_node(self, old_node: Node, new_node: Node) -> None:
         r"""Replace old_node with new_node across the graph."""
         self.graph.nodes[new_node.node_id] = new_node
