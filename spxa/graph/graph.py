@@ -69,6 +69,35 @@ class ComputationalGraph:
             raise ValueError("Cycle detected in computational graph: topological ordering impossible")
         return order
 
+    def prune_unreachable(self) -> int:
+        r"""Remove all nodes that do not contribute to any designated output.
+
+        Returns
+        -------
+        int
+            Number of nodes pruned.
+        """
+        reachable: Set[int] = set()
+
+        def dfs(node: Node) -> None:
+            if node.node_id in reachable:
+                return
+            reachable.add(node.node_id)
+            for inp in node.inputs:
+                dfs(inp)
+
+        for out_node in self.outputs.values():
+            dfs(out_node)
+
+        to_remove = [nid for nid in self.nodes if nid not in reachable]
+        for nid in to_remove:
+            node = self.nodes.pop(nid)
+            for inp in node.inputs:
+                if node in inp.outputs:
+                    inp.outputs.remove(node)
+
+        return len(to_remove)
+
     def get_parameters(self) -> Dict[str, ParameterNode]:
         r"""Return all registered ParameterNodes keyed by parameter name."""
         return {
