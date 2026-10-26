@@ -628,4 +628,21 @@ __all__ = [
     "akaike_information_criterion",
     "bayesian_information_criterion",
     "CalibrationReport",
+    # Subpackages
+    "diff",
+    "ops",
 ]
+
+
+def __getattr__(name: str):
+    if name in ("diff", "ops"):
+        import importlib
+
+        mod = importlib.import_module(f"spxa.{name}")
+        globals()[name] = mod
+        return mod
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+
+def __dir__():
+    return sorted(list(globals().keys()) + __all__)
