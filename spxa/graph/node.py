@@ -123,3 +123,48 @@ class ParameterNode(Node):
 
     def forward(self, *inputs: Any) -> float:
         return self._value
+
+
+class OperatorNode(Node):
+    r"""Node representing an executable mathematical function over input nodes."""
+
+    def __init__(
+        self,
+        op_fn: Callable[..., Any],
+        inputs: Sequence[Node],
+        name: Optional[str] = None,
+        output_descriptor: Optional[PortDescriptor] = None,
+        vjp_fn: Optional[Callable[..., Any]] = None,
+    ) -> None:
+        super().__init__(
+            name=name or f"Op_{op_fn.__name__}",
+            node_type=NodeType.OPERATOR,
+            inputs=inputs,
+            output_descriptor=output_descriptor,
+        )
+        self.op_fn = op_fn
+        self.vjp_fn = vjp_fn
+
+    def forward(self, *inputs: Any) -> Any:
+        return self.op_fn(*inputs)
+
+
+class OutputNode(Node):
+    r"""Node marking a designated output or metric of the computational graph."""
+
+    def __init__(
+        self,
+        target_node: Node,
+        name: str = "output",
+        description: str = "",
+    ) -> None:
+        super().__init__(
+            name=name,
+            node_type=NodeType.OUTPUT,
+            inputs=[target_node],
+            output_descriptor=target_node.output_descriptor,
+            metadata={"description": description},
+        )
+
+    def forward(self, val: Any) -> Any:
+        return val
