@@ -62,6 +62,44 @@ class GraphCompiler:
 
         return eliminated
 
+    def algebraic_simplification(self) -> int:
+        r"""Apply algebraic identities (e.g. x + 0 -> x, x * 1 -> x, x * 0 -> 0)."""
+        from spxa.graph.math_ops import AddNode, MulNode, SubNode
+        order = self.graph.topological_sort()
+        simplified = 0
+
+        for node in order:
+            if isinstance(node, AddNode):
+                # x + 0 -> x or 0 + x -> x
+                if isinstance(node.inputs[1], ConstantNode) and node.inputs[1].value == 0:
+                    self._replace_node(node, node.inputs[0])
+                    simplified += 1
+                elif isinstance(node.inputs[0], ConstantNode) and node.inputs[0].value == 0:
+                    self._replace_node(node, node.inputs[1])
+                    simplified += 1
+            elif isinstance(node, SubNode):
+                # x - 0 -> x
+                if isinstance(node.inputs[1], ConstantNode) and node.inputs[1].value == 0:
+                    self._replace_node(node, node.inputs[0])
+                    simplified += 1
+            elif isinstance(node, MulNode):
+                # x * 1 -> x or 1 * x -> x
+                if isinstance(node.inputs[1], ConstantNode) and node.inputs[1].value == 1:
+                    self._replace_node(node, node.inputs[0])
+                    simplified += 1
+                elif isinstance(node.inputs[0], ConstantNode) and node.inputs[0].value == 1:
+                    self._replace_node(node, node.inputs[1])
+                    simplified += 1
+                # x * 0 -> 0
+                elif (isinstance(node.inputs[1], ConstantNode) and node.inputs[1].value == 0) or (
+                    isinstance(node.inputs[0], ConstantNode) and node.inputs[0].value == 0
+                ):
+                    zero_const = ConstantNode(0.0, name="ZeroConst")
+                    self._replace_node(node, zero_const)
+                    simplified += 1
+
+        return simplified
+
     def _replace_node(self, old_node: Node, new_node: Node) -> None:
         r"""Replace old_node with new_node across the graph."""
         self.graph.nodes[new_node.node_id] = new_node
