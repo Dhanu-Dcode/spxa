@@ -397,3 +397,24 @@ class KouJumpDiffusionNode(StochasticProcessNode):
             process_type="jump_diffusion",
             parameters={"s0": s0_n, "mu": mu_n, "sigma": sigma_n, "lam": lam_n, "p": p_n, "eta1": eta1_n, "eta2": eta2_n},
         )
+
+
+class SubordinatedProcessNode(StochasticProcessNode):
+    r"""Subordinated stochastic process node :math:`Y_t = X_{T_t}` where :math:`T_t` is a positive subordinator."""
+
+    def __init__(
+        self,
+        base_process: StochasticProcessNode,
+        subordinator: StochasticProcessNode,
+        name: Optional[str] = None,
+    ) -> None:
+        sub_name = name or f"Sub_{base_process.name}_by_{subordinator.name}"
+        super().__init__(
+            name=sub_name,
+            state_dim=base_process.state_dim,
+            noise_dim=base_process.noise_dim + subordinator.noise_dim,
+            process_type="subordinated",
+            parameters={"base": base_process, "subordinator": subordinator},
+        )
+        self.base_process = base_process
+        self.subordinator = subordinator
