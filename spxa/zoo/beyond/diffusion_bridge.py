@@ -221,35 +221,52 @@ class GeneralDiffusionBridge(Process):
 
     def simulate(
         self,
-        t_grid: np.ndarray,
+        t_grid: Optional[np.ndarray] = None,
         n_paths: int = 1,
         rng: Optional[np.random.Generator] = None,
+        *,
+        n_steps: Optional[int] = None,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
+        seed: Optional[int] = None,
+        T: Optional[float] = None,  # noqa: N803
     ) -> np.ndarray:
         r"""
         Exact vectorized bridge simulation guaranteeing endpoints X(0)=a and X(T)=b.
         """
-        t_grid = np.asarray(t_grid, dtype=np.float64)
+        paths_count = num_paths if num_paths is not None else n_paths
+        steps = num_steps if num_steps is not None else (n_steps if n_steps is not None else 100)
+
+        if rng is None:
+            if seed is not None:
+                rng = np.random.default_rng(seed)
+            else:
+                rng = np.random.default_rng()
+
+        if t_grid is None:
+            t_grid = np.linspace(0.0, self.T, steps + 1)
+        else:
+            t_grid = np.asarray(t_grid, dtype=np.float64)
+
         if t_grid.ndim != 1 or len(t_grid) < 2:
             raise ValueError("t_grid must be a 1-D array with at least 2 points")
         if t_grid[0] != 0.0 or not math.isclose(t_grid[-1], self.T):
             raise ValueError(f"t_grid must start at 0 and end at T={self.T}")
-        if rng is None:
-            rng = np.random.default_rng()
 
-        n_steps = len(t_grid)
-        paths = np.zeros((n_paths, n_steps), dtype=np.float64)
+        n_steps_len = len(t_grid)
+        paths = np.zeros((paths_count, n_steps_len), dtype=np.float64)
 
         if self.model == "brownian":
             # Standard Brownian bridge formula: B(t) = a + (t/T)(b - a) + W(t) - (t/T) W(T)
             # Generate Brownian increments
             dt_arr = np.diff(t_grid)
-            w = np.zeros((n_paths, n_steps), dtype=np.float64)
-            for i in range(1, n_steps):
-                z = rng.standard_normal(size=n_paths)
+            w = np.zeros((paths_count, n_steps_len), dtype=np.float64)
+            for i in range(1, n_steps_len):
+                z = rng.standard_normal(size=paths_count)
                 w[:, i] = w[:, i - 1] + self.sigma * math.sqrt(dt_arr[i - 1]) * z
 
             w_T = w[:, -1:]
-            for i in range(n_steps):
+            for i in range(n_steps_len):
                 t = t_grid[i]
                 paths[:, i] = (
                     self.a + (t / self.T) * (self.b - self.a) + w[:, i] - (t / self.T) * w_T[:, 0]
@@ -260,14 +277,14 @@ class GeneralDiffusionBridge(Process):
             log_a = math.log(self.a)
             log_b = math.log(self.b)
             dt_arr = np.diff(t_grid)
-            w = np.zeros((n_paths, n_steps), dtype=np.float64)
-            for i in range(1, n_steps):
-                z = rng.standard_normal(size=n_paths)
+            w = np.zeros((paths_count, n_steps_len), dtype=np.float64)
+            for i in range(1, n_steps_len):
+                z = rng.standard_normal(size=paths_count)
                 w[:, i] = w[:, i - 1] + self.sigma * math.sqrt(dt_arr[i - 1]) * z
 
             w_T = w[:, -1:]
-            log_paths = np.zeros((n_paths, n_steps), dtype=np.float64)
-            for i in range(n_steps):
+            log_paths = np.zeros((paths_count, n_steps_len), dtype=np.float64)
+            for i in range(n_steps_len):
                 t = t_grid[i]
                 log_paths[:, i] = (
                     log_a + (t / self.T) * (log_b - log_a) + w[:, i] - (t / self.T) * w_T[:, 0]
@@ -275,11 +292,8 @@ class GeneralDiffusionBridge(Process):
             paths = np.exp(log_paths)
 
         elif self.model == "ou":
-            # OU bridge exact formulation via standardized Gaussian scaling
-            # X_t = E[X_t] + sqrt(Var(X_t)) * Z_standardized
-            # Or conditional forward simulation step by step
             paths[:, 0] = self.a
-            for i in range(1, n_steps - 1):
+            for i in range(1, n_steps_len - 1):
                 t_prev = t_grid[i - 1]
                 t_curr = t_grid[i]
                 dt = t_curr - t_prev
@@ -287,14 +301,13 @@ class GeneralDiffusionBridge(Process):
                 # Drift under Doob's h-transform
                 k = self.kappa
 
-                # Step mean and variance conditioned on paths[:, i-1] and b at T
                 x_prev = paths[:, i - 1]
                 drift_step = k * (self.theta - x_prev) + (self.sigma**2) * (
                     self.b - self.theta - (x_prev - self.theta) * math.exp(-k * (self.T - t_prev))
                 ) / (
                     (self.sigma**2 / (2.0 * k)) * (1.0 - math.exp(-2.0 * k * (self.T - t_prev)))
                 ) * math.exp(-k * (self.T - t_prev))
-                z = rng.standard_normal(size=n_paths)
+                z = rng.standard_normal(size=paths_count)
                 paths[:, i] = x_prev + drift_step * dt + self.sigma * math.sqrt(dt) * z
 
             # Exact pinning at terminal step

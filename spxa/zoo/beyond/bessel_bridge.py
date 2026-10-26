@@ -94,35 +94,38 @@ class BesselBridge(Process):
 
     def simulate(
         self,
-        num_steps: int,
+        num_steps: Optional[int] = None,
         num_paths: int = 1,
         seed: Optional[int] = None,
+        *,
+        n_steps: Optional[int] = None,
+        n_paths: Optional[int] = None,
+        T: Optional[float] = None,  # noqa: N803
+        rng: Optional[np.random.Generator] = None,
     ) -> np.ndarray:
-        r"""Simulate sample paths of squared Bessel bridge pinned exactly to x0 and xT.
+        r"""Simulate sample paths of squared Bessel bridge pinned exactly to x0 and xT."""
+        steps = num_steps if num_steps is not None else (n_steps if n_steps is not None else 100)
+        paths_count = n_paths if n_paths is not None else num_paths
 
-        Uses the Pitman-Yor additive property:
-        A BESQ(delta) bridge decomposes into a 0-dimensional bridge plus an independent
-        BESQ(delta) bridge starting and ending at 0.
-        """
-        if seed is not None:
-            np.random.seed(seed)
+        if rng is None:
+            if seed is not None:
+                rng = np.random.default_rng(seed)
+            else:
+                rng = np.random.default_rng()
 
-        t_grid = np.linspace(0.0, self.T, num_steps + 1)
-        paths = np.zeros((num_paths, num_steps + 1))
+        t_grid = np.linspace(0.0, self.T, steps + 1)
+        paths = np.zeros((paths_count, steps + 1))
         paths[:, 0] = self.x0
         paths[:, -1] = self.xT
 
-        # Standard Brownian bridge for intermediate points
-        # Using conditional recursive interpolation / midpoint Gaussian construction
-        for i in range(1, num_steps):
+        for i in range(1, steps):
             t_curr = t_grid[i]
             tau = t_curr / self.T
-            # Mean under pinning
             mean_i = (1.0 - tau) * self.x0 + tau * self.xT
-            std_i = math.sqrt(self.variance(t_curr))
-            # Sample non-negative squared value
-            z = np.random.normal(0.0, 1.0, num_paths)
-            paths[:, i] = np.maximum(0.0, mean_i + std_i * z)
+            var_i = max(1e-8, self.variance(t_curr))
+            shape_i = (mean_i**2) / var_i
+            scale_i = var_i / mean_i
+            paths[:, i] = rng.gamma(shape=shape_i, scale=scale_i, size=paths_count)
 
         return paths
 
