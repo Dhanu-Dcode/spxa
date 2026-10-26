@@ -633,11 +633,12 @@ __all__ = [
     "ops",
     "risk",
     "calculus",
+    "graph",
 ]
 
 
 def __getattr__(name: str):
-    if name in ("diff", "ops", "risk", "calculus"):
+    if name in ("diff", "ops", "risk", "calculus", "graph"):
         import importlib
 
         mod = importlib.import_module(f"spxa.{name}")

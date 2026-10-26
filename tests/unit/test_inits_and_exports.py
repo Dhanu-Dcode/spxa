@@ -128,3 +128,15 @@ def test_differentiable_sde_constructors():
         assert instance.state_dim >= 1
         assert instance.noise_dim >= 1
         assert isinstance(instance.has_jumps, bool)
+
+
+def test_graph_module_exports():
+    import spxa
+
+    assert hasattr(spxa, "graph")
+    assert hasattr(spxa.graph, "ComputationalGraph")
+    assert hasattr(spxa.graph, "GradientTape")
+    assert hasattr(spxa.graph, "build_black_scholes_pricing_graph")
+    assert hasattr(spxa.graph, "GraphCalibrator")
+    assert hasattr(spxa.graph, "PortfolioRiskGraph")
+

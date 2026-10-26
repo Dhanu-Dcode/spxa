@@ -1,0 +1,199 @@
+"""
+Shared Computational Graph Engine for Stochastic Modeling, Analytics, Autodiff & Risk.
+"""
+
+from __future__ import annotations
+
+from spxa.graph.autodiff.dual import DualNumber
+from spxa.graph.autodiff.hessian import compute_graph_hessian
+from spxa.graph.autodiff.smoothers import SmoothIndicatorNode, SoftplusNode
+from spxa.graph.autodiff.tape import GradientTape, value_and_grad
+from spxa.graph.backends import (
+    AcceleratedBackend,
+    AnalyticalBackend,
+    Backend,
+    ExecutionContext,
+    ExecutionRouter,
+    NumericalBackend,
+    SimulationBackend,
+    get_backend,
+)
+from spxa.graph.calibration.constraints import FellerConstraintNode
+from spxa.graph.calibration.loss_nodes import ArbitragePenaltyNode, MSELossNode
+from spxa.graph.calibration.optimizer import GraphCalibrator
+from spxa.graph.char_nodes import (
+    AffineCharacteristicNode,
+    CharacteristicExponentNode,
+    CharacteristicFunctionNode,
+    CumulantGeneratingFunctionNode,
+    GeneratorApplicationNode,
+    ProcessMomentNode,
+)
+from spxa.graph.compiler import EvaluationCache, GraphCompiler
+from spxa.graph.graph import ComputationalGraph
+from spxa.graph.math_ops import (
+    AbsNode,
+    AddNode,
+    CholeskyNode,
+    CosNode,
+    CoshNode,
+    DivNode,
+    ErfNode,
+    ExpNode,
+    GammaNode,
+    LogNode,
+    MatMulNode,
+    MaximumNode,
+    MeanNode,
+    MinimumNode,
+    MulNode,
+    NegNode,
+    NormalCDFNode,
+    NormalPDFNode,
+    PowNode,
+    SinNode,
+    SinhNode,
+    SqrtNode,
+    SubNode,
+    SumNode,
+    TanhNode,
+    TransposeNode,
+)
+from spxa.graph.node import ConstantNode, Node, NodeType, OperatorNode, OutputNode, ParameterNode
+from spxa.graph.pricing.greeks import compute_graph_greeks
+from spxa.graph.pricing.payoff_nodes import (
+    AsianPayoffNode,
+    DigitalPayoffNode,
+    EuropeanCallPayoffNode,
+    EuropeanPutPayoffNode,
+)
+from spxa.graph.pricing.pricer_graph import (
+    build_black_scholes_pricing_graph,
+    monte_carlo_graph_price,
+)
+from spxa.graph.risk.risk_graph import PortfolioRiskGraph
+from spxa.graph.risk.scenario_graph import ScenarioShockNode, apply_macro_scenario
+from spxa.graph.risk.xva_graph import GraphCVANode, NettingExposureNode
+from spxa.graph.stochastic_nodes import (
+    BrownianMotionNode,
+    CEVNode,
+    CIRNode,
+    GeometricBrownianMotionNode,
+    HestonNode,
+    KouJumpDiffusionNode,
+    MertonJumpDiffusionNode,
+    OrnsteinUhlenbeckNode,
+    SABRNode,
+    StochasticProcessNode,
+    SubordinatedProcessNode,
+    VasicekNode,
+)
+from spxa.graph.types import (
+    BackendType,
+    DType,
+    DomainType,
+    ParameterBounds,
+    PortDescriptor,
+)
+
+__all__ = [
+    # Types
+    "DType",
+    "NodeType",
+    "BackendType",
+    "DomainType",
+    "PortDescriptor",
+    "ParameterBounds",
+    # Nodes
+    "Node",
+    "ConstantNode",
+    "ParameterNode",
+    "OperatorNode",
+    "OutputNode",
+    # Math Ops
+    "AddNode",
+    "SubNode",
+    "MulNode",
+    "DivNode",
+    "PowNode",
+    "NegNode",
+    "ExpNode",
+    "LogNode",
+    "SqrtNode",
+    "AbsNode",
+    "SinNode",
+    "CosNode",
+    "SinhNode",
+    "CoshNode",
+    "TanhNode",
+    "NormalCDFNode",
+    "NormalPDFNode",
+    "ErfNode",
+    "GammaNode",
+    "SumNode",
+    "MeanNode",
+    "MaximumNode",
+    "MinimumNode",
+    "MatMulNode",
+    "TransposeNode",
+    "CholeskyNode",
+    # DAG & Compiler
+    "ComputationalGraph",
+    "GraphCompiler",
+    "EvaluationCache",
+    # Stochastic Nodes
+    "StochasticProcessNode",
+    "BrownianMotionNode",
+    "GeometricBrownianMotionNode",
+    "OrnsteinUhlenbeckNode",
+    "VasicekNode",
+    "CIRNode",
+    "CEVNode",
+    "HestonNode",
+    "SABRNode",
+    "MertonJumpDiffusionNode",
+    "KouJumpDiffusionNode",
+    "SubordinatedProcessNode",
+    # Characteristic & Moments
+    "CharacteristicExponentNode",
+    "CharacteristicFunctionNode",
+    "AffineCharacteristicNode",
+    "CumulantGeneratingFunctionNode",
+    "GeneratorApplicationNode",
+    "ProcessMomentNode",
+    # Backends
+    "Backend",
+    "ExecutionContext",
+    "AnalyticalBackend",
+    "NumericalBackend",
+    "SimulationBackend",
+    "AcceleratedBackend",
+    "get_backend",
+    "ExecutionRouter",
+    # Autodiff
+    "DualNumber",
+    "GradientTape",
+    "value_and_grad",
+    "SmoothIndicatorNode",
+    "SoftplusNode",
+    "compute_graph_hessian",
+    # Pricing
+    "EuropeanCallPayoffNode",
+    "EuropeanPutPayoffNode",
+    "DigitalPayoffNode",
+    "AsianPayoffNode",
+    "build_black_scholes_pricing_graph",
+    "monte_carlo_graph_price",
+    "compute_graph_greeks",
+    # Calibration
+    "MSELossNode",
+    "ArbitragePenaltyNode",
+    "GraphCalibrator",
+    "FellerConstraintNode",
+    # Risk
+    "PortfolioRiskGraph",
+    "ScenarioShockNode",
+    "apply_macro_scenario",
+    "NettingExposureNode",
+    "GraphCVANode",
+]
