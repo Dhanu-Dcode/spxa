@@ -47,3 +47,27 @@ def build_black_scholes_pricing_graph(
     g = ComputationalGraph(name="BlackScholesPricingGraph")
     g.add_output(price_node, "price")
     return g
+
+
+def monte_carlo_graph_price(
+    paths: np.ndarray,
+    payoff_fn: Any,
+    discount_rate: float,
+    maturity: float,
+) -> Dict[str, float]:
+    r"""Compute Monte Carlo option price with sample mean and standard error."""
+    # Terminal spots S_T
+    s_t = paths[:, -1] if paths.ndim > 1 else paths
+    payoffs = payoff_fn(s_t)
+    df = np.exp(-discount_rate * maturity)
+    discounted_payoffs = df * payoffs
+
+    mean_price = float(np.mean(discounted_payoffs))
+    stderr = float(np.std(discounted_payoffs, ddof=1) / np.sqrt(len(payoffs)))
+
+    return {
+        "price": mean_price,
+        "stderr": stderr,
+        "ci_95_lower": mean_price - 1.96 * stderr,
+        "ci_95_upper": mean_price + 1.96 * stderr,
+    }
