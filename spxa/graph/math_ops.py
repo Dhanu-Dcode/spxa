@@ -304,3 +304,43 @@ class MinimumNode(OperatorNode):
                 grad_out * (b < a).astype(float),
             ),
         )
+
+
+class MatMulNode(OperatorNode):
+    r"""Matrix multiplication node :math:`Z = X Y`."""
+
+    def __init__(self, x: Node, y: Node, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a, b: np.matmul(a, b),
+            inputs=[x, y],
+            name=name or f"MatMul_{x.name}_{y.name}",
+            vjp_fn=lambda grad_out, a, b: (
+                np.matmul(grad_out, np.swapaxes(b, -1, -2)),
+                np.matmul(np.swapaxes(a, -1, -2), grad_out),
+            ),
+        )
+
+
+class TransposeNode(OperatorNode):
+    r"""Matrix transpose node :math:`Z = X^\top`."""
+
+    def __init__(self, x: Node, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a: np.swapaxes(a, -1, -2) if np.ndim(a) >= 2 else a,
+            inputs=[x],
+            name=name or f"Transpose_{x.name}",
+            vjp_fn=lambda grad_out, a: (
+                np.swapaxes(grad_out, -1, -2) if np.ndim(grad_out) >= 2 else grad_out,
+            ),
+        )
+
+
+class CholeskyNode(OperatorNode):
+    r"""Cholesky decomposition node :math:`L = \text{chol}(\Sigma)`."""
+
+    def __init__(self, x: Node, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a: np.linalg.cholesky(a),
+            inputs=[x],
+            name=name or f"Cholesky_{x.name}",
+        )
