@@ -152,3 +152,27 @@ class AffineCharacteristicNode(OperatorNode):
             name=name,
             output_descriptor=PortDescriptor(name="phi", dtype=DType.COMPLEX128),
         )
+
+
+class CumulantGeneratingFunctionNode(OperatorNode):
+    r"""Cumulant generating function node :math:`K(\theta, t) = \ln \mathbb{E}[e^{\theta X_t}]`."""
+
+    def __init__(
+        self,
+        char_func_node: CharacteristicFunctionNode,
+        theta_node: Node,
+        t_node: Node,
+        name: str = "CGF",
+    ) -> None:
+        def cgf_eval(theta_val: Any, t_val: Any) -> Any:
+            # phi(-i theta, t)
+            u_equiv = -1j * np.asarray(theta_val, dtype=complex)
+            phi = char_func_node.op_fn(u_equiv, t_val)
+            return np.real(np.log(phi))
+
+        super().__init__(
+            op_fn=cgf_eval,
+            inputs=[theta_node, t_node],
+            name=name,
+            output_descriptor=PortDescriptor(name="cgf", dtype=DType.FLOAT64),
+        )
