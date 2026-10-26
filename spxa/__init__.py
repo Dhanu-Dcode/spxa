@@ -631,11 +631,12 @@ __all__ = [
     # Subpackages
     "diff",
     "ops",
+    "risk",
 ]
 
 
 def __getattr__(name: str):
-    if name in ("diff", "ops"):
+    if name in ("diff", "ops", "risk"):
         import importlib
 
         mod = importlib.import_module(f"spxa.{name}")

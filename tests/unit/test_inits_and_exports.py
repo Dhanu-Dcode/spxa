@@ -4,6 +4,7 @@ import importlib
 import inspect
 from pathlib import Path
 
+import pytest
 import spxa
 
 
@@ -20,6 +21,7 @@ def test_top_level_subpackage_access():
         "analytics",
         "ops",
         "diff",
+        "risk",
     ]:
         assert hasattr(spxa, subpkg), f"spxa should expose subpackage '{subpkg}'"
         mod = getattr(spxa, subpkg)
@@ -53,6 +55,7 @@ def test_all_init_files_have_valid_exports():
 
 def test_diff_module_exports():
     """Verify spxa.diff exposes expected solvers, processes, Greeks, and NN tools."""
+    pytest.importorskip("jax")
     import spxa.diff as diff
 
     expected = [
@@ -78,6 +81,7 @@ def test_diff_module_exports():
 
 def test_differentiable_sde_constructors():
     """Verify all differentiable process classes instantiate and report state/noise dims."""
+    pytest.importorskip("jax")
     from spxa.diff.processes import (
         DifferentiableBates,
         DifferentiableBESQ,
