@@ -250,3 +250,57 @@ class GammaNode(OperatorNode):
             name=name or f"Gamma_{x.name}",
             vjp_fn=lambda grad_out, a: (grad_out * gamma(a) * polygamma(0, a),),
         )
+
+
+class SumNode(OperatorNode):
+    r"""Array sum reduction node :math:`z = \sum x_i`."""
+
+    def __init__(self, x: Node, axis: Optional[int] = None, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a: np.sum(a, axis=axis),
+            inputs=[x],
+            name=name or f"Sum_{x.name}",
+            vjp_fn=lambda grad_out, a: (np.ones_like(a) * grad_out,),
+        )
+
+
+class MeanNode(OperatorNode):
+    r"""Array mean reduction node :math:`z = \frac{1}{N} \sum x_i`."""
+
+    def __init__(self, x: Node, axis: Optional[int] = None, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a: np.mean(a, axis=axis),
+            inputs=[x],
+            name=name or f"Mean_{x.name}",
+            vjp_fn=lambda grad_out, a: (np.ones_like(a) * (grad_out / np.size(a)),),
+        )
+
+
+class MaximumNode(OperatorNode):
+    r"""Elementwise maximum node :math:`z = \max(x, y)`."""
+
+    def __init__(self, x: Node, y: Node, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a, b: np.maximum(a, b),
+            inputs=[x, y],
+            name=name or f"Max_{x.name}_{y.name}",
+            vjp_fn=lambda grad_out, a, b: (
+                grad_out * (a >= b).astype(float),
+                grad_out * (b > a).astype(float),
+            ),
+        )
+
+
+class MinimumNode(OperatorNode):
+    r"""Elementwise minimum node :math:`z = \min(x, y)`."""
+
+    def __init__(self, x: Node, y: Node, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a, b: np.minimum(a, b),
+            inputs=[x, y],
+            name=name or f"Min_{x.name}_{y.name}",
+            vjp_fn=lambda grad_out, a, b: (
+                grad_out * (a <= b).astype(float),
+                grad_out * (b < a).astype(float),
+            ),
+        )
