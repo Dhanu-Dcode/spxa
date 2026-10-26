@@ -295,13 +295,25 @@ def audit_credit_and_commodity() -> ProcessAuditResult:
     return result
 
 
-if __name__ == "__main__":
-    for fn in [
+def run_all_rates_credit_audits() -> bool:
+    audit_funcs = [
         audit_hull_white_process,
         audit_g2pp_process,
         audit_two_factor_and_shifted_cir,
         audit_chen_and_black_karasinski,
         audit_credit_and_commodity,
-    ]:
+    ]
+    all_passed = True
+    for fn in audit_funcs:
         res = fn()
         print(res.summary())
+        print()
+        if not res.passed:
+            all_passed = False
+    return all_passed
+
+
+if __name__ == "__main__":
+    success = run_all_rates_credit_audits()
+    if not success:
+        raise SystemExit(1)
