@@ -79,3 +79,40 @@ class GraphCalibrator:
             "optimal_parameters": {p.name: p.value for p in parameters},
             "message": str(res.message),
         }
+
+    def fit_adam(
+        self,
+        parameters: Optional[List[ParameterNode]] = None,
+        lr: float = 0.01,
+        max_iter: int = 150,
+        beta1: float = 0.9,
+        beta2: float = 0.999,
+        eps: float = 1e-8,
+    ) -> Dict[str, Any]:
+        r"""Optimize graph parameters using first-order Adam gradient descent."""
+        if parameters is None:
+            param_dict = self.graph.get_parameters()
+            parameters = [p for p in param_dict.values() if p.is_trainable]
+
+        m = [0.0] * len(parameters)
+        v = [0.0] * len(parameters)
+        tape = GradientTape(self.graph)
+
+        for step in range(1, max_iter + 1):
+            grads = tape.gradient(self.loss_output_name, sources=parameters)
+            for i, p in enumerate(parameters):
+                g = float(grads[p])
+                m[i] = beta1 * m[i] + (1.0 - beta1) * g
+                v[i] = beta2 * v[i] + (1.0 - beta2) * (g**2)
+                m_hat = m[i] / (1.0 - beta1**step)
+                v_hat = v[i] / (1.0 - beta2**step)
+                delta = lr * m_hat / (np.sqrt(v_hat) + eps)
+                p.value = p.value - delta
+
+        final_loss = float(self.graph.evaluate(return_outputs_only=True)[self.loss_output_name])
+        return {
+            "success": True,
+            "final_loss": final_loss,
+            "iterations": max_iter,
+            "optimal_parameters": {p.name: p.value for p in parameters},
+        }
