@@ -172,62 +172,50 @@ class QuadraticRoughHestonProcess(Process):
 
     def simulate(
         self,
-        t_max: float = 1.0,
-        num_steps: int = 100,
-        num_paths: int = 1000,
+        t_max: Optional[float] = None,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
         seed: Optional[int] = None,
         return_variance: bool = False,
+        *,
+        T: Optional[float] = None,  # noqa: N803
+        n_steps: Optional[int] = None,
+        n_paths: Optional[int] = None,
+        rng: Optional[np.random.Generator] = None,
     ) -> np.ndarray | Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        r"""Simulate coupled paths of spot price S_t, Volterra state Z_t, and variance V_t.
+        r"""Simulate coupled paths of spot price S_t, Volterra state Z_t, and variance V_t."""
+        final_t = t_max if t_max is not None else (T if T is not None else 1.0)
+        steps = num_steps if num_steps is not None else (n_steps if n_steps is not None else 100)
+        paths_count = num_paths if num_paths is not None else (n_paths if n_paths is not None else 1000)
 
-        Uses the fractional Adams-Bashforth / convolution Euler scheme:
-            Z_{k+1} = Z_0 + sum_{j=0}^k K((k+1 - j)*dt) * [lam*(theta - Z_j)*dt + nu*sqrt(V_j)*dW_j]
-            V_{k+1} = a * (Z_{k+1} - b)^2 + c
-
-        Parameters
-        ----------
-        t_max : float
-            Simulation horizon.
-        num_steps : int
-            Number of discrete grid points.
-        num_paths : int
-            Number of simulated sample paths.
-        seed : int, optional
-            RNG seed.
-        return_variance : bool
-            If True, returns tuple (s_paths, z_paths, v_paths). Otherwise returns s_paths.
-        """
-        if t_max <= 0.0 or num_steps <= 0 or num_paths <= 0:
+        if final_t <= 0.0 or steps <= 0 or paths_count <= 0:
             raise ValueError("t_max, num_steps, and num_paths must be strictly positive.")
 
-        rng = np.random.default_rng(seed)
-        dt = t_max / num_steps
+        if rng is None:
+            rng = np.random.default_rng(seed)
+
+        dt = final_t / steps
         sqrt_dt = math.sqrt(dt)
 
-        # Precompute Volterra kernel weights: K(m * dt) * dt for drift, K(m * dt) for diffusion
-        # To avoid singularity at 0, integrate over sub-intervals:
-        # int_{(m-1)dt}^{m dt} s^{alpha-1}/Gamma(alpha) ds = (m^alpha - (m-1)^alpha) * dt^alpha / Gamma(alpha + 1)
-        m_vec = np.arange(1, num_steps + 1)
+        m_vec = np.arange(1, steps + 1)
         gamma_alpha_plus_1 = special.gamma(self.alpha + 1.0)
         kernel_weights = (
             (m_vec**self.alpha - (m_vec - 1.0) ** self.alpha)
             * (dt**self.alpha)
             / gamma_alpha_plus_1
         )
-        # Diffusion weights: (m^alpha - (m-1)^alpha) * dt^{alpha - 0.5} / Gamma(alpha + 1)
         kernel_diff_weights = kernel_weights / dt
 
-        s_paths = np.empty((num_paths, num_steps + 1), dtype=float)
-        z_paths = np.empty((num_paths, num_steps + 1), dtype=float)
-        v_paths = np.empty((num_paths, num_steps + 1), dtype=float)
+        s_paths = np.empty((paths_count, steps + 1), dtype=float)
+        z_paths = np.empty((paths_count, steps + 1), dtype=float)
+        v_paths = np.empty((paths_count, steps + 1), dtype=float)
 
         s_paths[:, 0] = self.s0
         z_paths[:, 0] = self.z0
         v_paths[:, 0] = self.initial_variance
 
-        # History arrays of increments
-        drift_increments = np.zeros((num_paths, num_steps), dtype=float)
-        diff_increments = np.zeros((num_paths, num_steps), dtype=float)
+        drift_increments = np.zeros((paths_count, steps), dtype=float)
+        diff_increments = np.zeros((paths_count, steps), dtype=float)
 
         rho = self.rho
         sqrt_one_minus_rho2 = math.sqrt(max(0.0, 1.0 - rho**2))
@@ -237,39 +225,32 @@ class QuadraticRoughHestonProcess(Process):
         theta = self.theta
         nu = self.nu
 
-        log_s = np.full(num_paths, math.log(self.s0))
+        log_s = np.full(paths_count, math.log(self.s0))
 
-        for step in range(num_steps):
+        for step in range(steps):
             z_curr = z_paths[:, step]
             v_curr = v_paths[:, step]
 
-            # Correlated Gaussian increments
-            z_w = rng.standard_normal(num_paths)
-            z_perp = rng.standard_normal(num_paths)
+            z_w = rng.standard_normal(paths_count)
+            z_perp = rng.standard_normal(paths_count)
             z_s = rho * z_w + sqrt_one_minus_rho2 * z_perp
 
-            # Store drift and diffusion shocks
             drift_increments[:, step] = lam * (theta - z_curr) * dt
             diff_increments[:, step] = nu * np.sqrt(v_curr) * sqrt_dt * z_w
 
-            # Update spot price log-Euler
             log_s += (r - q - 0.5 * v_curr) * dt + np.sqrt(v_curr) * sqrt_dt * z_s
             s_paths[:, step + 1] = np.exp(log_s)
 
-            # Convolution sum for Z_{step + 1}
-            # Conv = sum_{j=0}^step [ kernel_weights[step - j] * drift/dt + kernel_diff_weights[step - j] * diff ]
             rev_indices = np.arange(step, -1, -1)
             k_w = kernel_weights[step - rev_indices]
             k_dw = kernel_diff_weights[step - rev_indices]
 
-            # Vectorized dot product across history
             conv_drift = np.dot(drift_increments[:, : step + 1], k_w / dt)
             conv_diff = np.dot(diff_increments[:, : step + 1], k_dw)
 
             z_next = self.z0 + conv_drift + conv_diff
             z_paths[:, step + 1] = z_next
 
-            # Quadratic variance update with floor c
             v_next = self.a * ((z_next - self.b) ** 2) + self.c
             v_paths[:, step + 1] = v_next
 

@@ -103,7 +103,7 @@ class OULevy(Process):
             name=f"OULevy(lam={lam}, subordinator={subordinator!r}, v0={v0})",
             math_note=(
                 f"dV_t = -λV_t dt + dL_{{λt}}; λ={lam}; "
-                f"Var(V_∞) = κ_2(L_1)/(2λ) = {self._sub_var / (2 * lam):.4f}; "
+                f"Var(V_∞) = κ_2(L_1)/2 = {self._sub_var / 2.0:.4f}; "
                 f"Cov(V_t, V_{{t+h}}) = e^{{-λh}}·Var(V_∞)"
             ),
             reference="Barndorff-Nielsen & Shephard (2001), eq. (17)",
@@ -122,11 +122,11 @@ class OULevy(Process):
     @property
     def stationary_variance(self) -> float:
         """
-        Var(V_∞) = κ_2(L_1) / (2λ).
+        Var(V_∞) = κ_2(L_1) / 2.
 
         Barndorff-Nielsen & Shephard (2001), equation (16).
         """
-        return self._sub_var / (2 * self.lam)
+        return self._sub_var / 2.0
 
     def autocovariance(self, h: float) -> float:
         """
@@ -211,7 +211,7 @@ class OULevy(Process):
         rng = rng or np.random.default_rng()
         dt = T / n_steps
         decay = np.exp(-self.lam * dt)
-        jump_scale = (1 - decay) / self.lam
+        jump_scale = (1 - decay) / (self.lam * dt)
 
         sub_increments = self.subordinator.simulate(
             n_steps=n_steps, n_paths=n_paths, T=self.lam * T, rng=rng
