@@ -116,6 +116,22 @@ class GraphCompiler:
                 break
         return stats
 
+
+class EvaluationCache:
+    r"""Memoization cache for subgraphs that depend only on unchanging parameters or constants."""
+
+    def __init__(self) -> None:
+        self._cache: Dict[Tuple[int, Tuple[Any, ...]], Any] = {}
+
+    def get(self, node_id: int, input_fingerprint: Tuple[Any, ...]) -> Optional[Any]:
+        return self._cache.get((node_id, input_fingerprint))
+
+    def put(self, node_id: int, input_fingerprint: Tuple[Any, ...], val: Any) -> None:
+        self._cache[(node_id, input_fingerprint)] = val
+
+    def clear(self) -> None:
+        self._cache.clear()
+
     def _replace_node(self, old_node: Node, new_node: Node) -> None:
         r"""Replace old_node with new_node across the graph."""
         self.graph.nodes[new_node.node_id] = new_node
