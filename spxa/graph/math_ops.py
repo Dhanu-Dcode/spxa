@@ -85,3 +85,53 @@ class NegNode(OperatorNode):
             name=name or f"Neg_{x.name}",
             vjp_fn=lambda grad_out, a: (-grad_out,),
         )
+
+
+class ExpNode(OperatorNode):
+    r"""Exponential node :math:`z = e^x`."""
+
+    def __init__(self, x: Node, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a: np.exp(a),
+            inputs=[x],
+            name=name or f"Exp_{x.name}",
+            vjp_fn=lambda grad_out, a: (grad_out * np.exp(a),),
+        )
+
+
+class LogNode(OperatorNode):
+    r"""Natural logarithm node :math:`z = \ln(x)` with numerical floor."""
+
+    def __init__(self, x: Node, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a: np.log(np.maximum(a, 1e-15)),
+            inputs=[x],
+            name=name or f"Log_{x.name}",
+            vjp_fn=lambda grad_out, a: (grad_out / np.maximum(a, 1e-15),),
+        )
+
+
+class SqrtNode(OperatorNode):
+    r"""Square root node :math:`z = \sqrt{x}`."""
+
+    def __init__(self, x: Node, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a: np.sqrt(np.maximum(a, 0.0)),
+            inputs=[x],
+            name=name or f"Sqrt_{x.name}",
+            vjp_fn=lambda grad_out, a: (
+                grad_out / (2.0 * np.sqrt(np.maximum(a, 1e-12))),
+            ),
+        )
+
+
+class AbsNode(OperatorNode):
+    r"""Absolute value node :math:`z = |x|`."""
+
+    def __init__(self, x: Node, name: Optional[str] = None) -> None:
+        super().__init__(
+            op_fn=lambda a: np.abs(a),
+            inputs=[x],
+            name=name or f"Abs_{x.name}",
+            vjp_fn=lambda grad_out, a: (grad_out * np.sign(a),),
+        )
