@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, List, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 from spxa.diff.config import require_jax
 
@@ -33,9 +33,13 @@ def init_mlp_params(
 def mlp_forward(
     params: List[Tuple[Any, Any]],
     x: Any,
-    activation: Callable[[Any], Any] = jax.nn.silu,
+    activation: Optional[Callable[[Any], Any]] = None,
 ) -> Any:
     r"""Forward pass through an MLP with arbitrary activation."""
+    require_jax()
+    if activation is None:
+        activation = jax.nn.silu
+
     h = x
     for i, (w, b) in enumerate(params):
         h = jnp.matmul(h, w) + b
