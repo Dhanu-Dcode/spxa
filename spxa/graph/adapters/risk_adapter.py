@@ -37,8 +37,10 @@ class RiskInstrumentAdapter:
             p_arr = np.asarray(p_val, dtype=float)
             # Instrument.payoff expects (n_paths, n_steps + 1)
             if p_arr.ndim == 1:
-                p_arr = p_arr.reshape(-1, 1)
-            return np.asarray(self.instrument.payoff(p_arr), dtype=float)
+                p_arr = p_arr.reshape(1, -1)
+            maturity = getattr(self.instrument, "maturity", 1.0)
+            t_grid = np.linspace(0.0, maturity, p_arr.shape[1])
+            return np.asarray(self.instrument.payoff(p_arr, t_grid=t_grid), dtype=float)
 
         return OperatorNode(
             op_fn=payoff_op,

@@ -24,6 +24,7 @@ class DifferentiableSDEAdapter(StochasticProcessNode):
         self,
         sde: DifferentiableSDE,
         name: Optional[str] = None,
+        default_params: Optional[Dict[str, float]] = None,
     ) -> None:
         self.underlying_sde = sde
         cls_name = sde.__class__.__name__
@@ -31,9 +32,17 @@ class DifferentiableSDEAdapter(StochasticProcessNode):
 
         # Parameter introspection
         param_nodes: Dict[str, ParameterNode] = {}
+        # From explicit default_params or known common parameters
+        known_defaults = {"mu": 0.05, "sigma": 0.20, "kappa": 1.5, "theta": 0.04, "rho": -0.7}
+        if default_params is not None:
+            known_defaults.update(default_params)
+
         for k, v in vars(sde).items():
             if not k.startswith("_") and isinstance(v, (int, float, np.number)):
-                param_nodes[k] = ParameterNode(value=float(v), name=f"{node_name}_{k}")
+                known_defaults[k] = float(v)
+
+        for p_name, p_val in known_defaults.items():
+            param_nodes[p_name] = ParameterNode(value=float(p_val), name=f"{node_name}_{p_name}")
 
         super().__init__(
             name=node_name,
@@ -43,13 +52,17 @@ class DifferentiableSDEAdapter(StochasticProcessNode):
             parameters=param_nodes,
         )
 
+    def _collect_param_dict(self) -> Dict[str, float]:
+        return {k: float(node.value) for k, node in self.params.items()}
+
     def drift_node(self, x: Node, t: Optional[Node] = None) -> OperatorNode:
-        r"""Construct graph node evaluating drift b(x, t)."""
+        r"""Construct graph node evaluating drift b(t, x, params)."""
         t_node = t or ConstantNode(0.0, name="t0")
 
         def drift_op(x_val: Any, t_val: Any) -> np.ndarray:
             x_arr = np.asarray(x_val, dtype=float)
-            res = self.underlying_sde.drift(x_arr, float(t_val))
+            p_dict = self._collect_param_dict()
+            res = self.underlying_sde.drift(float(t_val), x_arr, p_dict)
             return np.asarray(res, dtype=float)
 
         return OperatorNode(
@@ -60,12 +73,13 @@ class DifferentiableSDEAdapter(StochasticProcessNode):
         )
 
     def diffusion_node(self, x: Node, t: Optional[Node] = None) -> OperatorNode:
-        r"""Construct graph node evaluating diffusion matrix sigma(x, t)."""
+        r"""Construct graph node evaluating diffusion matrix sigma(t, x, params)."""
         t_node = t or ConstantNode(0.0, name="t0")
 
         def diff_op(x_val: Any, t_val: Any) -> np.ndarray:
             x_arr = np.asarray(x_val, dtype=float)
-            res = self.underlying_sde.diffusion(x_arr, float(t_val))
+            p_dict = self._collect_param_dict()
+            res = self.underlying_sde.diffusion(float(t_val), x_arr, p_dict)
             return np.asarray(res, dtype=float)
 
         return OperatorNode(
@@ -81,8 +95,10 @@ class DifferentiableSDEAdapter(StochasticProcessNode):
 
         def step_op(x_val: Any, dt_val: Any, dw_val: Any, t_val: Any) -> np.ndarray:
             x_arr = np.asarray(x_val, dtype=float)
-            b = np.asarray(self.underlying_sde.drift(x_arr, float(t_val)), dtype=float)
-            sig = np.asarray(self.underlying_sde.diffusion(x_arr, float(t_val)), dtype=float)
+            p_dict = self._collect_param_dict()
+            t_f = float(t_val)
+            b = np.asarray(self.underlying_sde.drift(t_f, x_arr, p_dict), dtype=float)
+            sig = np.asarray(self.underlying_sde.diffusion(t_f, x_arr, p_dict), dtype=float)
             dw_arr = np.asarray(dw_val, dtype=float)
             return x_arr + b * float(dt_val) + np.dot(sig, dw_arr)
 
