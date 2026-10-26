@@ -39,6 +39,10 @@ dev = [
     "pre-commit",
     "matplotlib>=3.7",
 ]
+diff = [
+    "jax",
+    "jaxlib",
+]
 docs = [
     "mkdocs",
     "mkdocs-material",
