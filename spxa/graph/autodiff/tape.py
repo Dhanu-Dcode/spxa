@@ -81,3 +81,16 @@ class GradientTape:
             sources = list(self.graph.get_parameters().values())
 
         return {s: adjoints.get(s.node_id, 0.0) for s in sources}
+
+    def jacobian(
+        self,
+        targets: List[Union[str, Node]],
+        sources: List[Node],
+    ) -> np.ndarray:
+        r"""Compute the full Jacobian matrix J_{ij} = d(target_i) / d(source_j)."""
+        jac = np.zeros((len(targets), len(sources)))
+        for i, tgt in enumerate(targets):
+            grads = self.gradient(tgt, sources=sources)
+            for j, src in enumerate(sources):
+                jac[i, j] = float(grads.get(src, 0.0))
+        return jac
