@@ -61,3 +61,65 @@ class Node:
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__}(id={self.node_id}, name='{self.name}', type={self.node_type.value})>"
+
+
+class ConstantNode(Node):
+    r"""Node holding a fixed, immutable numerical constant."""
+
+    def __init__(
+        self,
+        value: Any,
+        name: Optional[str] = None,
+        dtype: DType = DType.FLOAT64,
+    ) -> None:
+        super().__init__(
+            name=name or f"Const_{value}",
+            node_type=NodeType.CONSTANT,
+            output_descriptor=PortDescriptor(name="val", dtype=dtype),
+        )
+        self.value = np.asarray(value) if isinstance(value, (list, tuple, np.ndarray)) else float(value)
+        self.is_constant = True
+
+    def forward(self, *inputs: Any) -> Any:
+        return self.value
+
+
+class ParameterNode(Node):
+    r"""Node holding a tunable, optimizable model parameter with bounds and domain validation."""
+
+    def __init__(
+        self,
+        value: float,
+        name: str,
+        bounds: Optional[ParameterBounds] = None,
+        is_trainable: bool = True,
+    ) -> None:
+        super().__init__(
+            name=name,
+            node_type=NodeType.PARAMETER,
+            output_descriptor=PortDescriptor(
+                name=name,
+                domain=bounds.domain if bounds else DomainType.REAL,
+            ),
+        )
+        self.bounds = bounds or ParameterBounds()
+        self.is_trainable = is_trainable
+        self._value = float(value)
+        if not self.bounds.validate(self._value):
+            raise ValueError(
+                f"Initial value {value} for parameter '{name}' violates bounds {self.bounds}"
+            )
+
+    @property
+    def value(self) -> float:
+        return self._value
+
+    @value.setter
+    def value(self, new_val: float) -> None:
+        val = float(new_val)
+        if not self.bounds.validate(val):
+            val = self.bounds.clip(val)
+        self._value = val
+
+    def forward(self, *inputs: Any) -> float:
+        return self._value
