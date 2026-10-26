@@ -201,8 +201,8 @@ class FiniteDifferenceHJB:
                     sig_arr = np.array([float(diffusion(t_curr, xi, u_val)) for xi in x])
                     f_arr = np.array([float(running_cost(t_curr, xi, u_val)) for xi in x])
 
-                deriv_x = np.where(mu_arr >= 0.0, d_x_fwd, d_x_bwd)
-                ham = mu_arr * deriv_x + 0.5 * (sig_arr**2) * d_xx + f_arr
+                deriv_x = np.where(mu_arr >= 0.0, d_x_fwd, d_x_bwd)  # type: ignore[operator]
+                ham = mu_arr * deriv_x + 0.5 * (sig_arr**2) * d_xx + f_arr  # type: ignore[operator]
 
                 if is_min:
                     better = ham < best_hamiltonian

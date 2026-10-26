@@ -97,7 +97,7 @@ def audit_multivariate_ou() -> ProcessAuditResult:
 def audit_ou_levy() -> ProcessAuditResult:
     result = ProcessAuditResult(process_name="OULevy")
 
-    lam = 1.5
+    lam = 1.0
     v0 = 0.5
     oul = OULevy(lam=lam, v0=v0)
 

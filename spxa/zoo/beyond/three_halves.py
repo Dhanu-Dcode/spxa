@@ -144,8 +144,8 @@ class ThreeHalvesProcess(Process):
 
     @property
     def stationary_shape(self) -> float:
-        r"""Shape parameter α = 2 + 2κ / ε² of the stationary Inverse-Gamma law for reciprocal CIR."""
-        return 2.0 + 2.0 * self.kappa / (self.epsilon**2)
+        r"""Shape parameter α = 1 + 2κ / ε² of the stationary Inverse-Gamma law for reciprocal CIR."""
+        return 1.0 + 2.0 * self.kappa / (self.epsilon**2)
 
     @property
     def stationary_scale(self) -> float:
@@ -154,17 +154,19 @@ class ThreeHalvesProcess(Process):
 
     @property
     def stationary_mean(self) -> float:
-        r"""Stationary expectation E[v_∞] = β / (α - 1) = θ * (2κ / (2κ + ε²))."""
+        r"""Stationary expectation E[v_∞] = β / (α - 1) = θ."""
         return self.stationary_scale / (self.stationary_shape - 1.0)
 
     @property
     def stationary_variance(self) -> float:
         r"""
-        Stationary variance Var(v_∞) = β² / [(α - 1)² (α - 2)] = ε² E[v_∞]² / (2κ).
-        Finite since α = 2 + 2κ/ε² > 2 for all κ, ε > 0.
+        Stationary variance Var(v_∞) = β² / [(α - 1)² (α - 2)] = ε² θ² / (2κ - ε²).
+        Finite if and only if 2κ > ε² (α > 2).
         """
         alpha = self.stationary_shape
         beta = self.stationary_scale
+        if alpha <= 2.0:
+            return float("inf")
         return (beta**2) / (((alpha - 1.0) ** 2) * (alpha - 2.0))
 
     def stationary_density(self, v: Union[float, np.ndarray]) -> Union[float, np.ndarray]:

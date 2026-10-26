@@ -53,6 +53,11 @@ Repository = "https://github.com/Nityahapani/spxa"
 Issues = "https://github.com/Nityahapani/spxa/issues"
 Changelog = "https://github.com/Nityahapani/spxa/blob/main/CHANGELOG.md"
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["spxa*"]
+exclude = ["audits*", "tests*", "benchmarks*", "scripts*", "docs*", "site*", "examples_output*"]
+
 [tool.ruff]
 target-version = "py310"
 line-length = 100
@@ -83,6 +88,7 @@ disable_error_code = [
     "attr-defined",
     "type-var",
     "assignment",
+    "operator",
 ]
 
 [tool.pytest.ini_options]

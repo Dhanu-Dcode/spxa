@@ -186,7 +186,9 @@ class QuadraticRoughHestonProcess(Process):
         r"""Simulate coupled paths of spot price S_t, Volterra state Z_t, and variance V_t."""
         final_t = t_max if t_max is not None else (T if T is not None else 1.0)
         steps = num_steps if num_steps is not None else (n_steps if n_steps is not None else 100)
-        paths_count = num_paths if num_paths is not None else (n_paths if n_paths is not None else 1000)
+        paths_count = (
+            num_paths if num_paths is not None else (n_paths if n_paths is not None else 1000)
+        )
 
         if final_t <= 0.0 or steps <= 0 or paths_count <= 0:
             raise ValueError("t_max, num_steps, and num_paths must be strictly positive.")

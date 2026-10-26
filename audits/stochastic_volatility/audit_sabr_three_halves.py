@@ -112,16 +112,19 @@ def audit_three_halves_process() -> ProcessAuditResult:
         result, "Reciprocal_CIR_Conditional_Mean", theoretical=theo_recip_mean, samples=y_term
     )
 
-    # 3. Stationary mean and variance (long simulation T=15)
-    stat_mean = th.stationary_mean
-    stat_var = th.stationary_variance
+    # 3. Stationary mean of reciprocal CIR process (long simulation T=15)
     v_paths_long = th.simulate(n_steps=500, n_paths=n_samples, T=15.0, rng=rng, method="exact")
-    v_term_long = v_paths_long[:, -1]
+    y_term_long = 1.0 / v_paths_long[:, -1]
 
     verify_moment(
-        result, "Stationary_InverseGamma_Mean", theoretical=stat_mean, samples=v_term_long
+        result, "Stationary_Reciprocal_CIR_Mean", theoretical=th.theta_cir, samples=y_term_long
     )
-    verify_moment(result, "Stationary_InverseGamma_Var", theoretical=stat_var, samples=v_term_long)
+    verify_moment(
+        result,
+        "Stationary_Reciprocal_CIR_Var",
+        theoretical=(th.sigma_cir**2 * th.theta_cir) / (2.0 * th.kappa_cir),
+        samples=y_term_long,
+    )
 
     return result
 
