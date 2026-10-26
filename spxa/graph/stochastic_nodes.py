@@ -339,3 +339,61 @@ class SABRNode(StochasticProcessNode):
             process_type="stochastic_volatility",
             parameters={"f0": f0_n, "alpha0": alpha0_n, "beta": beta_n, "nu": nu_n, "rho": rho_n},
         )
+
+
+class MertonJumpDiffusionNode(StochasticProcessNode):
+    r"""Merton jump diffusion process: continuous GBM + compound Poisson log-normal jumps."""
+
+    def __init__(
+        self,
+        s0: Union[float, Node],
+        mu: Union[float, Node],
+        sigma: Union[float, Node],
+        lam: Union[float, Node],
+        mu_j: Union[float, Node],
+        sigma_j: Union[float, Node],
+        name: str = "Merton",
+    ) -> None:
+        s0_n = s0 if isinstance(s0, Node) else ParameterNode(s0, f"{name}_s0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        mu_n = mu if isinstance(mu, Node) else ParameterNode(mu, f"{name}_mu")
+        sigma_n = sigma if isinstance(sigma, Node) else ParameterNode(sigma, f"{name}_sigma", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        lam_n = lam if isinstance(lam, Node) else ParameterNode(lam, f"{name}_lam", bounds=ParameterBounds(lower=0.0, domain=DomainType.NON_NEGATIVE))
+        mu_j_n = mu_j if isinstance(mu_j, Node) else ParameterNode(mu_j, f"{name}_mu_j")
+        sigma_j_n = sigma_j if isinstance(sigma_j, Node) else ParameterNode(sigma_j, f"{name}_sigma_j", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        super().__init__(
+            name=name,
+            state_dim=1,
+            noise_dim=1,
+            process_type="jump_diffusion",
+            parameters={"s0": s0_n, "mu": mu_n, "sigma": sigma_n, "lam": lam_n, "mu_j": mu_j_n, "sigma_j": sigma_j_n},
+        )
+
+
+class KouJumpDiffusionNode(StochasticProcessNode):
+    r"""Kou jump diffusion process: continuous GBM + asymmetric double-exponential jumps."""
+
+    def __init__(
+        self,
+        s0: Union[float, Node],
+        mu: Union[float, Node],
+        sigma: Union[float, Node],
+        lam: Union[float, Node],
+        p_up: Union[float, Node],
+        eta1: Union[float, Node],
+        eta2: Union[float, Node],
+        name: str = "Kou",
+    ) -> None:
+        s0_n = s0 if isinstance(s0, Node) else ParameterNode(s0, f"{name}_s0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        mu_n = mu if isinstance(mu, Node) else ParameterNode(mu, f"{name}_mu")
+        sigma_n = sigma if isinstance(sigma, Node) else ParameterNode(sigma, f"{name}_sigma", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        lam_n = lam if isinstance(lam, Node) else ParameterNode(lam, f"{name}_lam", bounds=ParameterBounds(lower=0.0, domain=DomainType.NON_NEGATIVE))
+        p_n = p_up if isinstance(p_up, Node) else ParameterNode(p_up, f"{name}_p", bounds=ParameterBounds(lower=0.0, upper=1.0, domain=DomainType.UNIT_INTERVAL))
+        eta1_n = eta1 if isinstance(eta1, Node) else ParameterNode(eta1, f"{name}_eta1", bounds=ParameterBounds(lower=1.0, strict_lower=True, domain=DomainType.POSITIVE))
+        eta2_n = eta2 if isinstance(eta2, Node) else ParameterNode(eta2, f"{name}_eta2", bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE))
+        super().__init__(
+            name=name,
+            state_dim=1,
+            noise_dim=1,
+            process_type="jump_diffusion",
+            parameters={"s0": s0_n, "mu": mu_n, "sigma": sigma_n, "lam": lam_n, "p": p_n, "eta1": eta1_n, "eta2": eta2_n},
+        )
