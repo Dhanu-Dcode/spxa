@@ -176,14 +176,14 @@ class TestEllipticalCopulas:
         cop = GaussianCopula(corr=r_mat, dim=3)
         assert cop.dim == 3
 
-        samples = cop.sample(500)
-        assert samples.shape == (500, 3)
+        samples = cop.sample(2000, rng=np.random.default_rng(42))
+        assert samples.shape == (2000, 3)
         assert np.all(samples >= 0.0) and np.all(samples <= 1.0)
 
         # Empirical normal scores correlation matches R
         z = stats.norm.ppf(samples)
         emp_r = np.corrcoef(z, rowvar=False)
-        assert np.allclose(emp_r, r_mat, atol=0.1)
+        assert np.allclose(emp_r, r_mat, atol=0.08)
 
     def test_student_t_copula_tail_dependence(self):
         nu = 4.0
@@ -236,8 +236,8 @@ class TestArchimedeanCopulas:
         assert np.isclose(u2_inv, u2, atol=1e-6)
 
         # Sampling
-        samples = clayton.sample(500)
-        assert samples.shape == (500, 2)
+        samples = clayton.sample(1000, rng=np.random.default_rng(42))
+        assert samples.shape == (1000, 2)
         # Check empirical tau near theoretical 0.5
         tau_emp = stats.kendalltau(samples[:, 0], samples[:, 1])[0]
         assert np.isclose(tau_emp, 0.5, atol=0.08)
@@ -255,8 +255,8 @@ class TestArchimedeanCopulas:
         assert np.isclose(lambda_u, 2.0 - 2.0 ** (1.0 / 2.5))
 
         # Sampling
-        samples = gumbel.sample(500)
-        assert samples.shape == (500, 2)
+        samples = gumbel.sample(1000, rng=np.random.default_rng(42))
+        assert samples.shape == (1000, 2)
         tau_emp = stats.kendalltau(samples[:, 0], samples[:, 1])[0]
         assert np.isclose(tau_emp, 0.6, atol=0.08)
 
