@@ -118,3 +118,37 @@ The `GraphCompiler` optimizes the DAG before execution:
 - **Common Subexpression Elimination (CSE)**: Identical mathematical operations with identical inputs are merged into single nodes.
 - **Dead Code Elimination**: Pruning of nodes unreferenced by any downstream target.
 - **Execution Caching**: Thread-safe evaluation cache for instant reuse of stationary nodes.
+
+---
+
+## 5. Universal Implementation Layer (`spxa.graph.adapters`)
+
+Rather than requiring manually handwritten graph nodes for every one of the ~200 processes in `spxa.zoo` or objects in other submodules, `spxa.graph` provides an automatic **reflection and adaptation layer**:
+
+### A. Zero-Boilerplate Zoo Process Adaptation
+
+Any process from `spxa.zoo` (e.g. `BatesModel`, `VarianceGamma`, `NIG`, `CIRProcess`, `BNSModel`, etc.), as well as any composed process ($X + Y$, $c \cdot X$, $X @ T$), can be directly used in computational graphs:
+
+```python
+from spxa.zoo import BatesModel, VarianceGamma
+
+# 1. Any zoo process immediately has .to_graph()
+bates = BatesModel(v0=0.04, kappa=2.0, theta=0.04, sigma_v=0.3, rho=-0.5)
+bates_node = bates.to_graph()
+
+# 2. Parameters are automatically discovered and mutable
+bates_node.params["v0"].value = 0.05
+bates_node.sync_parameters_to_process()
+
+# 3. Graph nodes for simulation and characteristic function are auto-generated
+cf_node = bates_node.char_func_node(u=0.5, t=1.0)
+sim_node = bates_node.simulate_node(t=1.0, n_paths=1000, n_steps=100)
+```
+
+### B. Submodule Integration (`risk`, `diff`, `calculus`, `copula`)
+
+- **Risk Instruments (`spxa.risk`)**: Instruments (`EuropeanOption`, `BarrierOption`, `AsianOption`) and `Portfolio` have `.to_graph()` returning automated payoff and sensitivity aggregation graphs.
+- **Differentiable SDEs (`spxa.diff`)**: `DifferentiableSDE` models have `.to_graph()` providing drift, diffusion, and Euler step graph nodes.
+- **Copulas (`spxa.copula`)**: Copulas have `.to_graph()` providing coupled uniform sampling nodes.
+- **Generators (`spxa.calculus`)**: `InfinitesimalGenerator` adapts into graph operator nodes evaluating $\mathcal{A} f(x)$.
+
