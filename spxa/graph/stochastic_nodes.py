@@ -131,3 +131,50 @@ class GeometricBrownianMotionNode(StochasticProcessNode):
     def diffusion(self, t: float, x: np.ndarray, **param_vals: Any) -> np.ndarray:
         sigma = param_vals.get("sigma", self.params["sigma"].forward())
         return sigma * x
+
+
+class OrnsteinUhlenbeckNode(StochasticProcessNode):
+    r"""Ornstein-Uhlenbeck process: :math:`dX_t = \kappa (\theta - X_t) dt + \sigma dW_t`."""
+
+    def __init__(
+        self,
+        kappa: Union[float, Node],
+        theta: Union[float, Node],
+        sigma: Union[float, Node],
+        x0: Union[float, Node] = 0.0,
+        name: str = "OU",
+    ) -> None:
+        kappa_n = kappa if isinstance(kappa, Node) else ParameterNode(kappa, f"{name}_kappa", bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE))
+        theta_n = theta if isinstance(theta, Node) else ParameterNode(theta, f"{name}_theta")
+        sigma_n = sigma if isinstance(sigma, Node) else ParameterNode(sigma, f"{name}_sigma", bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE))
+        x0_n = x0 if isinstance(x0, Node) else ConstantNode(x0, f"{name}_x0")
+        super().__init__(
+            name=name,
+            state_dim=1,
+            noise_dim=1,
+            process_type="diffusion",
+            parameters={"kappa": kappa_n, "theta": theta_n, "sigma": sigma_n, "x0": x0_n},
+        )
+
+    def drift(self, t: float, x: np.ndarray, **param_vals: Any) -> np.ndarray:
+        kappa = param_vals.get("kappa", self.params["kappa"].forward())
+        theta = param_vals.get("theta", self.params["theta"].forward())
+        return kappa * (theta - x)
+
+    def diffusion(self, t: float, x: np.ndarray, **param_vals: Any) -> np.ndarray:
+        sigma = param_vals.get("sigma", self.params["sigma"].forward())
+        return np.full_like(x, sigma)
+
+
+class VasicekNode(OrnsteinUhlenbeckNode):
+    r"""Vasicek short-rate model node."""
+
+    def __init__(
+        self,
+        kappa: Union[float, Node],
+        theta: Union[float, Node],
+        sigma: Union[float, Node],
+        r0: Union[float, Node] = 0.03,
+        name: str = "Vasicek",
+    ) -> None:
+        super().__init__(kappa=kappa, theta=theta, sigma=sigma, x0=r0, name=name)
