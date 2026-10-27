@@ -43,6 +43,7 @@ from spxa.graph.char_nodes import (
 )
 from spxa.graph.compiler import EvaluationCache, GraphCompiler
 from spxa.graph.graph import ComputationalGraph
+from spxa.graph.introspection import GraphProfiler, graph_summary, to_dot
 from spxa.graph.math_ops import (
     AbsNode,
     AddNode,
@@ -71,6 +72,7 @@ from spxa.graph.math_ops import (
     TanhNode,
     TransposeNode,
 )
+from spxa.graph.multiasset import CorrelatedDiffusionNode, MultiAssetBasketNode
 from spxa.graph.node import ConstantNode, Node, NodeType, OperatorNode, OutputNode, ParameterNode
 from spxa.graph.pricing.greeks import compute_graph_greeks
 from spxa.graph.pricing.payoff_nodes import (
@@ -80,12 +82,14 @@ from spxa.graph.pricing.payoff_nodes import (
     EuropeanPutPayoffNode,
 )
 from spxa.graph.pricing.pricer_graph import (
+    BlackScholesPriceNode,
     build_black_scholes_pricing_graph,
     monte_carlo_graph_price,
 )
 from spxa.graph.risk.risk_graph import PortfolioRiskGraph
 from spxa.graph.risk.scenario_graph import ScenarioShockNode, apply_macro_scenario
 from spxa.graph.risk.xva_graph import GraphCVANode, NettingExposureNode
+from spxa.graph.serialization import GraphSerializer
 from spxa.graph.stochastic_nodes import (
     BrownianMotionNode,
     CEVNode,
@@ -100,6 +104,7 @@ from spxa.graph.stochastic_nodes import (
     SubordinatedProcessNode,
     VasicekNode,
 )
+from spxa.graph.subgraph import SubgraphNode
 from spxa.graph.types import (
     BackendType,
     DType,
@@ -219,4 +224,13 @@ __all__ = [
     "CalculusGeneratorAdapter",
     "CopulaAdapter",
     "install_graph_extensions",
+    # Advanced Depth: Serialization, Profiling & Subgraphs
+    "GraphSerializer",
+    "graph_summary",
+    "to_dot",
+    "GraphProfiler",
+    "SubgraphNode",
+    "BlackScholesPriceNode",
+    "MultiAssetBasketNode",
+    "CorrelatedDiffusionNode",
 ]
