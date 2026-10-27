@@ -55,7 +55,7 @@ class GraphCalibrator:
 
             loss_val = float(self.graph.evaluate(return_outputs_only=True)[self.loss_output_name])
             grads = tape.gradient(self.loss_output_name, sources=parameters)
-            grad_vec = np.array([float(grads[p]) for p in parameters])
+            grad_vec = np.array([float(np.sum(grads[p])) for p in parameters])
             return loss_val, grad_vec
 
         res = minimize(
@@ -101,7 +101,7 @@ class GraphCalibrator:
         for step in range(1, max_iter + 1):
             grads = tape.gradient(self.loss_output_name, sources=parameters)
             for i, p in enumerate(parameters):
-                g = float(grads[p])
+                g = float(np.sum(grads[p]))
                 m[i] = beta1 * m[i] + (1.0 - beta1) * g
                 v[i] = beta2 * v[i] + (1.0 - beta2) * (g**2)
                 m_hat = m[i] / (1.0 - beta1**step)
