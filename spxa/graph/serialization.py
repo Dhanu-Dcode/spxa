@@ -39,6 +39,13 @@ from spxa.graph.math_ops import (
     TransposeNode,
 )
 from spxa.graph.node import ConstantNode, Node, NodeType, OperatorNode, OutputNode, ParameterNode
+from spxa.graph.pricing.payoff_nodes import (
+    AsianPayoffNode,
+    DigitalPayoffNode,
+    EuropeanCallPayoffNode,
+    EuropeanPutPayoffNode,
+)
+from spxa.graph.pricing.pricer_graph import BlackScholesPriceNode
 from spxa.graph.types import ParameterBounds
 
 _OP_NAME_MAP: Dict[str, Type[OperatorNode]] = {
@@ -68,13 +75,18 @@ _OP_NAME_MAP: Dict[str, Type[OperatorNode]] = {
     "MatMul": MatMulNode,
     "Transpose": TransposeNode,
     "Cholesky": CholeskyNode,
+    "BlackScholesPrice": BlackScholesPriceNode,
+    "EuropeanCallPayoff": EuropeanCallPayoffNode,
+    "EuropeanPutPayoff": EuropeanPutPayoffNode,
+    "DigitalPayoff": DigitalPayoffNode,
+    "AsianPayoff": AsianPayoffNode,
 }
 
 
 def _detect_op_type(node: OperatorNode) -> str:
     cls_name = node.__class__.__name__
     for name, cls in _OP_NAME_MAP.items():
-        if cls_name == cls.__name__:
+        if cls_name == cls.__name__ or cls_name.startswith(name):
             return name
     return "GenericOperator"
 
@@ -87,7 +99,7 @@ class GraphSerializer:
         r"""Serialize graph to a JSON-compatible dictionary."""
         nodes_data: List[Dict[str, Any]] = []
 
-        for node in graph.nodes:
+        for node in graph.topological_sort():
             item: Dict[str, Any] = {
                 "id": node.node_id,
                 "name": node.name,
@@ -109,8 +121,8 @@ class GraphSerializer:
                 item["bounds"] = {
                     "lower": node.bounds.lower,
                     "upper": node.bounds.upper,
-                    "inclusive_lower": node.bounds.inclusive_lower,
-                    "inclusive_upper": node.bounds.inclusive_upper,
+                    "strict_lower": node.bounds.strict_lower,
+                    "strict_upper": node.bounds.strict_upper,
                 }
                 item["is_trainable"] = node.is_trainable
 
@@ -158,8 +170,8 @@ class GraphSerializer:
                 bounds = ParameterBounds(
                     lower=bounds_data.get("lower"),
                     upper=bounds_data.get("upper"),
-                    inclusive_lower=bounds_data.get("inclusive_lower", True),
-                    inclusive_upper=bounds_data.get("inclusive_upper", True),
+                    strict_lower=bounds_data.get("strict_lower", False),
+                    strict_upper=bounds_data.get("strict_upper", False),
                 )
                 node = ParameterNode(
                     value=item["value"],

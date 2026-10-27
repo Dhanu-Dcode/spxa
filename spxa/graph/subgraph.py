@@ -34,9 +34,9 @@ class SubgraphNode(OperatorNode):
         self.tape = GradientTape(inner_graph)
 
         def subgraph_forward(*input_vals: Any) -> Any:
-            feed_dict: Dict[str, Any] = {}
+            feed_dict: Dict[Node, Any] = {}
             for inner_node, val in zip(self.inner_input_nodes, input_vals):
-                feed_dict[inner_node.name] = val
+                feed_dict[inner_node] = val
                 if isinstance(inner_node, ParameterNode):
                     inner_node.value = float(val)
 
@@ -44,9 +44,9 @@ class SubgraphNode(OperatorNode):
             return res[self.output_name]
 
         def subgraph_vjp(grad_out: Any, *input_vals: Any) -> Tuple[Any, ...]:
-            feed_dict: Dict[str, Any] = {}
+            feed_dict: Dict[Node, Any] = {}
             for inner_node, val in zip(self.inner_input_nodes, input_vals):
-                feed_dict[inner_node.name] = val
+                feed_dict[inner_node] = val
                 if isinstance(inner_node, ParameterNode):
                     inner_node.value = float(val)
 

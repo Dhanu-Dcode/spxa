@@ -24,7 +24,7 @@ def graph_summary(graph: ComputationalGraph) -> str:
         "-" * 85,
     ]
 
-    for node in graph.nodes:
+    for node in graph.nodes.values():
         n_type = node.node_type.name
         inps = f"{len(node.inputs)} inputs" if node.inputs else "Root"
         val_info = ""
@@ -61,7 +61,7 @@ def to_dot(graph: ComputationalGraph) -> str:
         NodeType.OUTPUT: 'fillcolor="#FFEBEE", shape=doublecircle, color="#D32F2F"',
     }
 
-    for node in graph.nodes:
+    for node in graph.nodes.values():
         attrs = color_map.get(node.node_type, 'fillcolor="#FFFFFF"')
         label = f"{node.name}\\n({node.node_type.name})"
         if isinstance(node, ParameterNode):
@@ -70,7 +70,7 @@ def to_dot(graph: ComputationalGraph) -> str:
             label = f"{node.name}\\nval={node.value:.4g}"
         lines.append(f'  "{node.node_id}" [label="{label}", {attrs}];')
 
-    for node in graph.nodes:
+    for node in graph.nodes.values():
         for inp in node.inputs:
             lines.append(f'  "{inp.node_id}" -> "{node.node_id}";')
 
@@ -91,23 +91,27 @@ class GraphProfiler:
         cls,
         graph: ComputationalGraph,
         n_runs: int = 50,
-        feed_dict: Optional[Dict[str, Any]] = None,
+        feed_dict: Optional[Dict[Any, Any]] = None,
     ) -> Dict[str, Any]:
         r"""Profile execution runtime per node across multiple runs."""
-        node_times: Dict[str, List[float]] = {n.node_id: [] for n in graph.nodes}
+        topo_order = graph.topological_sort()
+        node_times: Dict[int, List[float]] = {n.node_id: [] for n in topo_order}
         total_times: List[float] = []
 
-        cache: Dict[str, Any] = {}
+        cache: Dict[int, Any] = {}
         if feed_dict:
+            params = graph.get_parameters()
             for k, v in feed_dict.items():
-                if k in graph.nodes_by_name:
-                    cache[graph.nodes_by_name[k].node_id] = v
+                if isinstance(k, Node):
+                    cache[k.node_id] = v
+                elif isinstance(k, str) and k in params:
+                    cache[params[k].node_id] = v
 
         for _ in range(n_runs):
             run_cache = cache.copy()
             t_start = time.perf_counter()
 
-            for node in graph.nodes:
+            for node in topo_order:
                 if node.node_id in run_cache:
                     continue
 
@@ -123,7 +127,7 @@ class GraphProfiler:
         node_stats: List[Dict[str, Any]] = []
         avg_total = float(np.mean(total_times))
 
-        for node in graph.nodes:
+        for node in topo_order:
             times = node_times[node.node_id]
             mean_time = float(np.mean(times)) if times else 0.0
             pct = (mean_time / avg_total * 100.0) if avg_total > 0 else 0.0

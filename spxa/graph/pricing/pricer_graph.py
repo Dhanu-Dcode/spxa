@@ -11,8 +11,40 @@ from scipy.stats import norm
 
 from spxa.graph.graph import ComputationalGraph
 from spxa.graph.math_ops import ExpNode, MulNode, NormalCDFNode
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode
+from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
 from spxa.graph.stochastic_nodes import GeometricBrownianMotionNode
+from spxa.graph.types import DType
+
+
+class BlackScholesPriceNode(OperatorNode):
+    r"""Analytical Black-Scholes pricing node for European options."""
+
+    def __init__(
+        self,
+        s0: Node,
+        strike: Node,
+        maturity: Node,
+        rate: Node,
+        volatility: Node,
+        is_call: bool = True,
+        name: str = "BS_Price",
+    ) -> None:
+        self.is_call = is_call
+
+        def bs_price_fn(s_val: float, k_val: float, t_val: float, r_val: float, sig_val: float) -> float:
+            vol_sqrt = float(sig_val) * np.sqrt(float(t_val))
+            d1 = (np.log(float(s_val) / float(k_val)) + (float(r_val) + 0.5 * float(sig_val)**2) * float(t_val)) / vol_sqrt
+            d2 = d1 - vol_sqrt
+            if self.is_call:
+                return float(float(s_val) * norm.cdf(d1) - float(k_val) * np.exp(-float(r_val) * float(t_val)) * norm.cdf(d2))
+            return float(float(k_val) * np.exp(-float(r_val) * float(t_val)) * norm.cdf(-d2) - float(s_val) * norm.cdf(-d1))
+
+        super().__init__(
+            op_fn=bs_price_fn,
+            inputs=[s0, strike, maturity, rate, volatility],
+            name=name,
+            output_descriptor=PortDescriptor(name="price", dtype=DType.FLOAT64),
+        )
 
 
 def build_black_scholes_pricing_graph(
@@ -30,18 +62,13 @@ def build_black_scholes_pricing_graph(
     r_node = ParameterNode(value=r, name="rate")
     sig_node = ParameterNode(value=sigma, name="volatility")
 
-    def bs_price_fn(s_val: float, k_val: float, t_val: float, r_val: float, sig_val: float) -> float:
-        vol_sqrt = sig_val * np.sqrt(t_val)
-        d1 = (np.log(s_val / k_val) + (r_val + 0.5 * sig_val**2) * t_val) / vol_sqrt
-        d2 = d1 - vol_sqrt
-        if is_call:
-            return float(s_val * norm.cdf(d1) - k_val * np.exp(-r_val * t_val) * norm.cdf(d2))
-        return float(k_val * np.exp(-r_val * t_val) * norm.cdf(-d2) - s_val * norm.cdf(-d1))
-
-    price_node = OperatorNode(
-        op_fn=bs_price_fn,
-        inputs=[s0_node, k_node, t_node, r_node, sig_node],
-        name="BS_Price",
+    price_node = BlackScholesPriceNode(
+        s0=s0_node,
+        strike=k_node,
+        maturity=t_node,
+        rate=r_node,
+        volatility=sig_node,
+        is_call=is_call,
     )
 
     g = ComputationalGraph(name="BlackScholesPricingGraph")
