@@ -13,6 +13,22 @@ from spxa.graph.stochastic_nodes import StochasticProcessNode
 from spxa.graph.types import DType
 
 
+def _call_drift(proc: StochasticProcessNode, x: float, t: float = 0.0) -> float:
+    try:
+        res = proc.drift(t, x)
+    except (TypeError, ValueError):
+        res = proc.drift(x, t)
+    return float(np.asarray(res).squeeze())
+
+
+def _call_diffusion(proc: StochasticProcessNode, x: float, t: float = 0.0) -> float:
+    try:
+        res = proc.diffusion(t, x)
+    except (TypeError, ValueError):
+        res = proc.diffusion(x, t)
+    return float(np.asarray(res).squeeze())
+
+
 class InfinitesimalGeneratorNode(OperatorNode):
     r"""Applies infinitesimal generator :math:`\mathcal{A} f(x) = \mu(x) f'(x) + \frac{1}{2}\sigma^2(x) f''(x)`."""
 
@@ -34,8 +50,8 @@ class InfinitesimalGeneratorNode(OperatorNode):
             fp = (self.func(x_f + self.eps) - self.func(x_f - self.eps)) / (2.0 * self.eps)
             fpp = (self.func(x_f + self.eps) - 2.0 * f0 + self.func(x_f - self.eps)) / (self.eps**2)
 
-            mu = float(self.process.drift(x_f))
-            sig = float(self.process.diffusion(x_f))
+            mu = _call_drift(self.process, x_f)
+            sig = _call_diffusion(self.process, x_f)
             return float(mu * fp + 0.5 * (sig**2) * fpp)
 
         super().__init__(
@@ -69,8 +85,8 @@ class MartingaleVerificationNode(OperatorNode):
                 f0 = self.func(x_f)
                 fp = (self.func(x_f + eps) - self.func(x_f - eps)) / (2.0 * eps)
                 fpp = (self.func(x_f + eps) - 2.0 * f0 + self.func(x_f - eps)) / (eps**2)
-                mu = float(self.process.drift(x_f))
-                sig = float(self.process.diffusion(x_f))
+                mu = _call_drift(self.process, x_f)
+                sig = _call_diffusion(self.process, x_f)
                 af = mu * fp + 0.5 * (sig**2) * fpp
                 defects.append(abs(af))
 

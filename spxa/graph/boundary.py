@@ -14,6 +14,22 @@ from spxa.graph.stochastic_nodes import StochasticProcessNode
 from spxa.graph.types import DType
 
 
+def _call_drift(proc: StochasticProcessNode, x: float, t: float = 0.0) -> float:
+    try:
+        res = proc.drift(t, x)
+    except (TypeError, ValueError):
+        res = proc.drift(x, t)
+    return float(np.asarray(res).squeeze())
+
+
+def _call_diffusion(proc: StochasticProcessNode, x: float, t: float = 0.0) -> float:
+    try:
+        res = proc.diffusion(t, x)
+    except (TypeError, ValueError):
+        res = proc.diffusion(x, t)
+    return float(np.asarray(res).squeeze())
+
+
 class ScaleDensityNode(OperatorNode):
     r"""Evaluates diffusion scale density :math:`s(x) = \exp\left(-\int_{x_0}^x \frac{2\mu(u)}{\sigma^2(u)} du\right)`."""
 
@@ -31,8 +47,8 @@ class ScaleDensityNode(OperatorNode):
             x_f = float(x_val)
 
             def integrand(u: float) -> float:
-                mu = float(self.process.drift(u))
-                sig = float(self.process.diffusion(u))
+                mu = _call_drift(self.process, u)
+                sig = _call_diffusion(self.process, u)
                 return float(2.0 * mu / (sig**2 + 1e-12))
 
             integ, _ = quad(integrand, self.x0, x_f)
@@ -61,7 +77,7 @@ class SpeedDensityNode(OperatorNode):
         def eval_speed_density(s_val: Any, x_val: Any) -> float:
             x_f = float(x_val)
             s_f = float(s_val)
-            sig = float(self.process.diffusion(x_f))
+            sig = _call_diffusion(self.process, x_f)
             return float(1.0 / (sig**2 * s_f + 1e-12))
 
         super().__init__(
@@ -89,19 +105,16 @@ class FellerBoundaryClassifierNode(OperatorNode):
         def classify() -> Dict[str, Any]:
             # Scale function integral S(b) = int_c^b s(x) dx
             def s_integrand(x: float) -> float:
-                # int_c^x 2mu/sig^2
-                sub_int, _ = quad(lambda u: 2.0 * float(self.process.drift(u)) / (float(self.process.diffusion(u))**2 + 1e-12), self.c, x)
+                sub_int, _ = quad(lambda u: 2.0 * _call_drift(self.process, u) / (_call_diffusion(self.process, u)**2 + 1e-12), self.c, x)
                 return float(np.exp(-sub_int))
 
-            # Test scale integral convergence near boundary
-            # If b is 0, test c -> eps
             target = 1e-4 if self.b == 0.0 else self.b
             s_val, _ = quad(s_integrand, self.c, target, limit=50)
             is_s_finite = np.isfinite(s_val) and abs(s_val) < 1e5
 
             # Speed density m(x)
             def m_integrand(x: float) -> float:
-                sig = float(self.process.diffusion(x))
+                sig = _call_diffusion(self.process, x)
                 return float(1.0 / (sig**2 * s_integrand(x) + 1e-12))
 
             m_val, _ = quad(m_integrand, self.c, target, limit=50)

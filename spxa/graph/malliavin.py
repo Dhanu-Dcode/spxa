@@ -13,6 +13,22 @@ from spxa.graph.stochastic_nodes import StochasticProcessNode
 from spxa.graph.types import DType
 
 
+def _call_drift(proc: StochasticProcessNode, x: float, t: float = 0.0) -> float:
+    try:
+        res = proc.drift(t, x)
+    except (TypeError, ValueError):
+        res = proc.drift(x, t)
+    return float(np.asarray(res).squeeze())
+
+
+def _call_diffusion(proc: StochasticProcessNode, x: float, t: float = 0.0) -> float:
+    try:
+        res = proc.diffusion(t, x)
+    except (TypeError, ValueError):
+        res = proc.diffusion(x, t)
+    return float(np.asarray(res).squeeze())
+
+
 class MalliavinBismutDeltaNode(OperatorNode):
     r"""Computes Delta sensitivity via the Malliavin-Bismut integration by parts formula:
 
@@ -51,16 +67,16 @@ class MalliavinBismutDeltaNode(OperatorNode):
 
             eps = 1e-4
             for _ in range(self.n_steps):
-                mu = np.array([float(self.process.drift(xi)) for xi in x])
-                sig = np.array([float(self.process.diffusion(xi)) for xi in x])
+                mu = np.array([_call_drift(self.process, xi) for xi in x])
+                sig = np.array([_call_diffusion(self.process, xi) for xi in x])
 
                 # Spatial derivatives mu'(x), sig'(x)
-                mu_plus = np.array([float(self.process.drift(xi + eps)) for xi in x])
-                mu_minus = np.array([float(self.process.drift(xi - eps)) for xi in x])
+                mu_plus = np.array([_call_drift(self.process, xi + eps) for xi in x])
+                mu_minus = np.array([_call_drift(self.process, xi - eps) for xi in x])
                 d_mu = (mu_plus - mu_minus) / (2.0 * eps)
 
-                sig_plus = np.array([float(self.process.diffusion(xi + eps)) for xi in x])
-                sig_minus = np.array([float(self.process.diffusion(xi - eps)) for xi in x])
+                sig_plus = np.array([_call_diffusion(self.process, xi + eps) for xi in x])
+                sig_minus = np.array([_call_diffusion(self.process, xi - eps) for xi in x])
                 d_sig = (sig_plus - sig_minus) / (2.0 * eps)
 
                 dw = rng.normal(0.0, sqrt_dt, size=self.n_paths)
