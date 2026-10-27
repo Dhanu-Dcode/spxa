@@ -55,23 +55,20 @@ class AutomatedCumulantNode(OperatorNode):
 
         def eval_cumulant() -> float:
             h = self.h
-            f = self.char_exp_fn
-            # Central difference approximations around u = 0
+            # CGF K(s) = Psi(-i * s)
+            K = lambda s: self.char_exp_fn(-1j * s)
+            # Real central difference approximations around s = 0
             if self.order == 1:
-                # kappa_1 = -i * dPsi/du
-                d1 = (f(1j * h) - f(-1j * h)) / (2.0 * 1j * h)
+                d1 = (K(h) - K(-h)) / (2.0 * h)
                 return float(np.real(d1))
             elif self.order == 2:
-                # kappa_2 = - d2Psi/du2
-                d2 = (f(1j * h) - 2.0 * f(0.0) + f(-1j * h)) / ((1j * h) ** 2)
+                d2 = (K(h) - 2.0 * K(0.0) + K(-h)) / (h**2)
                 return float(np.real(d2))
             elif self.order == 3:
-                # kappa_3 = i * d3Psi/du3
-                d3 = (f(2j * h) - 2.0 * f(1j * h) + 2.0 * f(-1j * h) - f(-2j * h)) / (2.0 * (1j * h) ** 3)
+                d3 = (K(2.0 * h) - 2.0 * K(h) + 2.0 * K(-h) - K(-2.0 * h)) / (2.0 * (h**3))
                 return float(np.real(d3))
             elif self.order == 4:
-                # kappa_4 = d4Psi/du4
-                d4 = (f(2j * h) - 4.0 * f(1j * h) + 6.0 * f(0.0) - 4.0 * f(-1j * h) + f(-2j * h)) / ((1j * h) ** 4)
+                d4 = (K(2.0 * h) - 4.0 * K(h) + 6.0 * K(0.0) - 4.0 * K(-h) + K(-2.0 * h)) / (h**4)
                 return float(np.real(d4))
             raise ValueError(f"Cumulant order {self.order} not supported (supported: 1-4)")
 

@@ -13,6 +13,22 @@ from spxa.graph.stochastic_nodes import StochasticProcessNode
 from spxa.graph.types import DType
 
 
+def _call_drift(proc: StochasticProcessNode, x: float, t: float) -> float:
+    try:
+        res = proc.drift(t, x)
+    except (TypeError, ValueError):
+        res = proc.drift(x, t)
+    return float(np.asarray(res).squeeze())
+
+
+def _call_diffusion(proc: StochasticProcessNode, x: float, t: float) -> float:
+    try:
+        res = proc.diffusion(t, x)
+    except (TypeError, ValueError):
+        res = proc.diffusion(x, t)
+    return float(np.asarray(res).squeeze())
+
+
 class GirsanovTransformNode(StochasticProcessNode):
     r"""Applies a Girsanov measure change :math:`\mathbb{P} \to \mathbb{Q}` shifting diffusion drift.
 
@@ -45,14 +61,15 @@ class GirsanovTransformNode(StochasticProcessNode):
     def drift(self, x: Union[float, np.ndarray], t: float = 0.0) -> Union[float, np.ndarray]:
         r"""Drift under equivalent martingale measure :math:`\mathbb{Q}`."""
         x_val = float(x) if np.isscalar(x) else float(x[0])
-        mu_p = float(self.base_process.drift(x_val, t))
-        sig = float(self.base_process.diffusion(x_val, t))
+        mu_p = _call_drift(self.base_process, x_val, t)
+        sig = _call_diffusion(self.base_process, x_val, t)
         lam = self.mpr_fn(x_val, t)
         return mu_p - sig * lam
 
     def diffusion(self, x: Union[float, np.ndarray], t: float = 0.0) -> Union[float, np.ndarray]:
         r"""Diffusion matrix is invariant under equivalent measure change."""
-        return self.base_process.diffusion(x, t)
+        x_val = float(x) if np.isscalar(x) else float(x[0])
+        return _call_diffusion(self.base_process, x_val, t)
 
     def sample_paths(self, t: float, n_paths: int = 1000, n_steps: int = 100) -> np.ndarray:
         r"""Simulate paths under Q using Euler-Maruyama with Q-drift."""
@@ -60,7 +77,7 @@ class GirsanovTransformNode(StochasticProcessNode):
         sqrt_dt = np.sqrt(dt)
         paths = np.empty((n_paths, n_steps + 1))
         # Initial state from base process
-        paths[:, 0] = self.base_process.params.get("s0", ParameterNode(100.0)).value
+        paths[:, 0] = self.base_process.params.get("s0", ParameterNode(100.0, name="default_s0")).value
         t_grid = np.linspace(0.0, t, n_steps + 1)
 
         for step in range(n_steps):

@@ -13,6 +13,22 @@ from spxa.graph.stochastic_nodes import StochasticProcessNode
 from spxa.graph.types import DType
 
 
+def _call_drift(proc: StochasticProcessNode, x: float, t: float) -> float:
+    try:
+        res = proc.drift(t, x)
+    except (TypeError, ValueError):
+        res = proc.drift(x, t)
+    return float(np.asarray(res).squeeze())
+
+
+def _call_diffusion(proc: StochasticProcessNode, x: float, t: float) -> float:
+    try:
+        res = proc.diffusion(t, x)
+    except (TypeError, ValueError):
+        res = proc.diffusion(x, t)
+    return float(np.asarray(res).squeeze())
+
+
 class ItoTransformNode(StochasticProcessNode):
     r"""Applies Itô's Lemma to a diffusion process :math:`X_t` under a transformation :math:`Y_t = f(X_t, t)`.
 
@@ -60,8 +76,8 @@ class ItoTransformNode(StochasticProcessNode):
         x_val = float(x_orig) if np.isscalar(x_orig) else float(x_orig[0])
         ft, fx, fxx = self._diff_f(x_val, t)
 
-        base_mu = float(self.base_process.drift(x_val, t))
-        base_sig = float(self.base_process.diffusion(x_val, t))
+        base_mu = _call_drift(self.base_process, x_val, t)
+        base_sig = _call_diffusion(self.base_process, x_val, t)
 
         mu_y = ft + base_mu * fx + 0.5 * (base_sig**2) * fxx
         return mu_y
@@ -72,14 +88,30 @@ class ItoTransformNode(StochasticProcessNode):
         x_val = float(x_orig) if np.isscalar(x_orig) else float(x_orig[0])
         _, fx, _ = self._diff_f(x_val, t)
 
-        base_sig = float(self.base_process.diffusion(x_val, t))
+        base_sig = _call_diffusion(self.base_process, x_val, t)
         return base_sig * fx
 
     def sample_paths(self, t: float, n_paths: int = 1000, n_steps: int = 100) -> np.ndarray:
         r"""Sample paths by mapping base process paths through f(X_t, t)."""
-        base_paths = self.base_process.sample_paths(t=t, n_paths=n_paths, n_steps=n_steps)
+        if hasattr(self.base_process, "sample_paths"):
+            base_paths = self.base_process.sample_paths(t=t, n_paths=n_paths, n_steps=n_steps)
+        else:
+            # Fallback simulation of base process via Euler-Maruyama
+            dt = t / n_steps
+            sqrt_dt = np.sqrt(dt)
+            base_paths = np.empty((n_paths, n_steps + 1))
+            x0 = float(self.base_process.params.get("s0", ParameterNode(0.0, name="default_s0")).value)
+            base_paths[:, 0] = x0
+            t_grid = np.linspace(0.0, t, n_steps + 1)
+            for step in range(n_steps):
+                cur_t = t_grid[step]
+                cur_x = base_paths[:, step]
+                mu = np.array([_call_drift(self.base_process, xi, cur_t) for xi in cur_x])
+                sig = np.array([_call_diffusion(self.base_process, xi, cur_t) for xi in cur_x])
+                dw = np.random.randn(n_paths) * sqrt_dt
+                base_paths[:, step + 1] = cur_x + mu * dt + sig * dw
+
         t_grid = np.linspace(0.0, t, n_steps + 1)
-        # Apply f across time grid
         y_paths = np.empty_like(base_paths)
         for i, t_val in enumerate(t_grid):
             y_paths[:, i] = self.func(base_paths[:, i], t_val)
