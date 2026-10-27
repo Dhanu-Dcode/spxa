@@ -152,3 +152,34 @@ sim_node = bates_node.simulate_node(t=1.0, n_paths=1000, n_steps=100)
 - **Copulas (`spxa.copula`)**: Copulas have `.to_graph()` providing coupled uniform sampling nodes.
 - **Generators (`spxa.calculus`)**: `InfinitesimalGenerator` adapts into graph operator nodes evaluating $\mathcal{A} f(x)$.
 
+---
+
+## 6. Deep Mathematical Calculus on Stochastic Processes
+
+The computational graph serves as a first-class algebraic engine for advanced stochastic calculus:
+
+### A. Automated Itô Lemma (`ItoTransformNode`)
+Applies Itô's Lemma to derive the exact SDE of $Y_t = f(X_t, t)$ automatically using graph derivatives:
+$$dY_t = \left(\frac{\partial f}{\partial t} + \mu \frac{\partial f}{\partial x} + \frac{1}{2} \sigma^2 \frac{\partial^2 f}{\partial x^2}\right) dt + \sigma \frac{\partial f}{\partial x} dW_t$$
+
+### B. Measure Changes (`GirsanovTransformNode`, `EsscherTransformNode`)
+- **Girsanov Drift Shifts**: Shifts diffusion drift under market price of risk $\lambda(x, t)$: $\mu^\mathbb{Q} = \mu^\mathbb{P} - \sigma \lambda$.
+- **Esscher Transforms**: Shifts characteristic exponents for jump processes: $\Psi_\theta(u) = \Psi(u - i\theta) - \Psi(-i\theta)$.
+
+### C. Bochner Subordination & Cumulant Generation (`BochnerSubordinationNode`, `AutomatedCumulantNode`)
+- Composes parent Lévy exponent with subordinator Laplace exponent: $\Psi_Z(u) = -\Phi_T(-\Psi_X(u))$.
+- Automatically extracts cumulants $\kappa_1, \kappa_2, \kappa_3, \kappa_4$ to arbitrary order by real central differentiation of the CGF $K(s) = \Psi(-is)$.
+
+### D. Infinitesimal Generators & Martingale Verification (`InfinitesimalGeneratorNode`, `MartingaleVerificationNode`)
+- Evaluates Dynkin's formula $\mathcal{A} f(x) = \mu(x) f'(x) + \frac{1}{2}\sigma^2(x) f''(x)$.
+- Algebraically checks whether $f(X_t)$ is a true martingale by proving $\mathcal{A} f(x) \equiv 0$ across the state space.
+
+### E. Speed / Scale Density & Feller Boundary Classification (`ScaleDensityNode`, `SpeedDensityNode`, `FellerBoundaryClassifierNode`)
+- Computes scale density $s(x) = \exp\left(-\int \frac{2\mu}{\sigma^2}\right)$ and speed density $m(x) = \frac{1}{\sigma^2 s}$.
+- Classifies 1D diffusion boundaries into Feller types: **Regular, Exit, Entrance, or Natural**.
+
+### F. Malliavin Calculus & Bismut Integration by Parts (`MalliavinBismutDeltaNode`)
+- Simulates the first variation process $Y_t = \partial X_t / \partial x_0$ alongside $X_t$.
+- Evaluates pathwise Bismut weights $\pi_T = \frac{1}{T} \int_0^T \frac{Y_t}{\sigma(X_t)} dW_t$, computing exact Greek sensitivities of discontinuous payoffs without payoff mollification.
+
+
