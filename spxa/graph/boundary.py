@@ -4,6 +4,7 @@ Speed and scale density calculus and Feller boundary classification nodes.
 
 from __future__ import annotations
 
+import inspect
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -15,18 +16,22 @@ from spxa.graph.types import DType
 
 
 def _call_drift(proc: StochasticProcessNode, x: float, t: float = 0.0) -> float:
-    try:
-        res = proc.drift(t, x)
-    except (TypeError, ValueError):
+    sig = inspect.signature(proc.drift)
+    params = list(sig.parameters.keys())
+    if len(params) >= 2 and params[0] == "x":
         res = proc.drift(x, t)
+    else:
+        res = proc.drift(t, x)
     return float(np.asarray(res).squeeze())
 
 
 def _call_diffusion(proc: StochasticProcessNode, x: float, t: float = 0.0) -> float:
-    try:
-        res = proc.diffusion(t, x)
-    except (TypeError, ValueError):
+    sig = inspect.signature(proc.diffusion)
+    params = list(sig.parameters.keys())
+    if len(params) >= 2 and params[0] == "x":
         res = proc.diffusion(x, t)
+    else:
+        res = proc.diffusion(t, x)
     return float(np.asarray(res).squeeze())
 
 

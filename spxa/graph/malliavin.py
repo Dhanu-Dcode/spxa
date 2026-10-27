@@ -4,6 +4,7 @@ Malliavin calculus: First variation processes and Bismut pathwise Greek weights.
 
 from __future__ import annotations
 
+import inspect
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -14,18 +15,22 @@ from spxa.graph.types import DType
 
 
 def _call_drift(proc: StochasticProcessNode, x: float, t: float = 0.0) -> float:
-    try:
-        res = proc.drift(t, x)
-    except (TypeError, ValueError):
+    sig = inspect.signature(proc.drift)
+    params = list(sig.parameters.keys())
+    if len(params) >= 2 and params[0] == "x":
         res = proc.drift(x, t)
+    else:
+        res = proc.drift(t, x)
     return float(np.asarray(res).squeeze())
 
 
 def _call_diffusion(proc: StochasticProcessNode, x: float, t: float = 0.0) -> float:
-    try:
-        res = proc.diffusion(t, x)
-    except (TypeError, ValueError):
+    sig = inspect.signature(proc.diffusion)
+    params = list(sig.parameters.keys())
+    if len(params) >= 2 and params[0] == "x":
         res = proc.diffusion(x, t)
+    else:
+        res = proc.diffusion(t, x)
     return float(np.asarray(res).squeeze())
 
 
@@ -67,16 +72,22 @@ class MalliavinBismutDeltaNode(OperatorNode):
 
             eps = 1e-4
             for _ in range(self.n_steps):
-                mu = np.array([_call_drift(self.process, xi) for xi in x])
-                sig = np.array([_call_diffusion(self.process, xi) for xi in x])
+                try:
+                    mu = np.asarray(self.process.drift(0.0, x), dtype=float)
+                    sig = np.asarray(self.process.diffusion(0.0, x), dtype=float)
+                    mu_plus = np.asarray(self.process.drift(0.0, x + eps), dtype=float)
+                    mu_minus = np.asarray(self.process.drift(0.0, x - eps), dtype=float)
+                    sig_plus = np.asarray(self.process.diffusion(0.0, x + eps), dtype=float)
+                    sig_minus = np.asarray(self.process.diffusion(0.0, x - eps), dtype=float)
+                except Exception:
+                    mu = np.array([_call_drift(self.process, xi) for xi in x])
+                    sig = np.array([_call_diffusion(self.process, xi) for xi in x])
+                    mu_plus = np.array([_call_drift(self.process, xi + eps) for xi in x])
+                    mu_minus = np.array([_call_drift(self.process, xi - eps) for xi in x])
+                    sig_plus = np.array([_call_diffusion(self.process, xi + eps) for xi in x])
+                    sig_minus = np.array([_call_diffusion(self.process, xi - eps) for xi in x])
 
-                # Spatial derivatives mu'(x), sig'(x)
-                mu_plus = np.array([_call_drift(self.process, xi + eps) for xi in x])
-                mu_minus = np.array([_call_drift(self.process, xi - eps) for xi in x])
                 d_mu = (mu_plus - mu_minus) / (2.0 * eps)
-
-                sig_plus = np.array([_call_diffusion(self.process, xi + eps) for xi in x])
-                sig_minus = np.array([_call_diffusion(self.process, xi - eps) for xi in x])
                 d_sig = (sig_plus - sig_minus) / (2.0 * eps)
 
                 dw = rng.normal(0.0, sqrt_dt, size=self.n_paths)
