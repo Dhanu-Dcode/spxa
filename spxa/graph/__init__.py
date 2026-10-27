@@ -30,6 +30,11 @@ from spxa.graph.backends import (
     SimulationBackend,
     get_backend,
 )
+from spxa.graph.boundary import (
+    FellerBoundaryClassifierNode,
+    ScaleDensityNode,
+    SpeedDensityNode,
+)
 from spxa.graph.calibration.constraints import FellerConstraintNode
 from spxa.graph.calibration.loss_nodes import ArbitragePenaltyNode, MSELossNode
 from spxa.graph.calibration.optimizer import GraphCalibrator
@@ -42,8 +47,14 @@ from spxa.graph.char_nodes import (
     ProcessMomentNode,
 )
 from spxa.graph.compiler import EvaluationCache, GraphCompiler
+from spxa.graph.generator import (
+    InfinitesimalGeneratorNode,
+    MartingaleVerificationNode,
+)
 from spxa.graph.graph import ComputationalGraph
 from spxa.graph.introspection import GraphProfiler, graph_summary, to_dot
+from spxa.graph.ito import ItoTransformNode
+from spxa.graph.malliavin import MalliavinBismutDeltaNode
 from spxa.graph.math_ops import (
     AbsNode,
     AddNode,
@@ -72,6 +83,7 @@ from spxa.graph.math_ops import (
     TanhNode,
     TransposeNode,
 )
+from spxa.graph.measure_change import EsscherTransformNode, GirsanovTransformNode
 from spxa.graph.multiasset import CorrelatedDiffusionNode, MultiAssetBasketNode
 from spxa.graph.node import ConstantNode, Node, NodeType, OperatorNode, OutputNode, ParameterNode
 from spxa.graph.pricing.greeks import compute_graph_greeks
@@ -105,6 +117,7 @@ from spxa.graph.stochastic_nodes import (
     VasicekNode,
 )
 from spxa.graph.subgraph import SubgraphNode
+from spxa.graph.subordination import AutomatedCumulantNode, BochnerSubordinationNode
 from spxa.graph.types import (
     BackendType,
     DType,
@@ -233,4 +246,16 @@ __all__ = [
     "BlackScholesPriceNode",
     "MultiAssetBasketNode",
     "CorrelatedDiffusionNode",
+    # Deep Stochastic Calculus & Operators
+    "ItoTransformNode",
+    "GirsanovTransformNode",
+    "EsscherTransformNode",
+    "BochnerSubordinationNode",
+    "AutomatedCumulantNode",
+    "InfinitesimalGeneratorNode",
+    "MartingaleVerificationNode",
+    "ScaleDensityNode",
+    "SpeedDensityNode",
+    "FellerBoundaryClassifierNode",
+    "MalliavinBismutDeltaNode",
 ]
