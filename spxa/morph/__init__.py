@@ -6,6 +6,15 @@ Wasserstein displacement interpolations between stochastic processes.
 """
 
 from spxa.morph.base import AbstractMorphEngine, MorphMethod
+from spxa.morph.dynamic_morph import (
+    CosineSchedule,
+    DynamicMorphedProcess,
+    LinearSchedule,
+    MorphSchedule,
+    SigmoidalSchedule,
+    SmoothstepSchedule,
+    StateThresholdSchedule,
+)
 from spxa.morph.generator_morph import GeneratorMorphEngine, MorphedSDEDiffusion
 from spxa.morph.geodesic_morph import (
     GeodesicMorphEngine,
@@ -34,6 +43,13 @@ __all__ = [
     "GeodesicMorphedProcess",
     "WassersteinMorphEngine",
     "WassersteinMorphedProcess",
+    "MorphSchedule",
+    "LinearSchedule",
+    "CosineSchedule",
+    "SmoothstepSchedule",
+    "SigmoidalSchedule",
+    "StateThresholdSchedule",
+    "DynamicMorphedProcess",
     "bures_wasserstein_distance",
     "gaussian_displacement_interpolation",
     "gaussian_geodesic_path",
