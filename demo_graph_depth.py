@@ -29,6 +29,8 @@ from spxa.graph import (
     ExecutionRouter,
     FellerBoundaryClassifierNode,
     FellerConstraintNode,
+    FisherInformationMetricNode,
+    FractionalRiccatiNode,
     GeometricBrownianMotionNode,
     GirsanovTransformNode,
     GradientTape,
@@ -43,6 +45,7 @@ from spxa.graph import (
     MartingaleVerificationNode,
     MSELossNode,
     MultiAssetBasketNode,
+    NaturalGradientCalibratorNode,
     NumericalBackend,
     OperatorNode,
     OrnsteinUhlenbeckNode,
@@ -77,10 +80,18 @@ from spxa.graph import (
     FourierFacet,
     GeneratorFacet,
     ItoToStratonovichNode,
+    PathSignatureNode,
     ProcessDualityCore,
     QuadraticCovariationNode,
+    RoughBergomiNode,
+    RoughKernelNode,
     SDEFacet,
+    SignatureKernelNode,
+    SignatureLinearPricerNode,
 )
+from spxa.geom import AffineConnection, FisherInformationMetric, GeodesicFlow
+from spxa.rough import FractionalKernel, FractionalRiccatiSolver, RoughBergomi
+from spxa.signature import PathSignature, SignatureAlgebra, SignatureKernel
 from spxa.zoo import (
     BatesModel,
     BrownianMotion,
@@ -632,6 +643,102 @@ def demo_dimension_14_algebraic_process_surgery():
     print(f"  > Doob h-Transform Conditioned Drift at x=[1, 2, 5] : {[round(d, 4) for d in bessel_drifts]}  (Theoretical: [1.0, 0.5, 0.2])")
 
 
+def demo_dimension_15_information_geometry_and_natural_gradient():
+    print_header(
+        "DIMENSION 15: Statistical Information Geometry & Natural Gradient Manifolds",
+        "Riemannian Fisher metric tensors, hyperbolic geodesic shooting, and natural gradients"
+    )
+    # 1. Exact Gaussian Fisher Metric
+    mu, sigma = 0.0, 1.5
+    g_fish = FisherInformationMetric.gaussian_fisher(mu=mu, sigma=sigma)
+
+    # 2. Rao Hyperbolic Geodesic Distance
+    p1, p2 = (0.0, 1.0), (0.0, 2.0)
+    d_exact = GeodesicFlow.gaussian_exact_rao_distance(p1, p2)
+
+    # 3. Natural Gradient Calibration on Ill-Conditioned Manifold
+    param_mu = ParameterNode(2.5, name="mu")
+    param_sigma = ParameterNode(3.5, name="sigma")
+    target = np.array([0.0, 1.0])
+    loss_fn = lambda p: float(0.5 * np.sum((p - target)**2))
+    metric_fn = lambda p: np.diag([2.0, 5.0])
+
+    calibrator = NaturalGradientCalibratorNode(
+        parameters=[param_mu, param_sigma],
+        loss_fn=loss_fn,
+        metric_fn=metric_fn,
+        learning_rate=1.5,
+        max_iter=50,
+        tol=1e-4,
+    )
+    res = calibrator.calibrate()
+
+    print("Statistical Manifold Curvature & Riemannian Optimization:")
+    print(f"  > Fisher Information Matrix g(mu={mu}, sigma={sigma}):\n{g_fish}")
+    print(f"  > Exact Rao Hyperbolic Distance d_R((0, 1), (0, 2)): {d_exact:.6f}  (sqrt(2)*log(2) = {np.sqrt(2.0)*np.log(2.0):.6f})")
+    print(f"  > Natural Gradient Calibration Converged in {res['iterations']} iterations: optimal {res['optimal_parameters'].round(4)}")
+    print("  => Riemannian metrics eliminate parameterization ravines by following probability manifold geodesics.")
+
+
+def demo_dimension_16_rough_paths_and_tensor_signatures():
+    print_header(
+        "DIMENSION 16: Rough Paths, Chen Signatures & Goursat Hyperbolic Kernel",
+        "Pathwise non-Markovian representation, shuffle algebra, and infinite-dimensional kernels"
+    )
+    # 1. Chen's Identity & Signature of 2D Spiral Path
+    t = np.linspace(0.0, 2.0 * np.pi, 100)
+    spiral_path = np.column_stack([t * np.cos(t), t * np.sin(t)])
+    sig_engine = PathSignature(depth=3)
+    chen_discrepancy = sig_engine.verify_chen_identity(spiral_path, split_idx=50)
+
+    # 2. Dimension Reduction via Log-Signature Free Lie Algebra
+    tensor_dim = PathSignature.signature_dimension(d=2, depth=3)
+    lie_dim = SignatureAlgebra.log_signature_dimension(d=2, depth=3)
+
+    # 3. Goursat PDE Infinite-Order Signature Kernel
+    path_a = np.column_stack([t, np.sin(t)])
+    path_b = np.column_stack([t, np.cos(t)])
+    kernel_val = SignatureKernel.evaluate(path_a, path_b)
+    dist_val = SignatureKernel.normalized_distance(path_a, path_b)
+
+    print("Rough Path Tensor Signatures & Kernel Embeddings:")
+    print(f"  > Chen's Identity Verification Discrepancy ||S(0,T) - S(0,t) (x) S(t,T)||: {chen_discrepancy:.2e}")
+    print(f"  > Dimension Compression: Full Tensor Dim = {tensor_dim} -> Log-Signature Lie Dim = {lie_dim} ({100*(1-lie_dim/tensor_dim):.1f}% reduction)")
+    print(f"  > Goursat PDE Infinite-Order Kernel K(X, Y)  : {kernel_val:.4f}")
+    print(f"  > Pathwise Signature Hilbert Distance d(X, Y) : {dist_val:.4f}")
+    print("  => Signature kernels capture all pathwise non-Markovian geometric features in polynomial O(N*M) time.")
+
+
+def demo_dimension_17_rough_volatility_and_short_time_skew():
+    print_header(
+        "DIMENSION 17: Rough Volatility, Volterra SDEs & Skew Blow-Up",
+        "Sub-diffusive Hurst exponent H < 1/2, rough Bergomi, and fractional Riccati solver"
+    )
+    # 1. Rough Bergomi Model with Hurst H = 0.1
+    h_rough = 0.1
+    rbergomi = RoughBergomi(hurst=h_rough, eta=1.9, rho=-0.7, xi0=0.04, s0=100.0)
+
+    # Short-time at-the-money implied volatility skew
+    tau_ultra_short = 0.005  # ~1.8 days
+    tau_short = 0.05        # ~18 days
+    tau_long = 1.0          # 1 year
+    skew_ultra = rbergomi.theoretical_short_time_skew(tau_ultra_short)
+    skew_short = rbergomi.theoretical_short_time_skew(tau_short)
+    skew_long = rbergomi.theoretical_short_time_skew(tau_long)
+
+    # 2. Fractional Riccati Solver for Rough Heston CF
+    riccati = FractionalRiccatiSolver(hurst=h_rough, lambda_param=1.5, rho=-0.7, nu=0.3)
+    cf_val = riccati.rough_heston_char_func(u=1.0, t_mat=0.5, v0=0.04, theta=0.04, n_steps=50)
+
+    print(f"Rough Volatility Dynamics (Hurst Parameter H = {h_rough} < 0.5):")
+    print(f"  > ATM Implied Volatility Skew at Tau = {tau_ultra_short*365:.1f} days : {skew_ultra:.4f}")
+    print(f"  > ATM Implied Volatility Skew at Tau = {tau_short*365:.1f} days : {skew_short:.4f}")
+    print(f"  > ATM Implied Volatility Skew at Tau = 1 Year       : {skew_long:.4f}")
+    print(f"  > Power-Law Skew Ratio (Short / Long)               : {skew_ultra / skew_long:.2f}x blow-up")
+    print(f"  > Rough Heston Characteristic Function phi(u=1.0)   : {cf_val.real:.6f} + {cf_val.imag:.6f}i  (|phi| = {abs(cf_val):.4f})")
+    print("  => Rough volatility reproduces the empirical power-law skew slope tau^{H - 0.5} without jumps.")
+
+
 def main():
     print("=" * 78)
     print("  SPXA COMPUTATIONAL GRAPH ENGINE - LIVE ARCHITECTURAL DEPTH DEMO")
@@ -654,10 +761,13 @@ def main():
     demo_dimension_12_semimartingale_decomposition_and_algebra()
     demo_dimension_13_four_facet_duality_engine()
     demo_dimension_14_algebraic_process_surgery()
+    demo_dimension_15_information_geometry_and_natural_gradient()
+    demo_dimension_16_rough_paths_and_tensor_signatures()
+    demo_dimension_17_rough_volatility_and_short_time_skew()
 
     total_time = (time.perf_counter() - t_start) * 1000
     print("\n" + "=" * 78)
-    print(f"  ALL 14 DEPTH DIMENSIONS EXECUTED SUCCESSFULLY IN {total_time:.2f} ms")
+    print(f"  ALL 17 DEPTH DIMENSIONS EXECUTED SUCCESSFULLY IN {total_time:.2f} ms")
     print("=" * 78 + "\n")
 
 
