@@ -15,6 +15,12 @@ from spxa.morph.geodesic_morph import (
 )
 from spxa.morph.morphed_process import MorphedProcess
 from spxa.morph.triplet_morph import MorphedLevyMeasure, char_exp_morphed, morph_triplets
+from spxa.morph.wasserstein_morph import (
+    WassersteinMorphEngine,
+    WassersteinMorphedProcess,
+    bures_wasserstein_distance,
+    gaussian_displacement_interpolation,
+)
 from spxa.ops.morph import morph
 
 __all__ = [
@@ -26,6 +32,10 @@ __all__ = [
     "MorphedSDEDiffusion",
     "GeodesicMorphEngine",
     "GeodesicMorphedProcess",
+    "WassersteinMorphEngine",
+    "WassersteinMorphedProcess",
+    "bures_wasserstein_distance",
+    "gaussian_displacement_interpolation",
     "gaussian_geodesic_path",
     "gaussian_rao_distance",
     "morph_triplets",
