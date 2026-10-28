@@ -5,7 +5,6 @@ Performance benchmarks for spxa stochastic processes and computational core.
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from spxa import (
     BrownianMotion,
