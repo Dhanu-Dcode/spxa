@@ -93,6 +93,7 @@ from spxa.graph.math_ops import (
     TransposeNode,
 )
 from spxa.graph.measure_change import EsscherTransformNode, GirsanovTransformNode
+from spxa.graph.morph import MorphNode, QuadraticVarianceMorphNode
 from spxa.graph.multiasset import CorrelatedDiffusionNode, MultiAssetBasketNode
 from spxa.graph.node import ConstantNode, Node, NodeType, OperatorNode, OutputNode, ParameterNode
 from spxa.graph.pricing.greeks import compute_graph_greeks
@@ -289,6 +290,8 @@ __all__ = [
     "ItoTransformNode",
     "GirsanovTransformNode",
     "EsscherTransformNode",
+    "MorphNode",
+    "QuadraticVarianceMorphNode",
     "BochnerSubordinationNode",
     "AutomatedCumulantNode",
     "InfinitesimalGeneratorNode",
