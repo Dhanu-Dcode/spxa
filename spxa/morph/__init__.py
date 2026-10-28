@@ -29,6 +29,7 @@ from spxa.morph.geodesic_morph import (
     gaussian_rao_distance,
 )
 from spxa.morph.morphed_process import MorphedProcess
+from spxa.morph.surface_morph import MorphedVolatilitySurface, SurfaceMorphEngine
 from spxa.morph.triplet_morph import MorphedLevyMeasure, char_exp_morphed, morph_triplets
 from spxa.morph.wasserstein_morph import (
     WassersteinMorphEngine,
@@ -49,6 +50,8 @@ __all__ = [
     "GeodesicMorphedProcess",
     "WassersteinMorphEngine",
     "WassersteinMorphedProcess",
+    "SurfaceMorphEngine",
+    "MorphedVolatilitySurface",
     "MorphSchedule",
     "LinearSchedule",
     "CosineSchedule",
