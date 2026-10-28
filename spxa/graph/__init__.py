@@ -117,7 +117,22 @@ from spxa.graph.semimartingale import (
     StochasticIntegralNode,
     StochasticProductNode,
 )
+from spxa.graph.geom import (
+    FisherInformationMetricNode,
+    NaturalGradientCalibratorNode,
+)
+from spxa.graph.rough import (
+    FractionalRiccatiNode,
+    RoughBergomiNode,
+    RoughKernelNode,
+)
 from spxa.graph.serialization import GraphSerializer
+from spxa.graph.signature import (
+    ExpectedSignatureNode,
+    PathSignatureNode,
+    SignatureKernelNode,
+    SignatureLinearPricerNode,
+)
 from spxa.graph.stochastic_nodes import (
     BrownianMotionNode,
     CEVNode,
@@ -303,4 +318,16 @@ __all__ = [
     "DoobHTransformNode",
     "StratonovichToItoNode",
     "ItoToStratonovichNode",
+    # Information Geometry & Manifolds
+    "FisherInformationMetricNode",
+    "NaturalGradientCalibratorNode",
+    # Rough Paths & Tensor Signatures
+    "PathSignatureNode",
+    "SignatureKernelNode",
+    "ExpectedSignatureNode",
+    "SignatureLinearPricerNode",
+    # Rough Volatility & Volterra SDEs
+    "RoughKernelNode",
+    "RoughBergomiNode",
+    "FractionalRiccatiNode",
 ]
