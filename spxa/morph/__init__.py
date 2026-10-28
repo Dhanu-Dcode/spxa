@@ -5,6 +5,11 @@ Provides continuous homotopies, information-geometric geodesics, and
 Wasserstein displacement interpolations between stochastic processes.
 """
 
+from spxa.morph.barycenter import (
+    MixtureLevyMeasure,
+    ModelBarycenter,
+    bures_wasserstein_barycenter_cov,
+)
 from spxa.morph.base import AbstractMorphEngine, MorphMethod
 from spxa.morph.dynamic_morph import (
     CosineSchedule,
@@ -15,6 +20,7 @@ from spxa.morph.dynamic_morph import (
     SmoothstepSchedule,
     StateThresholdSchedule,
 )
+from spxa.morph.ensemble import ModelEnsemble
 from spxa.morph.generator_morph import GeneratorMorphEngine, MorphedSDEDiffusion
 from spxa.morph.geodesic_morph import (
     GeodesicMorphEngine,
@@ -50,6 +56,10 @@ __all__ = [
     "SigmoidalSchedule",
     "StateThresholdSchedule",
     "DynamicMorphedProcess",
+    "ModelBarycenter",
+    "ModelEnsemble",
+    "MixtureLevyMeasure",
+    "bures_wasserstein_barycenter_cov",
     "bures_wasserstein_distance",
     "gaussian_displacement_interpolation",
     "gaussian_geodesic_path",
