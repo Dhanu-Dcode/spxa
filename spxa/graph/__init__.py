@@ -47,6 +47,15 @@ from spxa.graph.char_nodes import (
     ProcessMomentNode,
 )
 from spxa.graph.compiler import EvaluationCache, GraphCompiler
+from spxa.graph.duality import (
+    DensityFacet,
+    FourierFacet,
+    GeneratorFacet,
+    ProcessDualityCore,
+    SDEFacet,
+    compile_levy_khintchine,
+    triplet_to_fourier_facet,
+)
 from spxa.graph.generator import (
     InfinitesimalGeneratorNode,
     MartingaleVerificationNode,
@@ -101,6 +110,13 @@ from spxa.graph.pricing.pricer_graph import (
 from spxa.graph.risk.risk_graph import PortfolioRiskGraph
 from spxa.graph.risk.scenario_graph import ScenarioShockNode, apply_macro_scenario
 from spxa.graph.risk.xva_graph import GraphCVANode, NettingExposureNode
+from spxa.graph.semimartingale import (
+    QuadraticCovariationNode,
+    SemimartingaleComponents,
+    SemimartingaleWire,
+    StochasticIntegralNode,
+    StochasticProductNode,
+)
 from spxa.graph.serialization import GraphSerializer
 from spxa.graph.stochastic_nodes import (
     BrownianMotionNode,
@@ -118,6 +134,14 @@ from spxa.graph.stochastic_nodes import (
 )
 from spxa.graph.subgraph import SubgraphNode
 from spxa.graph.subordination import AutomatedCumulantNode, BochnerSubordinationNode
+from spxa.graph.surgery import (
+    DoleansExponentialNode,
+    DoobHTransformNode,
+    ItoToStratonovichNode,
+    StochasticLogarithmNode,
+    StratonovichToItoNode,
+    TanakaDecompositionNode,
+)
 from spxa.graph.types import (
     BackendType,
     DType,
@@ -258,4 +282,25 @@ __all__ = [
     "SpeedDensityNode",
     "FellerBoundaryClassifierNode",
     "MalliavinBismutDeltaNode",
+    # Semimartingale Decomposition Wires & Algebra
+    "SemimartingaleWire",
+    "SemimartingaleComponents",
+    "QuadraticCovariationNode",
+    "StochasticProductNode",
+    "StochasticIntegralNode",
+    # Four-Facet Process Duality Engine
+    "SDEFacet",
+    "GeneratorFacet",
+    "FourierFacet",
+    "DensityFacet",
+    "ProcessDualityCore",
+    "compile_levy_khintchine",
+    "triplet_to_fourier_facet",
+    # Algebraic Process Surgery Operators
+    "DoleansExponentialNode",
+    "StochasticLogarithmNode",
+    "TanakaDecompositionNode",
+    "DoobHTransformNode",
+    "StratonovichToItoNode",
+    "ItoToStratonovichNode",
 ]
