@@ -3,9 +3,11 @@
 from spxa.zoo.beyond.fbm import FractionalBrownianMotion
 from spxa.zoo.beyond.hawkes import HawkesProcess
 from spxa.zoo.beyond.ou_levy import OULevy
+from spxa.zoo.beyond.semi_markov import SemiMarkovProcess
 
 __all__ = [
     "FractionalBrownianMotion",
     "HawkesProcess",
     "OULevy",
+    "SemiMarkovProcess",
 ]

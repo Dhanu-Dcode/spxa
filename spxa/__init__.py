@@ -7,18 +7,19 @@ Stochastic processes as first-class algebraic objects.
 __version__ = "1.0.0"
 
 from spxa.core import (
-    ExactnessLevel,
     ExactnessError,
-    SpxaDegradationWarning,
+    ExactnessLevel,
     LevyMeasure,
     LevyTriplet,
     Process,
     ProcessProperties,
+    SpxaDegradationWarning,
 )
 from spxa.zoo import (
+    CGMY,
+    NIG,
     AlphaStable,
     BrownianMotion,
-    CGMY,
     CorrelatedLevy,
     FractionalBrownianMotion,
     GammaProcess,
@@ -28,9 +29,9 @@ from spxa.zoo import (
     MultivariateBrownianMotion,
     MultivariateLevyTriplet,
     NegativeBinomialProcess,
-    NIG,
     OULevy,
     PoissonProcess,
+    SemiMarkovProcess,
     TemperedStable,
     VarianceGamma,
     correlated_brownian_motion,
@@ -61,6 +62,7 @@ __all__ = [
     "NIG",
     "OULevy",
     "PoissonProcess",
+    "SemiMarkovProcess",
     "TemperedStable",
     "VarianceGamma",
     "correlated_brownian_motion",
