@@ -4,7 +4,7 @@ Rough Bergomi (rBergomi) stochastic volatility model with power-law short-time s
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Dict, Optional
 
 import numpy as np
 
@@ -44,7 +44,7 @@ class RoughBergomi:
         if tau <= 0.0:
             return 0.0
         c = (abs(self.rho) * self.eta / 2.0) * (np.sqrt(2.0 * self.H) / (self.H + 0.5))
-        return float(c * (tau**(self.H - 0.5)))
+        return float(c * (tau ** (self.H - 0.5)))
 
     def simulate_paths(
         self,
@@ -59,13 +59,15 @@ class RoughBergomi:
         time_grid = np.linspace(0.0, t_mat, n_steps + 1)
 
         # 1. Simulate fractional driver W_tilde_H using Cholesky
-        fbm_res = self.kernel.sample_fbm_cholesky(t_mat=t_mat, n_steps=n_steps, n_paths=n_paths, seed=seed)
+        fbm_res = self.kernel.sample_fbm_cholesky(
+            t_mat=t_mat, n_steps=n_steps, n_paths=n_paths, seed=seed
+        )
         # Note: B_t^H ~ sqrt(2H)/(H+1/2) W_tilde_H scaling
         w_tilde = fbm_res["paths"]  # Shape (n_paths, n_steps + 1)
 
         # 2. Instantaneous variance paths
         # v_t = xi0 * exp(eta * sqrt(2H) * W_tilde_t - 0.5 * eta^2 * t^{2H})
-        t_pow = time_grid**(2.0 * self.H)
+        t_pow = time_grid ** (2.0 * self.H)
         exponent = self.eta * np.sqrt(2.0 * self.H) * w_tilde - 0.5 * (self.eta**2) * t_pow
         v_paths = self.xi0 * np.exp(exponent)
 

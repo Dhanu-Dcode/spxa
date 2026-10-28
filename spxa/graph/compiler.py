@@ -4,12 +4,11 @@ Graph compilation, optimization passes, constant folding, and common subexpressi
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, Optional, Tuple
 
-import numpy as np
 
 from spxa.graph.graph import ComputationalGraph
-from spxa.graph.node import ConstantNode, Node, NodeType, OperatorNode, OutputNode, ParameterNode
+from spxa.graph.node import ConstantNode, Node, OperatorNode, OutputNode
 
 
 class GraphCompiler:
@@ -50,9 +49,7 @@ class GraphCompiler:
         for node in order:
             if isinstance(node, OperatorNode) and not isinstance(node, OutputNode):
                 input_keys = tuple(
-                    ("const", float(inp.value))
-                    if isinstance(inp, ConstantNode)
-                    else inp.node_id
+                    ("const", float(inp.value)) if isinstance(inp, ConstantNode) else inp.node_id
                     for inp in node.inputs
                 )
                 key = (node.__class__.__name__, input_keys)

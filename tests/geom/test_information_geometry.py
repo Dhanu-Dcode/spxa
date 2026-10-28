@@ -3,13 +3,11 @@ Tests for information geometry, Fisher information metrics, connections, and Rie
 """
 
 import numpy as np
-import pytest
 
 from spxa.geom.connection import AffineConnection
 from spxa.geom.fisher import FisherInformationMetric
 from spxa.geom.geodesic import GeodesicFlow
 from spxa.graph.geom.fisher_node import (
-    FisherInformationMetricNode,
     NaturalGradientCalibratorNode,
 )
 from spxa.graph.node import ParameterNode
@@ -36,13 +34,13 @@ def test_ou_transition_fisher_matrix_and_numerical_agreement():
     # Numerical verification via negative log-likelihood Hessian
     def neg_log_lik(p):
         th, m_u, sig = p
-        exp_neg = np.exp(-th * dt)
-        mean_cond = x0 * exp_neg + m_u * (1.0 - exp_neg)
         var_cond = (sig**2 / (2.0 * th)) * (1.0 - np.exp(-2.0 * th * dt))
         # At x = mean_cond: -log p = 0.5 * log(2*pi*var)
         return 0.5 * np.log(2.0 * np.pi * var_cond)
 
-    g_num = FisherInformationMetric.numerical_hessian_fisher(neg_log_lik, np.array([theta, mu, sigma]), eps=1e-4)
+    g_num = FisherInformationMetric.numerical_hessian_fisher(
+        neg_log_lik, np.array([theta, mu, sigma]), eps=1e-4
+    )
     assert g_num.shape == (3, 3)
 
 
@@ -92,8 +90,9 @@ def test_natural_gradient_calibrator_convergence():
 
     # Quadratic loss around target (0.0, 1.0)
     target = np.array([0.0, 1.0])
+
     def loss_fn(p):
-        return float(0.5 * np.sum((p - target)**2))
+        return float(0.5 * np.sum((p - target) ** 2))
 
     def metric_fn(p):
         # Fisher metric with ill-conditioned scaling

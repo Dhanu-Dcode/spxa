@@ -4,14 +4,12 @@ Implementation layer adapting spxa.diff DifferentiableSDE models to Graph nodes.
 
 from __future__ import annotations
 
-import inspect
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 
 import numpy as np
 
 from spxa.diff.sde_base import DifferentiableSDE
 from spxa.graph.adapters.registry import GraphAdapterRegistry
-from spxa.graph.graph import ComputationalGraph
 from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
 from spxa.graph.stochastic_nodes import StochasticProcessNode
 from spxa.graph.types import DType
@@ -89,7 +87,9 @@ class DifferentiableSDEAdapter(StochasticProcessNode):
             output_descriptor=PortDescriptor(name="diffusion", dtype=DType.FLOAT64),
         )
 
-    def euler_step_node(self, x: Node, dt: Node, dW: Node, t: Optional[Node] = None) -> OperatorNode:
+    def euler_step_node(
+        self, x: Node, dt: Node, dW: Node, t: Optional[Node] = None
+    ) -> OperatorNode:
         r"""Construct graph node for one Euler-Maruyama discretization step."""
         t_node = t or ConstantNode(0.0, name="t0")
 

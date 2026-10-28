@@ -4,7 +4,7 @@ Numerical execution backend for Fourier inversion, quadrature, and numerical roo
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 from scipy.integrate import quad

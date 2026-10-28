@@ -4,11 +4,11 @@ Computational graph nodes for rough volatility, fractional kernels, and non-Mark
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Dict, Optional
 
 import numpy as np
 
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
+from spxa.graph.node import OperatorNode, PortDescriptor
 from spxa.graph.types import DType
 from spxa.rough.kernel import FractionalKernel
 from spxa.rough.rbergomi import RoughBergomi
@@ -96,7 +96,9 @@ class FractionalRiccatiNode(OperatorNode):
             op_fn=self.eval_char_func,
             inputs=[],
             name=name or f"FracRiccati_H_{hurst}",
-            output_descriptor=PortDescriptor(name="characteristic_function", dtype=DType.COMPLEX128),
+            output_descriptor=PortDescriptor(
+                name="characteristic_function", dtype=DType.COMPLEX128
+            ),
         )
 
     def eval_char_func(
@@ -107,4 +109,6 @@ class FractionalRiccatiNode(OperatorNode):
         theta: float = 0.04,
         n_steps: int = 100,
     ) -> complex:
-        return self.solver.rough_heston_char_func(u, t_mat=t_mat, v0=v0, theta=theta, n_steps=n_steps)
+        return self.solver.rough_heston_char_func(
+            u, t_mat=t_mat, v0=v0, theta=theta, n_steps=n_steps
+        )

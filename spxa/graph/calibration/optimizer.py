@@ -4,12 +4,12 @@ Graph-based model calibration and numerical optimization with autodiff gradients
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from scipy.optimize import minimize
 
-from spxa.graph.autodiff.tape import GradientTape, value_and_grad
+from spxa.graph.autodiff.tape import GradientTape
 from spxa.graph.graph import ComputationalGraph
 from spxa.graph.node import ParameterNode
 
@@ -37,7 +37,6 @@ class GraphCalibrator:
             param_dict = self.graph.get_parameters()
             parameters = [p for p in param_dict.values() if p.is_trainable]
 
-        param_names = [p.name for p in parameters]
         x0 = np.array([p.value for p in parameters])
 
         # Bounds extraction

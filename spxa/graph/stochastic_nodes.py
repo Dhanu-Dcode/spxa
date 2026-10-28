@@ -4,7 +4,7 @@ Stochastic process representation nodes for computational graphs.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 
@@ -105,7 +105,13 @@ class GeometricBrownianMotionNode(StochasticProcessNode):
         sigma: Union[float, Node],
         name: str = "GBM",
     ) -> None:
-        s0_node = s0 if isinstance(s0, Node) else ParameterNode(s0, f"{name}_s0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        s0_node = (
+            s0
+            if isinstance(s0, Node)
+            else ParameterNode(
+                s0, f"{name}_s0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE)
+            )
+        )
         mu_node = mu if isinstance(mu, Node) else ParameterNode(mu, f"{name}_mu")
         sigma_node = (
             sigma
@@ -144,9 +150,25 @@ class OrnsteinUhlenbeckNode(StochasticProcessNode):
         x0: Union[float, Node] = 0.0,
         name: str = "OU",
     ) -> None:
-        kappa_n = kappa if isinstance(kappa, Node) else ParameterNode(kappa, f"{name}_kappa", bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE))
+        kappa_n = (
+            kappa
+            if isinstance(kappa, Node)
+            else ParameterNode(
+                kappa,
+                f"{name}_kappa",
+                bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE),
+            )
+        )
         theta_n = theta if isinstance(theta, Node) else ParameterNode(theta, f"{name}_theta")
-        sigma_n = sigma if isinstance(sigma, Node) else ParameterNode(sigma, f"{name}_sigma", bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE))
+        sigma_n = (
+            sigma
+            if isinstance(sigma, Node)
+            else ParameterNode(
+                sigma,
+                f"{name}_sigma",
+                bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE),
+            )
+        )
         x0_n = x0 if isinstance(x0, Node) else ConstantNode(x0, f"{name}_x0")
         super().__init__(
             name=name,
@@ -191,9 +213,33 @@ class CIRNode(StochasticProcessNode):
         r0: Union[float, Node] = 0.04,
         name: str = "CIR",
     ) -> None:
-        kappa_n = kappa if isinstance(kappa, Node) else ParameterNode(kappa, f"{name}_kappa", bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE))
-        theta_n = theta if isinstance(theta, Node) else ParameterNode(theta, f"{name}_theta", bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE))
-        sigma_n = sigma if isinstance(sigma, Node) else ParameterNode(sigma, f"{name}_sigma", bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE))
+        kappa_n = (
+            kappa
+            if isinstance(kappa, Node)
+            else ParameterNode(
+                kappa,
+                f"{name}_kappa",
+                bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE),
+            )
+        )
+        theta_n = (
+            theta
+            if isinstance(theta, Node)
+            else ParameterNode(
+                theta,
+                f"{name}_theta",
+                bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE),
+            )
+        )
+        sigma_n = (
+            sigma
+            if isinstance(sigma, Node)
+            else ParameterNode(
+                sigma,
+                f"{name}_sigma",
+                bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE),
+            )
+        )
         r0_n = r0 if isinstance(r0, Node) else ConstantNode(r0, f"{name}_r0")
         super().__init__(
             name=name,
@@ -231,10 +277,32 @@ class CEVNode(StochasticProcessNode):
         gamma: Union[float, Node],
         name: str = "CEV",
     ) -> None:
-        s0_n = s0 if isinstance(s0, Node) else ParameterNode(s0, f"{name}_s0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        s0_n = (
+            s0
+            if isinstance(s0, Node)
+            else ParameterNode(
+                s0, f"{name}_s0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE)
+            )
+        )
         mu_n = mu if isinstance(mu, Node) else ParameterNode(mu, f"{name}_mu")
-        sigma_n = sigma if isinstance(sigma, Node) else ParameterNode(sigma, f"{name}_sigma", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
-        gamma_n = gamma if isinstance(gamma, Node) else ParameterNode(gamma, f"{name}_gamma", bounds=ParameterBounds(lower=0.0, domain=DomainType.NON_NEGATIVE))
+        sigma_n = (
+            sigma
+            if isinstance(sigma, Node)
+            else ParameterNode(
+                sigma,
+                f"{name}_sigma",
+                bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE),
+            )
+        )
+        gamma_n = (
+            gamma
+            if isinstance(gamma, Node)
+            else ParameterNode(
+                gamma,
+                f"{name}_gamma",
+                bounds=ParameterBounds(lower=0.0, domain=DomainType.NON_NEGATIVE),
+            )
+        )
         super().__init__(
             name=name,
             state_dim=1,
@@ -272,13 +340,57 @@ class HestonNode(StochasticProcessNode):
         rho: Union[float, Node],
         name: str = "Heston",
     ) -> None:
-        s0_n = s0 if isinstance(s0, Node) else ParameterNode(s0, f"{name}_s0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
-        v0_n = v0 if isinstance(v0, Node) else ParameterNode(v0, f"{name}_v0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        s0_n = (
+            s0
+            if isinstance(s0, Node)
+            else ParameterNode(
+                s0, f"{name}_s0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE)
+            )
+        )
+        v0_n = (
+            v0
+            if isinstance(v0, Node)
+            else ParameterNode(
+                v0, f"{name}_v0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE)
+            )
+        )
         mu_n = mu if isinstance(mu, Node) else ParameterNode(mu, f"{name}_mu")
-        kappa_n = kappa if isinstance(kappa, Node) else ParameterNode(kappa, f"{name}_kappa", bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE))
-        theta_n = theta if isinstance(theta, Node) else ParameterNode(theta, f"{name}_theta", bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE))
-        xi_n = xi if isinstance(xi, Node) else ParameterNode(xi, f"{name}_xi", bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE))
-        rho_n = rho if isinstance(rho, Node) else ParameterNode(rho, f"{name}_rho", bounds=ParameterBounds(lower=-1.0, upper=1.0, domain=DomainType.CORRELATION))
+        kappa_n = (
+            kappa
+            if isinstance(kappa, Node)
+            else ParameterNode(
+                kappa,
+                f"{name}_kappa",
+                bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE),
+            )
+        )
+        theta_n = (
+            theta
+            if isinstance(theta, Node)
+            else ParameterNode(
+                theta,
+                f"{name}_theta",
+                bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE),
+            )
+        )
+        xi_n = (
+            xi
+            if isinstance(xi, Node)
+            else ParameterNode(
+                xi,
+                f"{name}_xi",
+                bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE),
+            )
+        )
+        rho_n = (
+            rho
+            if isinstance(rho, Node)
+            else ParameterNode(
+                rho,
+                f"{name}_rho",
+                bounds=ParameterBounds(lower=-1.0, upper=1.0, domain=DomainType.CORRELATION),
+            )
+        )
         super().__init__(
             name=name,
             state_dim=2,
@@ -309,10 +421,12 @@ class HestonNode(StochasticProcessNode):
         # Cholesky of [[1, rho], [rho, 1]] is [[1, 0], [rho, sqrt(1-rho^2)]]
         sig_s = np.sqrt(v) * s
         sig_v = xi * np.sqrt(v)
-        return np.array([
-            [sig_s, 0.0],
-            [sig_v * rho, sig_v * np.sqrt(max(1.0 - rho**2, 0.0))],
-        ])
+        return np.array(
+            [
+                [sig_s, 0.0],
+                [sig_v * rho, sig_v * np.sqrt(max(1.0 - rho**2, 0.0))],
+            ]
+        )
 
 
 class SABRNode(StochasticProcessNode):
@@ -327,11 +441,47 @@ class SABRNode(StochasticProcessNode):
         rho: Union[float, Node],
         name: str = "SABR",
     ) -> None:
-        f0_n = f0 if isinstance(f0, Node) else ParameterNode(f0, f"{name}_f0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
-        alpha0_n = alpha0 if isinstance(alpha0, Node) else ParameterNode(alpha0, f"{name}_alpha0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
-        beta_n = beta if isinstance(beta, Node) else ParameterNode(beta, f"{name}_beta", bounds=ParameterBounds(lower=0.0, upper=1.0, domain=DomainType.UNIT_INTERVAL))
-        nu_n = nu if isinstance(nu, Node) else ParameterNode(nu, f"{name}_nu", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
-        rho_n = rho if isinstance(rho, Node) else ParameterNode(rho, f"{name}_rho", bounds=ParameterBounds(lower=-1.0, upper=1.0, domain=DomainType.CORRELATION))
+        f0_n = (
+            f0
+            if isinstance(f0, Node)
+            else ParameterNode(
+                f0, f"{name}_f0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE)
+            )
+        )
+        alpha0_n = (
+            alpha0
+            if isinstance(alpha0, Node)
+            else ParameterNode(
+                alpha0,
+                f"{name}_alpha0",
+                bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE),
+            )
+        )
+        beta_n = (
+            beta
+            if isinstance(beta, Node)
+            else ParameterNode(
+                beta,
+                f"{name}_beta",
+                bounds=ParameterBounds(lower=0.0, upper=1.0, domain=DomainType.UNIT_INTERVAL),
+            )
+        )
+        nu_n = (
+            nu
+            if isinstance(nu, Node)
+            else ParameterNode(
+                nu, f"{name}_nu", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE)
+            )
+        )
+        rho_n = (
+            rho
+            if isinstance(rho, Node)
+            else ParameterNode(
+                rho,
+                f"{name}_rho",
+                bounds=ParameterBounds(lower=-1.0, upper=1.0, domain=DomainType.CORRELATION),
+            )
+        )
         super().__init__(
             name=name,
             state_dim=2,
@@ -354,18 +504,55 @@ class MertonJumpDiffusionNode(StochasticProcessNode):
         sigma_j: Union[float, Node],
         name: str = "Merton",
     ) -> None:
-        s0_n = s0 if isinstance(s0, Node) else ParameterNode(s0, f"{name}_s0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        s0_n = (
+            s0
+            if isinstance(s0, Node)
+            else ParameterNode(
+                s0, f"{name}_s0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE)
+            )
+        )
         mu_n = mu if isinstance(mu, Node) else ParameterNode(mu, f"{name}_mu")
-        sigma_n = sigma if isinstance(sigma, Node) else ParameterNode(sigma, f"{name}_sigma", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
-        lam_n = lam if isinstance(lam, Node) else ParameterNode(lam, f"{name}_lam", bounds=ParameterBounds(lower=0.0, domain=DomainType.NON_NEGATIVE))
+        sigma_n = (
+            sigma
+            if isinstance(sigma, Node)
+            else ParameterNode(
+                sigma,
+                f"{name}_sigma",
+                bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE),
+            )
+        )
+        lam_n = (
+            lam
+            if isinstance(lam, Node)
+            else ParameterNode(
+                lam,
+                f"{name}_lam",
+                bounds=ParameterBounds(lower=0.0, domain=DomainType.NON_NEGATIVE),
+            )
+        )
         mu_j_n = mu_j if isinstance(mu_j, Node) else ParameterNode(mu_j, f"{name}_mu_j")
-        sigma_j_n = sigma_j if isinstance(sigma_j, Node) else ParameterNode(sigma_j, f"{name}_sigma_j", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        sigma_j_n = (
+            sigma_j
+            if isinstance(sigma_j, Node)
+            else ParameterNode(
+                sigma_j,
+                f"{name}_sigma_j",
+                bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE),
+            )
+        )
         super().__init__(
             name=name,
             state_dim=1,
             noise_dim=1,
             process_type="jump_diffusion",
-            parameters={"s0": s0_n, "mu": mu_n, "sigma": sigma_n, "lam": lam_n, "mu_j": mu_j_n, "sigma_j": sigma_j_n},
+            parameters={
+                "s0": s0_n,
+                "mu": mu_n,
+                "sigma": sigma_n,
+                "lam": lam_n,
+                "mu_j": mu_j_n,
+                "sigma_j": sigma_j_n,
+            },
         )
 
 
@@ -383,19 +570,73 @@ class KouJumpDiffusionNode(StochasticProcessNode):
         eta2: Union[float, Node],
         name: str = "Kou",
     ) -> None:
-        s0_n = s0 if isinstance(s0, Node) else ParameterNode(s0, f"{name}_s0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
+        s0_n = (
+            s0
+            if isinstance(s0, Node)
+            else ParameterNode(
+                s0, f"{name}_s0", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE)
+            )
+        )
         mu_n = mu if isinstance(mu, Node) else ParameterNode(mu, f"{name}_mu")
-        sigma_n = sigma if isinstance(sigma, Node) else ParameterNode(sigma, f"{name}_sigma", bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE))
-        lam_n = lam if isinstance(lam, Node) else ParameterNode(lam, f"{name}_lam", bounds=ParameterBounds(lower=0.0, domain=DomainType.NON_NEGATIVE))
-        p_n = p_up if isinstance(p_up, Node) else ParameterNode(p_up, f"{name}_p", bounds=ParameterBounds(lower=0.0, upper=1.0, domain=DomainType.UNIT_INTERVAL))
-        eta1_n = eta1 if isinstance(eta1, Node) else ParameterNode(eta1, f"{name}_eta1", bounds=ParameterBounds(lower=1.0, strict_lower=True, domain=DomainType.POSITIVE))
-        eta2_n = eta2 if isinstance(eta2, Node) else ParameterNode(eta2, f"{name}_eta2", bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE))
+        sigma_n = (
+            sigma
+            if isinstance(sigma, Node)
+            else ParameterNode(
+                sigma,
+                f"{name}_sigma",
+                bounds=ParameterBounds(lower=0.0, domain=DomainType.POSITIVE),
+            )
+        )
+        lam_n = (
+            lam
+            if isinstance(lam, Node)
+            else ParameterNode(
+                lam,
+                f"{name}_lam",
+                bounds=ParameterBounds(lower=0.0, domain=DomainType.NON_NEGATIVE),
+            )
+        )
+        p_n = (
+            p_up
+            if isinstance(p_up, Node)
+            else ParameterNode(
+                p_up,
+                f"{name}_p",
+                bounds=ParameterBounds(lower=0.0, upper=1.0, domain=DomainType.UNIT_INTERVAL),
+            )
+        )
+        eta1_n = (
+            eta1
+            if isinstance(eta1, Node)
+            else ParameterNode(
+                eta1,
+                f"{name}_eta1",
+                bounds=ParameterBounds(lower=1.0, strict_lower=True, domain=DomainType.POSITIVE),
+            )
+        )
+        eta2_n = (
+            eta2
+            if isinstance(eta2, Node)
+            else ParameterNode(
+                eta2,
+                f"{name}_eta2",
+                bounds=ParameterBounds(lower=0.0, strict_lower=True, domain=DomainType.POSITIVE),
+            )
+        )
         super().__init__(
             name=name,
             state_dim=1,
             noise_dim=1,
             process_type="jump_diffusion",
-            parameters={"s0": s0_n, "mu": mu_n, "sigma": sigma_n, "lam": lam_n, "p": p_n, "eta1": eta1_n, "eta2": eta2_n},
+            parameters={
+                "s0": s0_n,
+                "mu": mu_n,
+                "sigma": sigma_n,
+                "lam": lam_n,
+                "p": p_n,
+                "eta1": eta1_n,
+                "eta2": eta2_n,
+            },
         )
 
 

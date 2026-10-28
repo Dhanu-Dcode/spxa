@@ -4,7 +4,7 @@ Riemannian geodesic shooting and Rao distance on statistical manifolds.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Tuple
 
 import numpy as np
 from scipy.integrate import solve_ivp
@@ -92,9 +92,11 @@ class GeodesicFlow:
         def shooting_loss(v: np.ndarray) -> float:
             exp_res = self.exponential_map(theta_0, v, t_span=1.0, n_steps=25)
             end_point = exp_res["target"]
-            return float(np.sum((end_point - theta_1)**2))
+            return float(np.sum((end_point - theta_1) ** 2))
 
-        opt = minimize(shooting_loss, v_init, method="Nelder-Mead", options={"maxiter": max_iter * 20})
+        opt = minimize(
+            shooting_loss, v_init, method="Nelder-Mead", options={"maxiter": max_iter * 20}
+        )
         v_opt = opt.x
 
         res = self.exponential_map(theta_0, v_opt, t_span=1.0, n_steps=50)
@@ -117,7 +119,6 @@ class GeodesicFlow:
         thetas = shoot["thetas"]
         velocities = shoot["velocities"]
         t_eval = shoot["t_eval"]
-        dt = t_eval[1] - t_eval[0]
 
         speeds = []
         for i in range(len(t_eval)):
@@ -146,8 +147,8 @@ class GeodesicFlow:
             raise ValueError("Standard deviations must be strictly positive")
 
         d_mu = mu1 - mu2
-        num = d_mu**2 + 2.0 * (sig1 - sig2)**2
-        den = d_mu**2 + 2.0 * (sig1 + sig2)**2
+        num = d_mu**2 + 2.0 * (sig1 - sig2) ** 2
+        den = d_mu**2 + 2.0 * (sig1 + sig2) ** 2
         delta = np.sqrt(num / den)
 
         # d_R = 2 * sqrt(2) * arctanh(delta) = sqrt(2) * log((1 + delta) / (1 - delta))

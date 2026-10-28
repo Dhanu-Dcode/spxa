@@ -3,9 +3,8 @@ Tests for algebraic process surgery operators: Doléans, Tanaka local time, Doob
 """
 
 import numpy as np
-import pytest
 
-from spxa.graph import ComputationalGraph, ConstantNode
+from spxa.graph import ConstantNode
 from spxa.graph.semimartingale import SemimartingaleWire
 from spxa.graph.surgery import (
     DoleansExponentialNode,
@@ -36,8 +35,6 @@ def test_doleans_exponential_and_stochastic_logarithm():
     z_node = ConstantNode(z_paths)
     log_node = StochasticLogarithmNode(z_paths_node=z_node)
     recovered_x = log_node.forward(z_paths)
-    # Check that increments match
-    dx_sim = res["qv_paths"]
     assert recovered_x.shape == z_paths.shape
 
 
@@ -71,8 +68,12 @@ def test_stratonovich_to_ito_roundtrip():
     # For Geometric Brownian Motion: sigma(x) = sigma * x
     # Correction = 0.5 * sigma * sigma' = 0.5 * (sigma*x) * sigma = 0.5 * sigma^2 * x
     sigma = 0.30
-    sig_fn = lambda x: sigma * x
-    b_strat_fn = lambda x: 0.05 * x
+
+    def sig_fn(x):
+        return sigma * x
+
+    def b_strat_fn(x):
+        return 0.05 * x
 
     x_node = ConstantNode(10.0)
     strat_to_ito = StratonovichToItoNode(b_strat_fn=b_strat_fn, sigma_fn=sig_fn, x_node=x_node)
@@ -83,6 +84,8 @@ def test_stratonovich_to_ito_roundtrip():
     assert np.isclose(b_ito_val, expected_ito, atol=1e-3)
 
     # Roundtrip back via ItoToStratonovichNode
-    ito_to_strat = ItoToStratonovichNode(b_ito_fn=lambda x: expected_ito, sigma_fn=sig_fn, x_node=x_node)
+    ito_to_strat = ItoToStratonovichNode(
+        b_ito_fn=lambda x: expected_ito, sigma_fn=sig_fn, x_node=x_node
+    )
     recovered_strat = ito_to_strat.forward(10.0)
     assert np.isclose(recovered_strat, 0.05 * 10.0, atol=1e-3)

@@ -1,16 +1,12 @@
 """Tests for graph-based calibration, loss nodes, constraints, and optimization."""
 
 import numpy as np
-import pytest
 
 from spxa.graph.calibration.constraints import FellerConstraintNode
 from spxa.graph.calibration.loss_nodes import MSELossNode
 from spxa.graph.calibration.optimizer import GraphCalibrator
 from spxa.graph.graph import ComputationalGraph
-from spxa.graph.math_ops import AddNode
 from spxa.graph.node import ConstantNode, ParameterNode
-from spxa.graph.pricing.pricer_graph import build_black_scholes_pricing_graph
-from spxa.graph.types import DomainType, ParameterBounds
 
 
 def test_linear_graph_calibration_recovering_parameters():

@@ -5,11 +5,11 @@ Stochastic measure changes: Girsanov drift shifts and Esscher Lévy transforms.
 from __future__ import annotations
 
 import inspect
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 import numpy as np
 
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
+from spxa.graph.node import Node, OperatorNode, ParameterNode, PortDescriptor
 from spxa.graph.stochastic_nodes import StochasticProcessNode
 from spxa.graph.types import DType
 
@@ -82,7 +82,9 @@ class GirsanovTransformNode(StochasticProcessNode):
         sqrt_dt = np.sqrt(dt)
         paths = np.empty((n_paths, n_steps + 1))
         # Initial state from base process
-        paths[:, 0] = self.base_process.params.get("s0", ParameterNode(100.0, name="default_s0")).value
+        paths[:, 0] = self.base_process.params.get(
+            "s0", ParameterNode(100.0, name="default_s0")
+        ).value
         t_grid = np.linspace(0.0, t, n_steps + 1)
 
         for step in range(n_steps):

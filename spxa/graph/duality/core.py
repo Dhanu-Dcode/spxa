@@ -5,7 +5,7 @@ Four-Facet Representation Duality Engine for Stochastic Processes.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Tuple
 
 import numpy as np
 from scipy.integrate import quad
@@ -113,7 +113,9 @@ class ProcessDualityCore:
             def stationary_density(x: float) -> float:
                 # Speed density m(x) = 1 / (sigma^2(x) * s(x))
                 # s(x) = exp(- int_0^x 2mu/sigma^2)
-                sub_int, _ = quad(lambda u: 2.0 * mu_f(u) / (sig_f(u)**2 + 1e-12), 0.0, x, limit=50)
+                sub_int, _ = quad(
+                    lambda u: 2.0 * mu_f(u) / (sig_f(u) ** 2 + 1e-12), 0.0, x, limit=50
+                )
                 s_val = np.exp(-sub_int)
                 sig = sig_f(x)
                 return float(1.0 / (sig**2 * s_val + 1e-12))

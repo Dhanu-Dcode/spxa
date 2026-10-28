@@ -4,14 +4,11 @@ Computational graph nodes for information geometry and Riemannian natural gradie
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 
-from spxa.geom.connection import AffineConnection
-from spxa.geom.fisher import FisherInformationMetric
-from spxa.geom.geodesic import GeodesicFlow
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
+from spxa.graph.node import OperatorNode, ParameterNode, PortDescriptor
 from spxa.graph.types import DType
 
 

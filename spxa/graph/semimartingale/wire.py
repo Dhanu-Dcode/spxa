@@ -5,22 +5,20 @@ Typed Semimartingale Wire: Processes as first-class algebraic edges in computati
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Optional
 
 import numpy as np
-
-from spxa.graph.node import ConstantNode, Node, ParameterNode
 
 
 @dataclass
 class SemimartingaleComponents:
     r"""Decomposition of semimartingale paths into canonical components :math:`X = X_0 + A + M^c + J`."""
 
-    total_paths: np.ndarray      # Shape (n_paths, n_steps + 1)
-    drift_A: np.ndarray          # Continuous finite variation drift A_t
-    martingale_M: np.ndarray     # Continuous local martingale M_t^c
-    jumps_J: np.ndarray          # Pure jump process J_t
-    time_grid: np.ndarray        # Time points t_0, ..., t_N
+    total_paths: np.ndarray  # Shape (n_paths, n_steps + 1)
+    drift_A: np.ndarray  # Continuous finite variation drift A_t
+    martingale_M: np.ndarray  # Continuous local martingale M_t^c
+    jumps_J: np.ndarray  # Pure jump process J_t
+    time_grid: np.ndarray  # Time points t_0, ..., t_N
 
 
 class SemimartingaleWire:

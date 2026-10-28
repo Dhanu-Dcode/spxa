@@ -4,11 +4,11 @@ Multi-asset basket options and correlated diffusion graph nodes.
 
 from __future__ import annotations
 
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Union
 
 import numpy as np
 
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
+from spxa.graph.node import Node, OperatorNode, PortDescriptor
 from spxa.graph.types import DType
 
 

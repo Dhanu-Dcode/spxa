@@ -4,12 +4,11 @@ Derivative payoff nodes for graph-based pricing and risk engines.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Optional
 
 import numpy as np
 
-from spxa.graph.node import Node, NodeType, OperatorNode, PortDescriptor
-from spxa.graph.types import DType
+from spxa.graph.node import Node, OperatorNode
 
 
 class EuropeanCallPayoffNode(OperatorNode):
@@ -58,7 +57,9 @@ class AsianPayoffNode(OperatorNode):
 
     def __init__(self, path_node: Node, strike: Node, name: Optional[str] = None) -> None:
         super().__init__(
-            op_fn=lambda p, k: np.maximum(np.mean(np.asarray(p, dtype=float), axis=-1) - float(k), 0.0),
+            op_fn=lambda p, k: np.maximum(
+                np.mean(np.asarray(p, dtype=float), axis=-1) - float(k), 0.0
+            ),
             inputs=[path_node, strike],
             name=name or "AsianPayoff",
         )

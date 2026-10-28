@@ -1,13 +1,11 @@
 """Tests for graph execution backends (Analytical, Numerical, Simulation, Accelerated)."""
 
 import numpy as np
-import pytest
 from scipy.stats import norm
 
 from spxa.graph.backends import (
     AcceleratedBackend,
     AnalyticalBackend,
-    ExecutionRouter,
     NumericalBackend,
     SimulationBackend,
 )

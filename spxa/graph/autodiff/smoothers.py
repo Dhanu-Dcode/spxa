@@ -57,7 +57,9 @@ class SoftplusNode(OperatorNode):
 
         def softplus_fn(a: Any) -> Any:
             arr = self.k * np.asarray(a, dtype=float)
-            return np.where(arr > 30.0, arr / self.k, np.log1p(np.exp(np.clip(arr, -50.0, 30.0))) / self.k)
+            return np.where(
+                arr > 30.0, arr / self.k, np.log1p(np.exp(np.clip(arr, -50.0, 30.0))) / self.k
+            )
 
         def softplus_vjp(grad_out: Any, a: Any) -> Any:
             arr = self.k * np.asarray(a, dtype=float)

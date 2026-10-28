@@ -4,8 +4,7 @@ Universal Graph Adapter Registry and to_graph dispatcher.
 
 from __future__ import annotations
 
-import inspect
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, Optional, Type, Union
 
 from spxa.graph.graph import ComputationalGraph
 from spxa.graph.node import Node
@@ -35,7 +34,9 @@ class GraphAdapterRegistry:
             return cls._adapters[obj_cls]
         # Inheritance match (MRO order)
         for registered_cls, adapter_fn in cls._adapters.items():
-            if isinstance(obj, registered_cls) or (isinstance(obj, type) and issubclass(obj, registered_cls)):
+            if isinstance(obj, registered_cls) or (
+                isinstance(obj, type) and issubclass(obj, registered_cls)
+            ):
                 return adapter_fn
         return None
 

@@ -4,11 +4,9 @@ Type definitions, domain constraints, and descriptors for computational graphs.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple, Union
-
-import numpy as np
+from typing import Optional, Tuple
 
 
 class DType(str, Enum):

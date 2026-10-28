@@ -5,12 +5,12 @@ Graph introspection, profiling telemetry, and visual DOT export.
 from __future__ import annotations
 
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
 from spxa.graph.graph import ComputationalGraph
-from spxa.graph.node import ConstantNode, Node, NodeType, OperatorNode, OutputNode, ParameterNode
+from spxa.graph.node import ConstantNode, Node, NodeType, OperatorNode, ParameterNode
 
 
 def graph_summary(graph: ComputationalGraph) -> str:
@@ -39,7 +39,9 @@ def graph_summary(graph: ComputationalGraph) -> str:
         elif isinstance(node, OperatorNode):
             val_info = node.__class__.__name__
 
-        lines.append(f"{node.node_id:<12} | {node.name[:24]:<24} | {n_type:<12} | {inps:<14} | {val_info}")
+        lines.append(
+            f"{node.node_id:<12} | {node.name[:24]:<24} | {n_type:<12} | {inps:<14} | {val_info}"
+        )
 
     lines.append("=" * 85)
     return "\n".join(lines)
@@ -49,7 +51,7 @@ def to_dot(graph: ComputationalGraph) -> str:
     r"""Generate Graphviz DOT format representation of the graph for visual rendering."""
     lines: List[str] = [
         f'digraph "{graph.name}" {{',
-        '  rankdir=LR;',
+        "  rankdir=LR;",
         '  node [fontname="Helvetica", fontsize=10, style=filled];',
         '  edge [color="#555555", arrowhead=vee];',
     ]
@@ -76,7 +78,9 @@ def to_dot(graph: ComputationalGraph) -> str:
 
     for out_name, out_node in graph.outputs.items():
         out_id = f"OUT_{out_name}"
-        lines.append(f'  "{out_id}" [label="{out_name}", shape=rarrow, fillcolor="#FCE4EC", color="#C2185B"];')
+        lines.append(
+            f'  "{out_id}" [label="{out_name}", shape=rarrow, fillcolor="#FCE4EC", color="#C2185B"];'
+        )
         lines.append(f'  "{out_node.node_id}" -> "{out_id}" [style=bold, color="#C2185B"];')
 
     lines.append("}")
@@ -131,14 +135,16 @@ class GraphProfiler:
             times = node_times[node.node_id]
             mean_time = float(np.mean(times)) if times else 0.0
             pct = (mean_time / avg_total * 100.0) if avg_total > 0 else 0.0
-            node_stats.append({
-                "node_id": node.node_id,
-                "name": node.name,
-                "type": node.node_type.name,
-                "mean_ms": mean_time,
-                "std_ms": float(np.std(times)) if times else 0.0,
-                "pct_of_total": pct,
-            })
+            node_stats.append(
+                {
+                    "node_id": node.node_id,
+                    "name": node.name,
+                    "type": node.node_type.name,
+                    "mean_ms": mean_time,
+                    "std_ms": float(np.std(times)) if times else 0.0,
+                    "pct_of_total": pct,
+                }
+            )
 
         # Sort descending by runtime
         node_stats.sort(key=lambda x: x["mean_ms"], reverse=True)

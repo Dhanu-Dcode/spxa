@@ -4,7 +4,7 @@ Lévy-Khintchine compiler: Triplet (b, sigma^2, nu) <-> Characteristic Exponent.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Optional
 
 import numpy as np
 from scipy.integrate import quad

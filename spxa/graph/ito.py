@@ -5,13 +5,12 @@ Automatic Itô Lemma and functional SDE derivation nodes on computational graphs
 from __future__ import annotations
 
 import inspect
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Optional, Tuple, Union
 
 import numpy as np
 
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
+from spxa.graph.node import ParameterNode
 from spxa.graph.stochastic_nodes import StochasticProcessNode
-from spxa.graph.types import DType
 
 
 def _call_drift(proc: StochasticProcessNode, x: float, t: float = 0.0) -> float:
@@ -48,7 +47,9 @@ class ItoTransformNode(StochasticProcessNode):
         self,
         base_process: StochasticProcessNode,
         func: Callable[[Union[float, np.ndarray], float], Union[float, np.ndarray]],
-        inv_func: Optional[Callable[[Union[float, np.ndarray], float], Union[float, np.ndarray]]] = None,
+        inv_func: Optional[
+            Callable[[Union[float, np.ndarray], float], Union[float, np.ndarray]]
+        ] = None,
         eps: float = 1e-5,
         name: Optional[str] = None,
     ) -> None:
@@ -105,7 +106,9 @@ class ItoTransformNode(StochasticProcessNode):
             dt = t / n_steps
             sqrt_dt = np.sqrt(dt)
             base_paths = np.empty((n_paths, n_steps + 1))
-            x0 = float(self.base_process.params.get("s0", ParameterNode(0.0, name="default_s0")).value)
+            x0 = float(
+                self.base_process.params.get("s0", ParameterNode(0.0, name="default_s0")).value
+            )
             base_paths[:, 0] = x0
             t_grid = np.linspace(0.0, t, n_steps + 1)
             for step in range(n_steps):

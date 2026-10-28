@@ -3,7 +3,6 @@ Tests for ProcessDualityCore and Four-Facet Representation Duality Engine.
 """
 
 import numpy as np
-import pytest
 
 from spxa.graph.duality import (
     GeneratorFacet,

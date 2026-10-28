@@ -5,7 +5,7 @@ Base graph Node abstractions, parameter nodes, and operator nodes.
 from __future__ import annotations
 
 import itertools
-from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence
 
 import numpy as np
 
@@ -69,42 +69,52 @@ class Node:
 
     def __add__(self, other: Any) -> Node:
         from spxa.graph.math_ops import AddNode
+
         return AddNode(self, self._ensure_node(other))
 
     def __radd__(self, other: Any) -> Node:
         from spxa.graph.math_ops import AddNode
+
         return AddNode(self._ensure_node(other), self)
 
     def __sub__(self, other: Any) -> Node:
         from spxa.graph.math_ops import SubNode
+
         return SubNode(self, self._ensure_node(other))
 
     def __rsub__(self, other: Any) -> Node:
         from spxa.graph.math_ops import SubNode
+
         return SubNode(self._ensure_node(other), self)
 
     def __mul__(self, other: Any) -> Node:
         from spxa.graph.math_ops import MulNode
+
         return MulNode(self, self._ensure_node(other))
 
     def __rmul__(self, other: Any) -> Node:
         from spxa.graph.math_ops import MulNode
+
         return MulNode(self._ensure_node(other), self)
 
     def __truediv__(self, other: Any) -> Node:
         from spxa.graph.math_ops import DivNode
+
         return DivNode(self, self._ensure_node(other))
 
     def __rtruediv__(self, other: Any) -> Node:
         from spxa.graph.math_ops import DivNode
+
         return DivNode(self._ensure_node(other), self)
 
     def __pow__(self, other: Any) -> Node:
         from spxa.graph.math_ops import PowNode
+
         return PowNode(self, self._ensure_node(other))
 
     def __neg__(self) -> Node:
         from spxa.graph.math_ops import NegNode
+
         return NegNode(self)
 
 
@@ -122,7 +132,9 @@ class ConstantNode(Node):
             node_type=NodeType.CONSTANT,
             output_descriptor=PortDescriptor(name="val", dtype=dtype),
         )
-        self.value = np.asarray(value) if isinstance(value, (list, tuple, np.ndarray)) else float(value)
+        self.value = (
+            np.asarray(value) if isinstance(value, (list, tuple, np.ndarray)) else float(value)
+        )
         self.is_constant = True
 
     def forward(self, *inputs: Any) -> Any:

@@ -4,12 +4,12 @@ Doléans exponential and stochastic logarithm operators on semimartingales.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional
 
 import numpy as np
 
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
-from spxa.graph.semimartingale.wire import SemimartingaleComponents, SemimartingaleWire
+from spxa.graph.node import Node, OperatorNode, PortDescriptor
+from spxa.graph.semimartingale.wire import SemimartingaleWire
 from spxa.graph.types import DType
 
 
@@ -27,7 +27,9 @@ class DoleansExponentialNode(OperatorNode):
     ) -> None:
         self.wire_X = wire_X
 
-        def eval_doleans(t: float = 1.0, n_paths: int = 1000, n_steps: int = 100, seed: Optional[int] = None) -> Dict[str, np.ndarray]:
+        def eval_doleans(
+            t: float = 1.0, n_paths: int = 1000, n_steps: int = 100, seed: Optional[int] = None
+        ) -> Dict[str, np.ndarray]:
             comp = self.wire_X.simulate_decomposed(t=t, n_paths=n_paths, n_steps=n_steps, seed=seed)
             x_paths = comp.total_paths
             time_grid = comp.time_grid
@@ -38,7 +40,9 @@ class DoleansExponentialNode(OperatorNode):
             for s in range(n_steps):
                 cur_t = time_grid[s]
                 cx = x_paths[:, s]
-                sig_sq = np.array([self.wire_X.predictable_quadratic_variation_rate(cur_t, xi) for xi in cx])
+                sig_sq = np.array(
+                    [self.wire_X.predictable_quadratic_variation_rate(cur_t, xi) for xi in cx]
+                )
                 qv_paths[:, s + 1] = qv_paths[:, s] + sig_sq * dt
 
             # Continuous part: exp(X_t - 0.5 * <X^c>_t)

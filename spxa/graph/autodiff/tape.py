@@ -4,12 +4,12 @@ Reverse-mode automatic differentiation gradient tape and adjoint vector-Jacobian
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
 from spxa.graph.graph import ComputationalGraph
-from spxa.graph.node import ConstantNode, Node, NodeType, OperatorNode, OutputNode, ParameterNode
+from spxa.graph.node import Node, OperatorNode, OutputNode
 
 
 class GradientTape:

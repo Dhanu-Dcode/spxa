@@ -4,12 +4,12 @@ Macro scenario shock nodes and stress testing propagation.
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Dict, Optional
 
 import numpy as np
 
 from spxa.graph.graph import ComputationalGraph
-from spxa.graph.node import Node, OperatorNode, ParameterNode
+from spxa.graph.node import Node, OperatorNode
 
 
 class ScenarioShockNode(OperatorNode):

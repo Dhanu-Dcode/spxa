@@ -3,7 +3,6 @@ Tests for deep stochastic operators: Generators, Martingale verification, Feller
 """
 
 import numpy as np
-import pytest
 from scipy.stats import norm
 
 from spxa.graph import (
@@ -19,7 +18,6 @@ from spxa.graph.boundary import (
     SpeedDensityNode,
 )
 from spxa.graph.generator import (
-    InfinitesimalGeneratorNode,
     MartingaleVerificationNode,
 )
 from spxa.graph.malliavin import MalliavinBismutDeltaNode
@@ -107,7 +105,6 @@ def test_malliavin_bismut_pathwise_delta():
 
     # Theoretical Black-Scholes Delta
     d1 = (np.log(s0 / k) + (r + 0.5 * sigma**2) * t_mat) / (sigma * np.sqrt(t_mat))
-    bs_undiscounted_delta = norm.cdf(d1)
     bs_discounted_delta = np.exp(-r * t_mat) * norm.cdf(d1)
 
     # The simulation evaluated E[f(X_T) * pi_T] (undiscounted)

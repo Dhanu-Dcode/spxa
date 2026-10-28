@@ -6,9 +6,8 @@ from __future__ import annotations
 
 from typing import Any
 
-import numpy as np
 
-from spxa.graph.node import Node, OperatorNode, ParameterNode, PortDescriptor
+from spxa.graph.node import Node, OperatorNode, PortDescriptor
 from spxa.graph.types import DType
 
 

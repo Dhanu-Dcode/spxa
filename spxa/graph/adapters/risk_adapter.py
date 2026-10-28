@@ -4,22 +4,16 @@ Implementation layer adapting spxa.risk instruments and portfolios to Graph node
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, List, Optional
 
 import numpy as np
 
 from spxa.graph.adapters.registry import GraphAdapterRegistry
 from spxa.graph.graph import ComputationalGraph
 from spxa.graph.math_ops import AddNode, MulNode
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
-from spxa.graph.pricing.payoff_nodes import (
-    AsianPayoffNode,
-    DigitalPayoffNode,
-    EuropeanCallPayoffNode,
-    EuropeanPutPayoffNode,
-)
+from spxa.graph.node import ConstantNode, Node, OperatorNode, PortDescriptor
 from spxa.graph.types import DType
-from spxa.risk.instruments import AsianOption, EuropeanOption, Instrument
+from spxa.risk.instruments import Instrument
 from spxa.risk.portfolio import Portfolio
 
 
@@ -57,7 +51,9 @@ class RiskInstrumentAdapter:
         return graph
 
 
-def adapt_portfolio(portfolio: Portfolio, paths_node: Node, name: str = "PortfolioGraph") -> ComputationalGraph:
+def adapt_portfolio(
+    portfolio: Portfolio, paths_node: Node, name: str = "PortfolioGraph"
+) -> ComputationalGraph:
     r"""Adapt an entire spxa.risk.portfolio.Portfolio into an aggregated computational graph."""
     graph = ComputationalGraph(name=name)
 
@@ -90,6 +86,8 @@ def _adapt_instrument(inst: Instrument, **kwargs: Any) -> RiskInstrumentAdapter:
 
 
 @GraphAdapterRegistry.register(Portfolio)
-def _adapt_portfolio_entry(portfolio: Portfolio, paths_node: Optional[Node] = None, **kwargs: Any) -> ComputationalGraph:
+def _adapt_portfolio_entry(
+    portfolio: Portfolio, paths_node: Optional[Node] = None, **kwargs: Any
+) -> ComputationalGraph:
     node = paths_node or ConstantNode(np.array([100.0]), name="default_spot")
     return adapt_portfolio(portfolio, node, **kwargs)

@@ -4,11 +4,11 @@ Algebraic Bochner subordination and automated cumulant extraction nodes.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Optional
 
 import numpy as np
 
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
+from spxa.graph.node import Node, OperatorNode, PortDescriptor
 from spxa.graph.types import DType
 
 
@@ -55,8 +55,11 @@ class AutomatedCumulantNode(OperatorNode):
 
         def eval_cumulant() -> float:
             h = self.h
+
             # CGF K(s) = Psi(-i * s)
-            K = lambda s: self.char_exp_fn(-1j * s)
+            def K(s):
+                return self.char_exp_fn(-1j * s)
+
             # Real central difference approximations around s = 0
             if self.order == 1:
                 d1 = (K(h) - K(-h)) / (2.0 * h)

@@ -139,4 +139,3 @@ def test_graph_module_exports():
     assert hasattr(spxa.graph, "build_black_scholes_pricing_graph")
     assert hasattr(spxa.graph, "GraphCalibrator")
     assert hasattr(spxa.graph, "PortfolioRiskGraph")
-

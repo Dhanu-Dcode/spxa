@@ -2,9 +2,7 @@
 Tests for advanced graph capabilities (serialization, subgraphs, profiling, multiasset).
 """
 
-import json
 import numpy as np
-import pytest
 
 from spxa.graph import (
     ComputationalGraph,
@@ -13,14 +11,16 @@ from spxa.graph import (
     build_black_scholes_pricing_graph,
 )
 from spxa.graph.introspection import GraphProfiler, graph_summary, to_dot
-from spxa.graph.multiasset import CorrelatedDiffusionNode, MultiAssetBasketNode
+from spxa.graph.multiasset import MultiAssetBasketNode
 from spxa.graph.serialization import GraphSerializer
 from spxa.graph.subgraph import SubgraphNode
 
 
 def test_graph_serialization_roundtrip():
     # Construct an arithmetic and pricing graph
-    g = build_black_scholes_pricing_graph(s0=100.0, k=100.0, t=1.0, r=0.05, sigma=0.20, is_call=True)
+    g = build_black_scholes_pricing_graph(
+        s0=100.0, k=100.0, t=1.0, r=0.05, sigma=0.20, is_call=True
+    )
     orig_res = g.evaluate()["price"]
 
     # Serialize to JSON

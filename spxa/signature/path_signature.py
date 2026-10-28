@@ -4,7 +4,7 @@ Truncated tensor path signatures and Chen's identity for multidimensional stocha
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Dict
 
 import numpy as np
 
@@ -27,7 +27,7 @@ class PathSignature:
         r"""Total dimension of the truncated tensor algebra :math:`\sum_{k=0}^M d^k = \frac{d^{M+1}-1}{d-1}`."""
         if d == 1:
             return depth + 1
-        return (d**(depth + 1) - 1) // (d - 1)
+        return (d ** (depth + 1) - 1) // (d - 1)
 
     @staticmethod
     def tensor_multiply(
@@ -115,7 +115,7 @@ class PathSignature:
         if path.ndim == 1:
             path = path[:, np.newaxis]
 
-        path_a = path[:split_idx + 1]
+        path_a = path[: split_idx + 1]
         path_b = path[split_idx:]
 
         sig_full = self.signature(path)

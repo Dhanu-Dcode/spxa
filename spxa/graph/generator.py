@@ -5,11 +5,11 @@ Infinitesimal generator application and Dynkin martingale verification nodes.
 from __future__ import annotations
 
 import inspect
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
+from spxa.graph.node import Node, OperatorNode, PortDescriptor
 from spxa.graph.stochastic_nodes import StochasticProcessNode
 from spxa.graph.types import DType
 

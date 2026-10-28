@@ -4,7 +4,7 @@ Fractional Brownian motion, Riemann-Liouville kernels, and hybrid convolution sc
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Dict, Optional
 
 import numpy as np
 from scipy.special import gamma
@@ -46,7 +46,11 @@ class FractionalKernel:
         # Covariance matrix
         t_col = t_grid[:, np.newaxis]
         t_row = t_grid[np.newaxis, :]
-        cov = 0.5 * (t_col**(2.0 * self.H) + t_row**(2.0 * self.H) - np.abs(t_col - t_row)**(2.0 * self.H))
+        cov = 0.5 * (
+            t_col ** (2.0 * self.H)
+            + t_row ** (2.0 * self.H)
+            - np.abs(t_col - t_row) ** (2.0 * self.H)
+        )
 
         # Regularize diagonal slightly for numerical stability when H is very small
         cov += 1e-10 * np.eye(n)
@@ -82,14 +86,14 @@ class FractionalKernel:
         # Local singular weights: exact integrals of (k dt - s)^alpha ds
         local_weights = np.zeros(b_cutoff)
         for k in range(1, b_cutoff + 1):
-            w_k = ((k * dt)**(alpha + 1.0) - ((k - 1) * dt)**(alpha + 1.0)) / (alpha + 1.0)
+            w_k = ((k * dt) ** (alpha + 1.0) - ((k - 1) * dt) ** (alpha + 1.0)) / (alpha + 1.0)
             local_weights[k - 1] = w_k / dt
 
         # Convolution weights for tail
         tail_len = max(0, n_steps - b_cutoff)
         if tail_len > 0:
             k_tail = np.arange(b_cutoff, n_steps)
-            tail_weights = (k_tail * dt)**alpha
+            tail_weights = (k_tail * dt) ** alpha
             weights = np.concatenate([local_weights, tail_weights])
         else:
             weights = local_weights[:n_steps]

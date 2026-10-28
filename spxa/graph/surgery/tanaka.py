@@ -4,11 +4,11 @@ Tanaka formula decomposition and stochastic local time extraction nodes.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Dict, Optional
 
 import numpy as np
 
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
+from spxa.graph.node import OperatorNode, PortDescriptor
 from spxa.graph.semimartingale.wire import SemimartingaleWire
 from spxa.graph.types import DType
 
@@ -29,7 +29,9 @@ class TanakaDecompositionNode(OperatorNode):
         self.wire = wire
         self.a = float(strike_a)
 
-        def eval_tanaka(t: float = 1.0, n_paths: int = 1000, n_steps: int = 200, seed: Optional[int] = None) -> Dict[str, np.ndarray]:
+        def eval_tanaka(
+            t: float = 1.0, n_paths: int = 1000, n_steps: int = 200, seed: Optional[int] = None
+        ) -> Dict[str, np.ndarray]:
             comp = self.wire.simulate_decomposed(t=t, n_paths=n_paths, n_steps=n_steps, seed=seed)
             x_paths = comp.total_paths
             a = self.a

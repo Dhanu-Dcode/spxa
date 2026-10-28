@@ -4,19 +4,18 @@ Characteristic functions, exponents, cumulants, and moments graph nodes.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Optional
 
 import numpy as np
 
-from spxa.graph.node import ConstantNode, Node, NodeType, OperatorNode, ParameterNode, PortDescriptor
+from spxa.graph.node import Node, OperatorNode, PortDescriptor
 from spxa.graph.stochastic_nodes import (
     BrownianMotionNode,
-    GeometricBrownianMotionNode,
     HestonNode,
     MertonJumpDiffusionNode,
     StochasticProcessNode,
 )
-from spxa.graph.types import DType, DomainType
+from spxa.graph.types import DType
 
 
 class CharacteristicExponentNode(OperatorNode):
@@ -97,12 +96,13 @@ class CharacteristicFunctionNode(OperatorNode):
                 d = np.sqrt((kappa - 1j * rho * xi * u) ** 2 + (xi**2) * (u**2 + 1j * u))
                 g = (kappa - 1j * rho * xi * u - d) / (kappa - 1j * rho * xi * u + d)
 
-                C = (
-                    1j * u * (np.log(s0) + mu * t)
-                    + (kappa * theta / (xi**2))
-                    * ((kappa - 1j * rho * xi * u - d) * t - 2.0 * np.log((1.0 - g * np.exp(-d * t)) / (1.0 - g)))
+                C = 1j * u * (np.log(s0) + mu * t) + (kappa * theta / (xi**2)) * (
+                    (kappa - 1j * rho * xi * u - d) * t
+                    - 2.0 * np.log((1.0 - g * np.exp(-d * t)) / (1.0 - g))
                 )
-                D = ((kappa - 1j * rho * xi * u - d) / (xi**2)) * ((1.0 - np.exp(-d * t)) / (1.0 - g * np.exp(-d * t)))
+                D = ((kappa - 1j * rho * xi * u - d) / (xi**2)) * (
+                    (1.0 - np.exp(-d * t)) / (1.0 - g * np.exp(-d * t))
+                )
                 return np.exp(C + D * v0)
             elif isinstance(process_node, MertonJumpDiffusionNode):
                 mu = process_node.params["mu"].forward()

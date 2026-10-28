@@ -4,11 +4,11 @@ Computational graph nodes for path signatures, signature kernels, and expected s
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Optional
 
 import numpy as np
 
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
+from spxa.graph.node import OperatorNode, PortDescriptor
 from spxa.graph.types import DType
 from spxa.signature.kernel import SignatureKernel
 from spxa.signature.path_signature import PathSignature

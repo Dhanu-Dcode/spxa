@@ -1,17 +1,14 @@
 """Tests for characteristic functions, exponents, and moments graph nodes."""
 
 import numpy as np
-import pytest
 
 from spxa.graph.char_nodes import (
-    CharacteristicExponentNode,
     CharacteristicFunctionNode,
-    CumulantGeneratingFunctionNode,
     GeneratorApplicationNode,
     ProcessMomentNode,
 )
 from spxa.graph.graph import ComputationalGraph
-from spxa.graph.node import ConstantNode, ParameterNode
+from spxa.graph.node import ConstantNode
 from spxa.graph.stochastic_nodes import BrownianMotionNode, HestonNode
 
 

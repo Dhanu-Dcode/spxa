@@ -3,12 +3,9 @@ Tests for rough paths, tensor signatures, shuffle algebra, and Goursat signature
 """
 
 import numpy as np
-import pytest
 
 from spxa.graph.signature.signature_nodes import (
     ExpectedSignatureNode,
-    PathSignatureNode,
-    SignatureKernelNode,
     SignatureLinearPricerNode,
 )
 from spxa.signature.algebra import SignatureAlgebra

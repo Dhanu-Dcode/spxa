@@ -1,8 +1,5 @@
 """Tests for GraphCompiler optimization passes, constant folding, and CSE."""
 
-import numpy as np
-import pytest
-
 from spxa.graph.compiler import GraphCompiler
 from spxa.graph.graph import ComputationalGraph
 from spxa.graph.math_ops import AddNode, MulNode
@@ -20,7 +17,6 @@ def test_constant_folding():
     g = ComputationalGraph()
     g.add_output(out_node, "result")
 
-    initial_nodes = len(g.nodes)
     compiler = GraphCompiler(g)
     folded = compiler.constant_folding()
     assert folded == 1

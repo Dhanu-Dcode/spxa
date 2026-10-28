@@ -4,15 +4,13 @@ Pricing graph architecture connecting stochastic models, cashflows, and payoffs.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import numpy as np
 from scipy.stats import norm
 
 from spxa.graph.graph import ComputationalGraph
-from spxa.graph.math_ops import ExpNode, MulNode, NormalCDFNode
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
-from spxa.graph.stochastic_nodes import GeometricBrownianMotionNode
+from spxa.graph.node import Node, OperatorNode, ParameterNode, PortDescriptor
 from spxa.graph.types import DType
 
 
@@ -31,13 +29,24 @@ class BlackScholesPriceNode(OperatorNode):
     ) -> None:
         self.is_call = is_call
 
-        def bs_price_fn(s_val: float, k_val: float, t_val: float, r_val: float, sig_val: float) -> float:
+        def bs_price_fn(
+            s_val: float, k_val: float, t_val: float, r_val: float, sig_val: float
+        ) -> float:
             vol_sqrt = float(sig_val) * np.sqrt(float(t_val))
-            d1 = (np.log(float(s_val) / float(k_val)) + (float(r_val) + 0.5 * float(sig_val)**2) * float(t_val)) / vol_sqrt
+            d1 = (
+                np.log(float(s_val) / float(k_val))
+                + (float(r_val) + 0.5 * float(sig_val) ** 2) * float(t_val)
+            ) / vol_sqrt
             d2 = d1 - vol_sqrt
             if self.is_call:
-                return float(float(s_val) * norm.cdf(d1) - float(k_val) * np.exp(-float(r_val) * float(t_val)) * norm.cdf(d2))
-            return float(float(k_val) * np.exp(-float(r_val) * float(t_val)) * norm.cdf(-d2) - float(s_val) * norm.cdf(-d1))
+                return float(
+                    float(s_val) * norm.cdf(d1)
+                    - float(k_val) * np.exp(-float(r_val) * float(t_val)) * norm.cdf(d2)
+                )
+            return float(
+                float(k_val) * np.exp(-float(r_val) * float(t_val)) * norm.cdf(-d2)
+                - float(s_val) * norm.cdf(-d1)
+            )
 
         super().__init__(
             op_fn=bs_price_fn,

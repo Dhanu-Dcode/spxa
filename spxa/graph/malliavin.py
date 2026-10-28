@@ -5,11 +5,11 @@ Malliavin calculus: First variation processes and Bismut pathwise Greek weights.
 from __future__ import annotations
 
 import inspect
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, Optional
 
 import numpy as np
 
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
+from spxa.graph.node import OperatorNode, PortDescriptor
 from spxa.graph.stochastic_nodes import StochasticProcessNode
 from spxa.graph.types import DType
 

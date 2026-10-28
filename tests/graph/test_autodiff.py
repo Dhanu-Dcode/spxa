@@ -1,15 +1,13 @@
 """Tests for graph automatic differentiation (dual numbers, reverse tape, Hessians)."""
 
 import numpy as np
-import pytest
 
 from spxa.graph.autodiff.dual import DualNumber
 from spxa.graph.autodiff.hessian import compute_graph_hessian
-from spxa.graph.autodiff.smoothers import SmoothIndicatorNode, SoftplusNode
-from spxa.graph.autodiff.tape import GradientTape, value_and_grad
+from spxa.graph.autodiff.tape import value_and_grad
 from spxa.graph.graph import ComputationalGraph
-from spxa.graph.math_ops import AddNode, ExpNode, MulNode
-from spxa.graph.node import ConstantNode, ParameterNode
+from spxa.graph.math_ops import ExpNode
+from spxa.graph.node import ParameterNode
 
 
 def test_dual_number_calculus():

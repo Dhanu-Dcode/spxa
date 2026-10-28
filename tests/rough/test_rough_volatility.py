@@ -5,11 +5,6 @@ Tests for rough volatility, fractional kernels, rBergomi model, and fractional R
 import numpy as np
 import pytest
 
-from spxa.graph.rough.rough_nodes import (
-    FractionalRiccatiNode,
-    RoughBergomiNode,
-    RoughKernelNode,
-)
 from spxa.rough.kernel import FractionalKernel
 from spxa.rough.rbergomi import RoughBergomi
 from spxa.rough.riccati import FractionalRiccatiSolver
@@ -43,14 +38,13 @@ def test_fbm_cholesky_covariance_structure():
     # 2000 paths on [0, 1]
     res = kernel.sample_fbm_cholesky(t_mat=1.0, n_steps=20, n_paths=2000, seed=42)
     paths = res["paths"]
-    time_grid = res["time_grid"]
 
     # Theoretical variance: Var(B_t^H) = t^{2H}
     emp_var_half = np.var(paths[:, 10])  # at t = 0.5
-    theo_var_half = 0.5**(2.0 * hurst)
+    theo_var_half = 0.5 ** (2.0 * hurst)
 
-    emp_var_one = np.var(paths[:, -1])   # at t = 1.0
-    theo_var_one = 1.0**(2.0 * hurst)
+    emp_var_one = np.var(paths[:, -1])  # at t = 1.0
+    theo_var_one = 1.0 ** (2.0 * hurst)
 
     assert np.isclose(emp_var_half, theo_var_half, rtol=0.12)
     assert np.isclose(emp_var_one, theo_var_one, rtol=0.10)

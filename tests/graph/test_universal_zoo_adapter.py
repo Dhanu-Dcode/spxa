@@ -3,7 +3,6 @@ Tests for universal zoo process adaptation, parameter reflection, and compositio
 """
 
 import numpy as np
-import pytest
 
 from spxa.graph import (
     ComputationalGraph,
@@ -13,8 +12,6 @@ from spxa.graph import (
 from spxa.zoo import (
     BatesModel,
     BrownianMotion,
-    CIRProcess,
-    NIG,
     OrnsteinUhlenbeck,
     VarianceGamma,
 )

@@ -1,7 +1,5 @@
 """Tests for graph nodes, parameter bounds, and port descriptors."""
 
-import pytest
-
 from spxa.graph.node import ConstantNode, OperatorNode, OutputNode, ParameterNode
 from spxa.graph.types import DomainType, ParameterBounds
 

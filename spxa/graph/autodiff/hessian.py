@@ -4,13 +4,13 @@ Hessian matrix and higher-order cross-sensitivity computation for computational 
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 import numpy as np
 
 from spxa.graph.autodiff.tape import GradientTape
 from spxa.graph.graph import ComputationalGraph
-from spxa.graph.node import Node, ParameterNode
+from spxa.graph.node import ParameterNode
 
 
 def compute_graph_hessian(

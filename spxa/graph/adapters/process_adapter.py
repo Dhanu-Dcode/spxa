@@ -4,7 +4,7 @@ Adapters bridging existing SPXA Process instances into Graph nodes.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 import numpy as np
 

@@ -4,7 +4,7 @@ Graph-based XVA valuation and exposure profile evaluation.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 
@@ -21,7 +21,9 @@ class NettingExposureNode(OperatorNode):
         collateral_node: Optional[Node] = None,
         name: str = "NettingExposure",
     ) -> None:
-        inputs = [portfolio_paths] if collateral_node is None else [portfolio_paths, collateral_node]
+        inputs = (
+            [portfolio_paths] if collateral_node is None else [portfolio_paths, collateral_node]
+        )
 
         def netting_fn(*vals: Any) -> np.ndarray:
             v = np.asarray(vals[0], dtype=float)

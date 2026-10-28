@@ -4,11 +4,11 @@ Stochastic integral operator nodes: (H . X)_t = int_0^t H_s dX_s.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Optional
 
 import numpy as np
 
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
+from spxa.graph.node import OperatorNode, PortDescriptor
 from spxa.graph.semimartingale.wire import SemimartingaleWire
 from spxa.graph.types import DType
 
@@ -25,7 +25,9 @@ class StochasticIntegralNode(OperatorNode):
         self.integrand_fn = integrand_fn
         self.wire = integrator_wire
 
-        def eval_integral(t: float = 1.0, n_paths: int = 1000, n_steps: int = 100, seed: Optional[int] = None) -> Dict[str, np.ndarray]:
+        def eval_integral(
+            t: float = 1.0, n_paths: int = 1000, n_steps: int = 100, seed: Optional[int] = None
+        ) -> Dict[str, Any]:
             comp = self.wire.simulate_decomposed(t=t, n_paths=n_paths, n_steps=n_steps, seed=seed)
             x_paths = comp.total_paths
             time_grid = comp.time_grid

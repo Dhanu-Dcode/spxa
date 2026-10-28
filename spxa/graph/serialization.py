@@ -5,7 +5,7 @@ JSON and dictionary serialization engine for SPXA computational graphs.
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Type
 
 import numpy as np
 

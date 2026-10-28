@@ -1,17 +1,11 @@
 """Tests for stochastic process representation nodes."""
 
 import numpy as np
-import pytest
 
-from spxa.graph.graph import ComputationalGraph
-from spxa.graph.node import ParameterNode
 from spxa.graph.stochastic_nodes import (
     CIRNode,
     GeometricBrownianMotionNode,
     HestonNode,
-    MertonJumpDiffusionNode,
-    OrnsteinUhlenbeckNode,
-    SABRNode,
 )
 
 

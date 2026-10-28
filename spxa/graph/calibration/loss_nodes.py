@@ -8,7 +8,7 @@ from typing import Any, Optional
 
 import numpy as np
 
-from spxa.graph.node import Node, NodeType, OperatorNode, PortDescriptor
+from spxa.graph.node import Node, OperatorNode, PortDescriptor
 from spxa.graph.types import DType
 
 
@@ -22,7 +22,11 @@ class MSELossNode(OperatorNode):
         weights: Optional[Node] = None,
         name: str = "MSE_Loss",
     ) -> None:
-        inputs = [model_output, market_quotes] if weights is None else [model_output, market_quotes, weights]
+        inputs = (
+            [model_output, market_quotes]
+            if weights is None
+            else [model_output, market_quotes, weights]
+        )
 
         def mse_fn(*vals: Any) -> float:
             y_mod = np.asarray(vals[0], dtype=float)
@@ -56,7 +60,9 @@ class MSELossNode(OperatorNode):
 class ArbitragePenaltyNode(OperatorNode):
     r"""Calendar/butterfly spread arbitrage penalty node :math:`P = \lambda \sum \max(0, - \Delta C)^2`."""
 
-    def __init__(self, prices_node: Node, penalty_weight: float = 100.0, name: str = "ArbPenalty") -> None:
+    def __init__(
+        self, prices_node: Node, penalty_weight: float = 100.0, name: str = "ArbPenalty"
+    ) -> None:
         def penalty_fn(p_vals: Any) -> float:
             p = np.asarray(p_vals, dtype=float)
             # Convexity / butterfly penalty: C(K_i-1) - 2 C(K_i) + C(K_i+1) >= 0

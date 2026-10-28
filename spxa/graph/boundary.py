@@ -5,12 +5,12 @@ Speed and scale density calculus and Feller boundary classification nodes.
 from __future__ import annotations
 
 import inspect
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional
 
 import numpy as np
 from scipy.integrate import quad
 
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
+from spxa.graph.node import Node, OperatorNode, PortDescriptor
 from spxa.graph.stochastic_nodes import StochasticProcessNode
 from spxa.graph.types import DType
 
@@ -110,7 +110,15 @@ class FellerBoundaryClassifierNode(OperatorNode):
         def classify() -> Dict[str, Any]:
             # Scale function integral S(b) = int_c^b s(x) dx
             def s_integrand(x: float) -> float:
-                sub_int, _ = quad(lambda u: 2.0 * _call_drift(self.process, u) / (_call_diffusion(self.process, u)**2 + 1e-12), self.c, x)
+                sub_int, _ = quad(
+                    lambda u: (
+                        2.0
+                        * _call_drift(self.process, u)
+                        / (_call_diffusion(self.process, u) ** 2 + 1e-12)
+                    ),
+                    self.c,
+                    x,
+                )
                 return float(np.exp(-sub_int))
 
             target = 1e-4 if self.b == 0.0 else self.b

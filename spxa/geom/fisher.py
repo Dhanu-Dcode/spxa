@@ -4,7 +4,7 @@ Fisher Information Metric (FIM) and statistical manifold geometry for stochastic
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable
 
 import numpy as np
 
@@ -29,10 +29,13 @@ class FisherInformationMetric:
         if sigma <= 0.0:
             raise ValueError(f"sigma must be strictly positive, got {sigma}")
         sig2 = sigma**2
-        return np.array([
-            [1.0 / sig2, 0.0],
-            [0.0, 2.0 / sig2],
-        ], dtype=np.float64)
+        return np.array(
+            [
+                [1.0 / sig2, 0.0],
+                [0.0, 2.0 / sig2],
+            ],
+            dtype=np.float64,
+        )
 
     @staticmethod
     def ou_transition_fisher(
@@ -60,7 +63,6 @@ class FisherInformationMetric:
         exp_neg_2 = np.exp(-2.0 * theta * dt)
         one_minus_exp_2 = 1.0 - exp_neg_2
 
-        m = x0 * exp_neg + mu * one_minus_exp
         v = (sigma**2 / (2.0 * theta)) * one_minus_exp_2
 
         # Derivatives of mean m with respect to (theta, mu, sigma)
@@ -70,7 +72,9 @@ class FisherInformationMetric:
         grad_m = np.array([dm_dtheta, dm_dmu, dm_dsigma])
 
         # Derivatives of variance v with respect to (theta, mu, sigma)
-        dv_dtheta = (sigma**2 / (2.0 * theta**2)) * (-one_minus_exp_2 + 2.0 * theta * dt * exp_neg_2)
+        dv_dtheta = (sigma**2 / (2.0 * theta**2)) * (
+            -one_minus_exp_2 + 2.0 * theta * dt * exp_neg_2
+        )
         dv_dmu = 0.0
         dv_dsigma = (sigma / theta) * one_minus_exp_2
         grad_v = np.array([dv_dtheta, dv_dmu, dv_dsigma])

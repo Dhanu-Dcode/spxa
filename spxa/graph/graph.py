@@ -5,9 +5,9 @@ Directed Acyclic Graph (DAG) container and evaluation orchestration.
 from __future__ import annotations
 
 from collections import deque
-from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Set
 
-from spxa.graph.node import ConstantNode, Node, NodeType, OutputNode, ParameterNode
+from spxa.graph.node import Node, OutputNode, ParameterNode
 
 
 class ComputationalGraph:
@@ -66,7 +66,9 @@ class ComputationalGraph:
                         queue.append(succ)
 
         if len(order) != len(self.nodes):
-            raise ValueError("Cycle detected in computational graph: topological ordering impossible")
+            raise ValueError(
+                "Cycle detected in computational graph: topological ordering impossible"
+            )
         return order
 
     def prune_unreachable(self) -> int:
@@ -100,11 +102,7 @@ class ComputationalGraph:
 
     def get_parameters(self) -> Dict[str, ParameterNode]:
         r"""Return all registered ParameterNodes keyed by parameter name."""
-        return {
-            node.name: node
-            for node in self.nodes.values()
-            if isinstance(node, ParameterNode)
-        }
+        return {node.name: node for node in self.nodes.values() if isinstance(node, ParameterNode)}
 
     def set_parameters(self, param_dict: Dict[str, float]) -> None:
         r"""Update values of registered ParameterNodes."""

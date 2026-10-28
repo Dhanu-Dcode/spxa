@@ -1,24 +1,20 @@
 """Tests for graph mathematical operation nodes."""
 
 import numpy as np
-import pytest
 from scipy.special import gamma
 from scipy.stats import norm
 
 from spxa.graph.graph import ComputationalGraph
 from spxa.graph.math_ops import (
     AbsNode,
-    CosNode,
-    ErfNode,
     ExpNode,
     GammaNode,
     LogNode,
     NormalCDFNode,
     NormalPDFNode,
-    SinNode,
     SqrtNode,
 )
-from spxa.graph.node import ConstantNode, ParameterNode
+from spxa.graph.node import ParameterNode
 
 
 def test_operator_overloading_graph_construction():

@@ -4,11 +4,11 @@ Stochastic calculus algebra: Quadratic covariation and stochastic integration by
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional
 
 import numpy as np
 
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
+from spxa.graph.node import OperatorNode, PortDescriptor
 from spxa.graph.semimartingale.wire import SemimartingaleWire
 from spxa.graph.types import DType
 
@@ -27,12 +27,18 @@ class QuadraticCovariationNode(OperatorNode):
         self.wire_Y = wire_Y
         self.rho = float(rho)
 
-        def eval_covariation(t: float = 1.0, n_paths: int = 1000, n_steps: int = 100, seed: Optional[int] = None) -> np.ndarray:
-            comp_X = self.wire_X.simulate_decomposed(t=t, n_paths=n_paths, n_steps=n_steps, seed=seed)
+        def eval_covariation(
+            t: float = 1.0, n_paths: int = 1000, n_steps: int = 100, seed: Optional[int] = None
+        ) -> np.ndarray:
+            comp_X = self.wire_X.simulate_decomposed(
+                t=t, n_paths=n_paths, n_steps=n_steps, seed=seed
+            )
             if self.wire_X is self.wire_Y:
                 comp_Y = comp_X
             else:
-                comp_Y = self.wire_Y.simulate_decomposed(t=t, n_paths=n_paths, n_steps=n_steps, seed=None if seed is None else seed + 1)
+                comp_Y = self.wire_Y.simulate_decomposed(
+                    t=t, n_paths=n_paths, n_steps=n_steps, seed=None if seed is None else seed + 1
+                )
 
             dx = np.diff(comp_X.total_paths, axis=1)
             dy = np.diff(comp_Y.total_paths, axis=1)
@@ -75,17 +81,10 @@ class StochasticProductNode(OperatorNode):
         self.wire_Y = wire_Y
         self.rho = float(rho)
 
-        # Derive semimartingale wire for Z = X * Y
-        z0 = wire_X.x0 * wire_Y.x0
-
-        def product_drift(t: float, z: float) -> float:
-            # For 1D representation, approximation based on current state
-            # mu_Z = X mu_Y + Y mu_X + sigma_X sigma_Y rho
-            # In exact simulation, evaluated along joint path
-            return 0.0
-
         super().__init__(
-            op_fn=lambda t=1.0, n_paths=1000, n_steps=100: self.simulate_product(t, n_paths, n_steps),
+            op_fn=lambda t=1.0, n_paths=1000, n_steps=100: self.simulate_product(
+                t, n_paths, n_steps
+            ),
             inputs=[],
             name=name or f"Product_{wire_X.name}_{wire_Y.name}",
             output_descriptor=PortDescriptor(name="product_paths", dtype=DType.FLOAT64),
@@ -97,7 +96,7 @@ class StochasticProductNode(OperatorNode):
         n_paths: int = 1000,
         n_steps: int = 100,
         seed: Optional[int] = None,
-    ) -> Dict[str, np.ndarray]:
+    ) -> Dict[str, Any]:
         r"""Simulate joint paths and verify the stochastic integration by parts identity."""
         rng = np.random.default_rng(seed)
         dt = t / n_steps

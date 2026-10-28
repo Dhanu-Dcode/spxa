@@ -3,7 +3,6 @@ Tests for deep stochastic operators: Itô calculus, measure changes, and Bochner
 """
 
 import numpy as np
-import pytest
 
 from spxa.graph import (
     BrownianMotionNode,
@@ -12,7 +11,7 @@ from spxa.graph import (
     GeometricBrownianMotionNode,
 )
 from spxa.graph.ito import ItoTransformNode
-from spxa.graph.measure_change import EsscherTransformNode, GirsanovTransformNode
+from spxa.graph.measure_change import GirsanovTransformNode
 from spxa.graph.subordination import AutomatedCumulantNode, BochnerSubordinationNode
 
 

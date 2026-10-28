@@ -4,7 +4,7 @@ Fractional Adams-Bashforth-Moulton Riccati solver and rough Heston characteristi
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict
 
 import numpy as np
 from scipy.special import gamma
@@ -64,16 +64,20 @@ class FractionalRiccatiSolver:
         for n in range(1, n_steps + 1):
             # 1. Predictor step (Adams-Bashforth)
             j_arr = np.arange(n)
-            b_jn = (n - j_arr)**alpha - (n - 1 - j_arr)**alpha
+            b_jn = (n - j_arr) ** alpha - (n - 1 - j_arr) ** alpha
             h_pred = c_pred * np.sum(b_jn * f_vals[:n])
 
             f_pred = self.riccati_rhs(u, h_pred)
 
             # 2. Corrector step (Adams-Moulton)
-            a_0n = (n - 1.0)**(alpha + 1.0) - (n - 1.0 - alpha) * (n**alpha)
+            a_0n = (n - 1.0) ** (alpha + 1.0) - (n - 1.0 - alpha) * (n**alpha)
             if n > 1:
                 j_mid = np.arange(1, n)
-                a_jn = (n - j_mid + 1.0)**(alpha + 1.0) - 2.0 * ((n - j_mid)**(alpha + 1.0)) + (n - j_mid - 1.0)**(alpha + 1.0)
+                a_jn = (
+                    (n - j_mid + 1.0) ** (alpha + 1.0)
+                    - 2.0 * ((n - j_mid) ** (alpha + 1.0))
+                    + (n - j_mid - 1.0) ** (alpha + 1.0)
+                )
                 sum_mid = np.sum(a_jn * f_vals[1:n])
             else:
                 sum_mid = 0.0 + 0.0j
@@ -104,9 +108,9 @@ class FractionalRiccatiSolver:
 
         # Fractional integral I^{H+1/2} h(T)
         alpha = self.alpha
-        weights = ((t_mat - t_grid[:-1])**(alpha - 1.0)) / gamma(alpha)
+        weights = ((t_mat - t_grid[:-1]) ** (alpha - 1.0)) / gamma(alpha)
         # Handle singularity by replacing last weight with integrated weight
-        weights[-1] = (dt**(alpha - 1.0)) / gamma(alpha)
+        weights[-1] = (dt ** (alpha - 1.0)) / gamma(alpha)
         frac_int = np.sum(weights * h_vals[:-1]) * dt
 
         # Standard Riemann integral theta * lambda * int_0^T h(s) ds

@@ -3,22 +3,13 @@ End-to-end integration test suite for the SPXA computational graph engine.
 """
 
 import numpy as np
-import pytest
 
 from spxa.graph import (
-    AcceleratedBackend,
-    AnalyticalBackend,
-    ComputationalGraph,
-    ExecutionRouter,
-    GradientTape,
     HestonNode,
-    NumericalBackend,
     PortfolioRiskGraph,
-    SimulationBackend,
     apply_macro_scenario,
     build_black_scholes_pricing_graph,
     compute_graph_greeks,
-    compute_graph_hessian,
 )
 
 
@@ -43,8 +34,12 @@ def test_end_to_end_pricing_and_greeks():
 
 
 def test_end_to_end_multimodel_portfolio():
-    t1 = build_black_scholes_pricing_graph(s0=100.0, k=90.0, t=0.5, r=0.03, sigma=0.15, is_call=True)
-    t2 = build_black_scholes_pricing_graph(s0=100.0, k=110.0, t=0.5, r=0.03, sigma=0.25, is_call=False)
+    t1 = build_black_scholes_pricing_graph(
+        s0=100.0, k=90.0, t=0.5, r=0.03, sigma=0.15, is_call=True
+    )
+    t2 = build_black_scholes_pricing_graph(
+        s0=100.0, k=110.0, t=0.5, r=0.03, sigma=0.25, is_call=False
+    )
 
     portfolio = PortfolioRiskGraph(name="GlobalNettingSet")
     portfolio.add_trade(t1)

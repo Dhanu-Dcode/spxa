@@ -4,7 +4,7 @@ Infinite-order signature kernel evaluation via 2D hyperbolic Goursat PDE solver.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import List
 
 import numpy as np
 
@@ -57,7 +57,9 @@ class SignatureKernel:
                 if abs(denom) < 1e-12:
                     denom = 1e-12
                 delta = 0.5 * (k_grid[i + 1, j] + k_grid[i, j + 1]) * m_ij
-                k_grid[i + 1, j + 1] = (k_grid[i + 1, j] + k_grid[i, j + 1] - k_grid[i, j] + delta) / denom
+                k_grid[i + 1, j + 1] = (
+                    k_grid[i + 1, j] + k_grid[i, j + 1] - k_grid[i, j] + delta
+                ) / denom
 
         return k_grid
 

@@ -4,15 +4,14 @@ Implementation layer adapting spxa.calculus generators and spxa.copula copulas t
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, Optional
 
 import numpy as np
 
 from spxa.calculus.generator import InfinitesimalGenerator
 from spxa.copula.base import Copula
 from spxa.graph.adapters.registry import GraphAdapterRegistry
-from spxa.graph.graph import ComputationalGraph
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
+from spxa.graph.node import Node, OperatorNode, ParameterNode, PortDescriptor
 from spxa.graph.types import DType
 
 

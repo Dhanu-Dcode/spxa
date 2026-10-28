@@ -1,7 +1,5 @@
 """Tests for ComputationalGraph DAG ordering and execution."""
 
-import pytest
-
 from spxa.graph.graph import ComputationalGraph
 from spxa.graph.node import ConstantNode, OperatorNode, ParameterNode
 

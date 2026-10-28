@@ -4,7 +4,7 @@ Shuffle product algebra and log-signature Lie algebra projection.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Tuple
 
 import numpy as np
 
@@ -87,6 +87,6 @@ class SignatureAlgebra:
             term = 0
             for m in range(1, k + 1):
                 if k % m == 0:
-                    term += mobius.get(m, 0) * (d**(k // m))
+                    term += mobius.get(m, 0) * (d ** (k // m))
             total_dim += term // k
         return total_dim

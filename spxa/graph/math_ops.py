@@ -4,15 +4,14 @@ Mathematical operation nodes for graph evaluation, transformations, and gradient
 
 from __future__ import annotations
 
-from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
+from typing import Optional
 
 import numpy as np
 
 from scipy.special import erf, gamma
 from scipy.stats import norm
 
-from spxa.graph.node import ConstantNode, Node, NodeType, OperatorNode, PortDescriptor
-from spxa.graph.types import DType
+from spxa.graph.node import Node, OperatorNode
 
 
 class AddNode(OperatorNode):
@@ -122,9 +121,7 @@ class SqrtNode(OperatorNode):
             op_fn=lambda a: np.sqrt(np.maximum(a, 0.0)),
             inputs=[x],
             name=name or f"Sqrt_{x.name}",
-            vjp_fn=lambda grad_out, a: (
-                grad_out / (2.0 * np.sqrt(np.maximum(a, 1e-12))),
-            ),
+            vjp_fn=lambda grad_out, a: (grad_out / (2.0 * np.sqrt(np.maximum(a, 1e-12))),),
         )
 
 
@@ -232,9 +229,7 @@ class ErfNode(OperatorNode):
             op_fn=lambda a: erf(a),
             inputs=[x],
             name=name or f"Erf_{x.name}",
-            vjp_fn=lambda grad_out, a: (
-                grad_out * (2.0 / np.sqrt(np.pi)) * np.exp(-(a**2)),
-            ),
+            vjp_fn=lambda grad_out, a: (grad_out * (2.0 / np.sqrt(np.pi)) * np.exp(-(a**2)),),
         )
 
 

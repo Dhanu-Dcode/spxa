@@ -1,12 +1,13 @@
 """Tests for graph pricing, automated Greeks, and Monte Carlo pricing."""
 
 import numpy as np
-import pytest
 from scipy.stats import norm
 
 from spxa.graph.pricing.greeks import compute_graph_greeks
-from spxa.graph.pricing.payoff_nodes import EuropeanCallPayoffNode, EuropeanPutPayoffNode
-from spxa.graph.pricing.pricer_graph import build_black_scholes_pricing_graph, monte_carlo_graph_price
+from spxa.graph.pricing.pricer_graph import (
+    build_black_scholes_pricing_graph,
+    monte_carlo_graph_price,
+)
 
 
 def test_black_scholes_pricing_graph_and_greeks():

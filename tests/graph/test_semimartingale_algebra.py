@@ -3,7 +3,6 @@ Tests for SemimartingaleWire, QuadraticCovariationNode, StochasticProductNode, a
 """
 
 import numpy as np
-import pytest
 
 from spxa.graph.semimartingale import (
     QuadraticCovariationNode,

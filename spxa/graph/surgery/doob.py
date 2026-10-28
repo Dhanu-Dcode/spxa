@@ -4,11 +4,10 @@ Doob h-transform and conditioned diffusion operators.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Optional
 
-import numpy as np
 
-from spxa.graph.node import ConstantNode, Node, OperatorNode, ParameterNode, PortDescriptor
+from spxa.graph.node import OperatorNode, PortDescriptor
 from spxa.graph.semimartingale.wire import SemimartingaleWire
 from spxa.graph.types import DType
 
@@ -35,7 +34,9 @@ class DoobHTransformNode(OperatorNode):
             h0 = float(self.h_fn(x))
             if abs(h0) < 1e-12:
                 return 0.0
-            hp = (float(self.h_fn(x + self.eps)) - float(self.h_fn(x - self.eps))) / (2.0 * self.eps)
+            hp = (float(self.h_fn(x + self.eps)) - float(self.h_fn(x - self.eps))) / (
+                2.0 * self.eps
+            )
             return hp / h0
 
         self.h_score = h_score
@@ -48,7 +49,11 @@ class DoobHTransformNode(OperatorNode):
         self.conditioned_drift = conditioned_drift
 
         super().__init__(
-            op_fn=lambda t=1.0, n_paths=1000, n_steps=100, seed=None: self.as_conditioned_wire().simulate_decomposed(t, n_paths, n_steps, seed).total_paths,
+            op_fn=lambda t=1.0, n_paths=1000, n_steps=100, seed=None: (
+                self.as_conditioned_wire()
+                .simulate_decomposed(t, n_paths, n_steps, seed)
+                .total_paths
+            ),
             inputs=[],
             name=name or f"DoobH_{base_wire.name}",
             output_descriptor=PortDescriptor(name="conditioned_paths", dtype=DType.FLOAT64),

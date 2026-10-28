@@ -4,9 +4,8 @@ Universal implementation and reflection layer for spxa.zoo processes.
 
 from __future__ import annotations
 
-import copy
 import inspect
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 
@@ -75,9 +74,9 @@ class UniversalProcessNode(StochasticProcessNode):
         state_dim = 1
         noise_dim = 1
         if hasattr(process, "state_dim"):
-            state_dim = getattr(process, "state_dim")
+            state_dim = process.state_dim
         if hasattr(process, "noise_dim"):
-            noise_dim = getattr(process, "noise_dim")
+            noise_dim = process.noise_dim
 
         super().__init__(
             name=node_name,
@@ -180,7 +179,9 @@ class UniversalProcessNode(StochasticProcessNode):
                 return np.asarray(self.underlying_process.char_func(u=u_val, t=float(t_val)))
             elif hasattr(self.underlying_process, "triplet"):
                 return np.asarray(self.underlying_process.triplet.char_exp(u=u_val, t=float(t_val)))
-            raise NotImplementedError(f"Process {self.underlying_process} does not support char_func")
+            raise NotImplementedError(
+                f"Process {self.underlying_process} does not support char_func"
+            )
 
         return OperatorNode(
             op_fn=chf_op,

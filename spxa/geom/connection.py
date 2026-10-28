@@ -4,7 +4,7 @@ Affine connections, Christoffel symbols, and Amari alpha-connections on statisti
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Optional
 
 import numpy as np
 
@@ -63,12 +63,12 @@ class AffineConnection:
             for i in range(n):
                 for j in range(n):
                     term = 0.0
-                    for l in range(n):
-                        # dg[i, j, l] is dg_jl / dtheta_i
-                        # dg[j, i, l] is dg_il / dtheta_j
-                        # dg[l, i, j] is dg_ij / dtheta_l
-                        bracket = dg[i, j, l] + dg[j, i, l] - dg[l, i, j]
-                        term += g_inv[k, l] * bracket
+                    for ll in range(n):
+                        # dg[i, j, ll] is dg_jl / dtheta_i
+                        # dg[j, i, ll] is dg_il / dtheta_j
+                        # dg[ll, i, j] is dg_ij / dtheta_l
+                        bracket = dg[i, j, ll] + dg[j, i, ll] - dg[ll, i, j]
+                        term += g_inv[k, ll] * bracket
                     gamma[k, i, j] = 0.5 * term
 
         return gamma
@@ -102,8 +102,8 @@ class AffineConnection:
             for i in range(n):
                 for j in range(n):
                     correction = 0.0
-                    for l in range(n):
-                        correction += g_inv[k, l] * skewness_tensor[i, j, l]
+                    for ll in range(n):
+                        correction += g_inv[k, ll] * skewness_tensor[i, j, ll]
                     gamma_alpha[k, i, j] -= 0.5 * alpha * correction
 
         return gamma_alpha
@@ -125,14 +125,17 @@ class AffineConnection:
 
         # R^l_ijk = d_j Gamma^l_ik - d_k Gamma^l_ij + Gamma^m_ik Gamma^l_jm - Gamma^m_ij Gamma^l_km
         riemann = np.zeros((n, n, n, n), dtype=np.float64)
-        for l in range(n):
+        for ll in range(n):
             for i in range(n):
                 for j in range(n):
                     for k in range(n):
-                        val = d_gamma[j, l, i, k] - d_gamma[k, l, i, j]
+                        val = d_gamma[j, ll, i, k] - d_gamma[k, ll, i, j]
                         for m in range(n):
-                            val += gamma0[m, i, k] * gamma0[l, j, m] - gamma0[m, i, j] * gamma0[l, k, m]
-                        riemann[l, i, j, k] = val
+                            val += (
+                                gamma0[m, i, k] * gamma0[ll, j, m]
+                                - gamma0[m, i, j] * gamma0[ll, k, m]
+                            )
+                        riemann[ll, i, j, k] = val
 
         return riemann
 
@@ -147,7 +150,7 @@ class AffineConnection:
         ricci = np.zeros((n, n), dtype=np.float64)
         for i in range(n):
             for k in range(n):
-                ricci[i, k] = np.sum([r_tensor[l, i, l, k] for l in range(n)])
+                ricci[i, k] = np.sum([r_tensor[ll, i, ll, k] for ll in range(n)])
 
         scalar = float(np.sum(g_inv * ricci))
         return scalar

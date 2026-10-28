@@ -4,14 +4,13 @@ Portfolio risk graph and multi-asset sensitivity aggregation.
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Dict, List
 
-import numpy as np
 
 from spxa.graph.autodiff.tape import GradientTape
 from spxa.graph.graph import ComputationalGraph
 from spxa.graph.math_ops import AddNode
-from spxa.graph.node import Node, OperatorNode, ParameterNode
+from spxa.graph.node import Node
 
 
 class PortfolioRiskGraph:
@@ -23,7 +22,9 @@ class PortfolioRiskGraph:
         self.master_graph = ComputationalGraph(name=name)
         self.trade_outputs: List[Node] = []
 
-    def add_trade(self, pricing_graph: ComputationalGraph, price_output_name: str = "price") -> None:
+    def add_trade(
+        self, pricing_graph: ComputationalGraph, price_output_name: str = "price"
+    ) -> None:
         r"""Add a trade pricing subgraph and connect its output to portfolio NPV."""
         self.trade_graphs.append(pricing_graph)
         out_node = pricing_graph.outputs[price_output_name]
