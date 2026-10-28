@@ -398,6 +398,38 @@ from spxa.calibration import (
     UKF,
     UnscentedKalmanFilter,
 )
+from spxa.morph import (
+    AbstractMorphEngine,
+    CosineSchedule,
+    DynamicMorphedProcess,
+    GeneratorMorphEngine,
+    GeodesicMorphEngine,
+    GeodesicMorphedProcess,
+    LinearSchedule,
+    MixtureLevyMeasure,
+    ModelBarycenter,
+    ModelEnsemble,
+    MorphedLevyMeasure,
+    MorphedProcess,
+    MorphedSDEDiffusion,
+    MorphedVolatilitySurface,
+    MorphMethod,
+    MorphSchedule,
+    SigmoidalSchedule,
+    SmoothstepSchedule,
+    StateThresholdSchedule,
+    SurfaceMorphEngine,
+    WassersteinMorphEngine,
+    WassersteinMorphedProcess,
+    bures_wasserstein_barycenter_cov,
+    bures_wasserstein_distance,
+    char_exp_morphed,
+    gaussian_displacement_interpolation,
+    gaussian_geodesic_path,
+    gaussian_rao_distance,
+    morph,
+    morph_triplets,
+)
 
 __all__ = [
     "__version__",
@@ -782,6 +814,37 @@ __all__ = [
     "akaike_information_criterion",
     "bayesian_information_criterion",
     "CalibrationReport",
+    # Model Morphing module
+    "morph",
+    "MorphMethod",
+    "AbstractMorphEngine",
+    "MorphedProcess",
+    "MorphedLevyMeasure",
+    "GeneratorMorphEngine",
+    "MorphedSDEDiffusion",
+    "GeodesicMorphEngine",
+    "GeodesicMorphedProcess",
+    "WassersteinMorphEngine",
+    "WassersteinMorphedProcess",
+    "SurfaceMorphEngine",
+    "MorphedVolatilitySurface",
+    "MorphSchedule",
+    "LinearSchedule",
+    "CosineSchedule",
+    "SmoothstepSchedule",
+    "SigmoidalSchedule",
+    "StateThresholdSchedule",
+    "DynamicMorphedProcess",
+    "ModelBarycenter",
+    "ModelEnsemble",
+    "MixtureLevyMeasure",
+    "bures_wasserstein_barycenter_cov",
+    "bures_wasserstein_distance",
+    "gaussian_displacement_interpolation",
+    "gaussian_geodesic_path",
+    "gaussian_rao_distance",
+    "morph_triplets",
+    "char_exp_morphed",
     # Subpackages
     "diff",
     "ops",
@@ -795,7 +858,7 @@ __all__ = [
 
 
 def __getattr__(name: str):
-    if name in ("diff", "ops", "risk", "calculus", "graph", "geom", "signature", "rough"):
+    if name in ("diff", "ops", "risk", "calculus", "graph", "geom", "signature", "rough", "morph"):
         import importlib
 
         mod = importlib.import_module(f"spxa.{name}")

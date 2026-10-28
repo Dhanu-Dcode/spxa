@@ -4877,5 +4877,98 @@ from spxa.graph.rough import (
     $$h(t) = \int_0^t \frac{(t-s)^{H-1/2}}{\Gamma(H + 1/2)} F(u, h(s)) ds$$
   - `rough_heston_char_func(u, t_mat, v0, theta)`: Evaluates Rough Heston characteristic function $\mathbb{E}[e^{i u X_T}]$ using fractional and standard integration of $h(t)$.
 
+---
+
+## Model Morphing Framework (`spxa.morph`)
+
+The `spxa.morph` package provides a rigorous, first-class mathematical framework for continuous homotopies, information-geometric geodesics, optimal transport displacement interpolations, and dynamic transitions between stochastic processes.
+
+### Core Morphing Abstractions (`spxa.morph.base`, `spxa.morph.morphed_process`)
+- `morph(p0, p1, alpha=0.5, method="triplet", coupling="independent", **kwargs)`:
+  Functional operator morphing process $P_0$ into $P_1$ at homotopy parameter $\alpha \in [0, 1]$. Also accessible via `p0.morph(p1, alpha=alpha, method=method)`.
+- `MorphMethod`:
+  Canonical enum of supported morphing schemes:
+  - `TRIPLET` (`"triplet"`, `"characteristic"`): Linear convex combination on the cone of conditionally positive-definite characteristic exponents $\psi_\alpha(u) = (1 - \alpha)\psi_0(u) + \alpha\psi_1(u)$.
+  - `GENERATOR` (`"generator"`, `"sde"`): Infinitesimal generator homotopy $\mathcal{A}_\alpha = (1 - \alpha)\mathcal{A}_0 + \alpha\mathcal{A}_1$.
+  - `GEODESIC` (`"geodesic"`, `"fisher_rao"`): Riemannian Fisher-Rao geodesic flow or Amari dual connections on statistical manifolds.
+  - `WASSERSTEIN` (`"wasserstein"`, `"displacement"`): McCann displacement interpolation along geodesics in $\mathcal{W}_2$.
+  - `CONVEX_COMBINATION` (`"convex_combination"`, `"pathwise"`): Direct coupled pathwise simulation $X_\alpha(t) = (1 - \alpha)X_0(t) + \alpha X_1(t)$.
+  - `SURFACE` (`"surface"`, `"volatility_surface"`): Total implied variance surface homotopy $w_\alpha(k, T) = (1 - \alpha)w_0(k, T) + \alpha w_1(k, T)$.
+- `MorphedProcess`:
+  First-class `Process` subclass representing the continuous homotopy $P_\alpha$, carrying full property lattice tracking, exactness preservation, moment derivations, and path simulation.
+
+### Characteristic Triplet Morphing (`spxa.morph.triplet_morph`)
+- `morph_triplets(triplet0, triplet1, alpha)`:
+  Computes exact morphed Lévy triplet $(b_\alpha, \sigma_\alpha^2, \nu_\alpha)$ where $b_\alpha = (1-\alpha)b_0 + \alpha b_1$, $\sigma_\alpha^2 = (1-\alpha)\sigma_0^2 + \alpha\sigma_1^2$, and $\nu_\alpha = (1-\alpha)\nu_0 + \alpha\nu_1$.
+- `MorphedLevyMeasure(nu0, nu1, alpha)`:
+  Exact mixture Lévy measure evaluating density, total mass, tails, and moments in closed form.
+- `char_exp_morphed(p0, p1, alpha, u, t)`:
+  Evaluates morphed characteristic function $\mathbb{E}[e^{iu X_\alpha(t)}] = (\mathbb{E}[e^{iu X_0(t)}])^{1-\alpha} (\mathbb{E}[e^{iu X_1(t)}])^\alpha$.
+
+### SDE & Infinitesimal Generator Homotopy (`spxa.morph.generator_morph`)
+- `GeneratorMorphEngine`:
+  Constructs morphed Markov diffusions governed by $\mathcal{A}_\alpha = (1 - \alpha)\mathcal{A}_0 + \alpha\mathcal{A}_1$.
+- `MorphedSDEDiffusion(p0, p1, alpha, x0=1.0, drift_mode="linear", diffusion_mode="quadratic")`:
+  - `drift(t, x)`: $\mu_\alpha(t, x) = (1 - \alpha)\mu_0(t, x) + \alpha \mu_1(t, x)$.
+  - `diffusion(t, x)`: Quadratic variance mode $\sigma_\alpha(t, x) = \sqrt{(1-\alpha)\sigma_0^2(t, x) + \alpha\sigma_1^2(t, x)}$ or linear mode.
+  - `generator_action(f, df, d2f, t, x)`: Evaluates $(\mathcal{A}_\alpha f)(x) = \mu_\alpha f'(x) + \frac{1}{2}\sigma_\alpha^2 f''(x)$.
+  - `simulate(n_steps, n_paths, T, rng, scheme="euler"|"milstein")`: High-order vector Euler-Maruyama and Milstein numerical discretization.
+
+### Information-Geometric & Geodesic Morphing (`spxa.morph.geodesic_morph`)
+- `GeodesicMorphEngine`:
+  Morphing engine along Riemannian geodesics in statistical parameter manifolds.
+- `gaussian_rao_distance(mu0, sigma0, mu1, sigma1)`:
+  Exact Fisher-Rao hyperbolic distance $d_R(\theta_0, \theta_1) = \sqrt{2}\ln((1+\delta)/(1-\delta))$ with $\delta = \sqrt{ [(\Delta\mu)^2 + 2(\Delta\sigma)^2] / [(\Delta\mu)^2 + 2(\Sigma\sigma)^2] }$.
+- `gaussian_geodesic_path(mu0, sigma0, mu1, sigma1, alpha)`:
+  Exact circular arc Riemannian geodesic coordinates $(\mu(\alpha), \sigma(\alpha))$ on $\mathbb{H}^2$.
+- `GeodesicMorphedProcess(p0, p1, alpha, connection="riemannian")`:
+  Process whose parameters follow the Levi-Civita geodesic, Amari $e$-geodesic (natural coordinates), or $m$-geodesic (expectation coordinates).
+
+### Optimal Transport & Wasserstein-2 Morphing (`spxa.morph.wasserstein_morph`)
+- `WassersteinMorphEngine`:
+  Optimal transport morphing engine using McCann displacement interpolation in $\mathcal{W}_2$.
+- `bures_wasserstein_distance(m0, cov0, m1, cov1)`:
+  Exact 2-Wasserstein distance $W_2^2 = \|m_0 - m_1\|^2 + \text{Tr}(\Sigma_0 + \Sigma_1 - 2(\Sigma_0^{1/2} \Sigma_1 \Sigma_0^{1/2})^{1/2})$.
+- `gaussian_displacement_interpolation(m0, cov0, m1, cov1, alpha)`:
+  McCann displacement interpolation $(m_\alpha, \Sigma_\alpha)$ using Brenier's optimal transport matrix $A$.
+- `WassersteinMorphedProcess(p0, p1, alpha)`:
+  Process with exact linear quantile displacement $F_\alpha^{-1}(p) = (1 - \alpha) F_0^{-1}(p) + \alpha F_1^{-1}(p)$.
+
+### Dynamic Schedules & Stochastic Morphing (`spxa.morph.dynamic_morph`)
+- `LinearSchedule(t0=0.0, t1=1.0)`: Linear ramp $\alpha(t) = \text{clip}((t - t_0)/(t_1 - t_0), 0, 1)$.
+- `CosineSchedule(t0=0.0, t1=1.0)`: Cosine ramp $\alpha(t) = \frac{1}{2}(1 - \cos(\pi \tau))$ with zero endpoint acceleration.
+- `SmoothstepSchedule(t0=0.0, t1=1.0, order=1|2)`: Cubic Hermite ($3\tau^2 - 2\tau^3$) and quintic smootherstep ($6\tau^5 - 15\tau^4 + 10\tau^3$).
+- `SigmoidalSchedule(t_mid=0.5, rate=10.0)`: Logistic transition schedule centered at $t_{\text{mid}}$.
+- `StateThresholdSchedule(x_crit, delta=0.1, direction=1)`: Endogenous barrier schedule $\alpha(x)$ triggered when state penetrates critical threshold.
+- `DynamicMorphedProcess(p0, p1, schedule, x0=1.0, stochastic_alpha=False, kappa_alpha=2.0, alpha_bar=0.5, sigma_alpha=0.2)`:
+  Continuous process supporting deterministic schedules and stochastic Jacobi/Wright-Fisher diffusion morph trajectories:
+  $$d\alpha_t = \kappa(\bar{\alpha} - \alpha_t) dt + \sigma_\alpha \sqrt{\alpha_t (1 - \alpha_t)} dW_t^\alpha$$
+
+### Multi-Model Barycenters & Ensembles (`spxa.morph.barycenter`, `spxa.morph.ensemble`)
+- `ModelBarycenter(processes, weights=None, geometry="triplet"|"wasserstein")`:
+  Fréchet mean of a portfolio of models on probability simplex $\mathbf{w} \in \Delta^K$.
+- `bures_wasserstein_barycentric_cov(covariances, weights, max_iter=50, tol=1e-8)`:
+  Iterative fixed-point solver for Bures-Wasserstein barycentric covariance $\Sigma^* = \sum w_k (\Sigma^{*1/2} \Sigma_k \Sigma^{*1/2})^{1/2}$.
+- `ModelEnsemble(models, weights=None, learning_rate=1.0)`:
+  Adaptive ensemble supporting exponential Bayesian loss updates $w_k \leftarrow w_k \exp(-\eta L_k)$ and mixture or barycentric path generation.
+
+### Implied Volatility Surface Morphing (`spxa.morph.surface_morph`)
+- `SurfaceMorphEngine`:
+  Morphing engine for total implied variance surfaces $w_\alpha(k, T) = (1 - \alpha)w_0(k, T) + \alpha w_1(k, T)$.
+- `MorphedVolatilitySurface(vol_fn0, vol_fn1, alpha=0.5, spot=100.0, rate=0.0)`:
+  - `implied_vol(k, T)`: Evaluates morphed Black-Scholes implied volatility $\sigma_\alpha(k, T) = \sqrt{w_\alpha(k, T)/T}$.
+  - `check_calendar_arbitrage(k, t_grid)`: Verifies monotonicity $\partial_T w_\alpha(k, T) \ge 0$.
+  - `check_butterfly_arbitrage(k_grid, T)`: Verifies Durrleman-Gatheral condition $g_\alpha(k, T) \ge 0$.
+  - `risk_neutral_density(strikes, T)`: Extracts Breeden-Litzenberger state price density $q_\alpha(K) = e^{rT} \partial^2 C_\alpha / \partial K^2$.
+
+### Computational Graph & Visualization (`spxa.graph.morph`, `spxa.vis.morph`)
+- `MorphNode(x, y, alpha)`: Computational graph node implementing homotopy $(1 - \alpha)x + \alpha y$ with reverse-mode VJP rule $\partial L/\partial \alpha = (y - x) \cdot \partial L/\partial z$.
+- `QuadraticVarianceMorphNode(sig0, sig1, alpha)`: Volatility diffusion node with gradient $\partial \sigma / \partial \alpha = (\sigma_1^2 - \sigma_0^2)/(2\sigma)$.
+- `plot_morph_density_evolution(p0, p1, alphas, x_range, t)`: Waterfall density evolution plot.
+- `plot_morph_paths(morphed, n_paths, n_steps, T)`: Multi-path trajectory visualization.
+- `plot_morph_surface(morphed_surface, k_grid, t_grid)`: 3D interactive implied volatility surface rendering.
+- `plot_geodesic_phase_portrait(mu0, sig0, mu1, sig1)`: Phase-space hyperbolic Riemannian geodesic trajectory.
+
+
 
 
