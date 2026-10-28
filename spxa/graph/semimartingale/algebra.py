@@ -27,9 +27,12 @@ class QuadraticCovariationNode(OperatorNode):
         self.wire_Y = wire_Y
         self.rho = float(rho)
 
-        def eval_covariation(t: float = 1.0, n_paths: int = 1000, n_steps: int = 100) -> np.ndarray:
-            comp_X = self.wire_X.simulate_decomposed(t=t, n_paths=n_paths, n_steps=n_steps)
-            comp_Y = self.wire_Y.simulate_decomposed(t=t, n_paths=n_paths, n_steps=n_steps)
+        def eval_covariation(t: float = 1.0, n_paths: int = 1000, n_steps: int = 100, seed: Optional[int] = None) -> np.ndarray:
+            comp_X = self.wire_X.simulate_decomposed(t=t, n_paths=n_paths, n_steps=n_steps, seed=seed)
+            if self.wire_X is self.wire_Y:
+                comp_Y = comp_X
+            else:
+                comp_Y = self.wire_Y.simulate_decomposed(t=t, n_paths=n_paths, n_steps=n_steps, seed=None if seed is None else seed + 1)
 
             dx = np.diff(comp_X.total_paths, axis=1)
             dy = np.diff(comp_Y.total_paths, axis=1)
@@ -37,6 +40,8 @@ class QuadraticCovariationNode(OperatorNode):
             cov = np.zeros((n_paths, n_steps + 1))
             cov[:, 1:] = np.cumsum(dx * dy, axis=1)
             return cov
+
+        self.eval_covariation = eval_covariation
 
         super().__init__(
             op_fn=eval_covariation,

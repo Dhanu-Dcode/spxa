@@ -45,6 +45,8 @@ class StochasticIntegralNode(OperatorNode):
                 "terminal_variance": float(np.var(integral_paths[:, -1])),
             }
 
+        self.eval_integral = eval_integral
+
         super().__init__(
             op_fn=eval_integral,
             inputs=[],
