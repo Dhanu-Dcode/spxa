@@ -87,8 +87,12 @@ class ReflectedBrownianMotion(Process):
             kind=NodeKind.PRIMITIVE,
             name=f"ReflectedBrownianMotion(μ={self.mu}, σ={self.sigma}, x0={self.x0})",
             math_note=(
-                f"X_t = X_0 + μt + σW_t + L_t on [0, ∞); "
-                + (f"stationary Exp(λ={2.0 * abs(self.mu) / (self.sigma**2):.3f})" if self.mu < 0 else "transient/null-recurrent")
+                "X_t = X_0 + μt + σW_t + L_t on [0, ∞); "
+                + (
+                    f"stationary Exp(λ={2.0 * abs(self.mu) / (self.sigma**2):.3f})"
+                    if self.mu < 0
+                    else "transient/null-recurrent"
+                )
             ),
             reference="Skorokhod (1961); Harrison & Reiman (1981), Ann. Probab. 302–308",
         )
@@ -182,7 +186,9 @@ class ReflectedBrownianMotion(Process):
         )
 
     def _moment_propagation_cumulants(self, order: int) -> dict[int, float]:
-        res: dict[int, float] = {1: self.stationary_mean if self.has_stationary_distribution else self.x0}
+        res: dict[int, float] = {
+            1: self.stationary_mean if self.has_stationary_distribution else self.x0
+        }
         if order >= 2:
             res[2] = self.stationary_variance if self.has_stationary_distribution else self.sigma**2
         for k in range(3, order + 1):
@@ -214,15 +220,21 @@ class ReflectedBrownianMotion(Process):
 
         if t_grid is None:
             t_final = float(T if T is not None else (t_max if t_max is not None else 1.0))
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         elif isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, float(t_grid), steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)
 
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 500))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 500)
+        )
         n_pts = len(times)
 
         # Discrete-time Skorokhod recursion:

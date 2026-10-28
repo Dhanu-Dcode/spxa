@@ -91,7 +91,7 @@ class KPZInterfaceProcess(Process):
         node = CompositionNode(
             kind=NodeKind.PRIMITIVE,
             name=f"KPZInterface(ν={self.nu}, λ={self.lam}, D={self.noise_amplitude}, L={self.lattice_size})",
-            math_note=f"∂_t h = ν ∂_xx h + ½λ (∂_x h)² + ξ(t,x); universal t^{{1/3}} Tracy-Widom scaling",
+            math_note="∂_t h = ν ∂_xx h + ½λ (∂_x h)² + ξ(t,x); universal t^{1/3} Tracy-Widom scaling",
             reference="Kardar, Parisi & Zhang (1986), Phys. Rev. Lett. 56(9), 889; Hairer (2013)",
         )
         super().__init__(exactness=ExactnessLevel.MOMENT_PROPAGATION, _node=node)
@@ -115,7 +115,7 @@ class KPZInterfaceProcess(Process):
             hurst_index=0.5,  # chi = 1/2
             notes=[
                 "Kardar-Parisi-Zhang interface growth stochastic PDE.",
-                f"Universal growth exponent β = 1/3, roughness χ = 1/2.",
+                "Universal growth exponent β = 1/3, roughness χ = 1/2.",
             ],
         )
 
@@ -152,15 +152,21 @@ class KPZInterfaceProcess(Process):
 
         if t_grid is None:
             t_final = float(T if T is not None else (t_max if t_max is not None else 1.0))
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 100))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         elif isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 100))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+            )
             times = np.linspace(0.0, float(t_grid), steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)
 
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 50))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 50)
+        )
         n_pts = len(times)
         l_pts = self.lattice_size
         dx = self.spatial_dx

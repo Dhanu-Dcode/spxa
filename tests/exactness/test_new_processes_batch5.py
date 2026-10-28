@@ -9,7 +9,6 @@ Tests for Batch 5 physics, anomalous diffusion and transport processes:
 """
 
 import numpy as np
-import pytest
 
 from spxa.zoo.beyond.ctrw import ContinuousTimeRandomWalk
 from spxa.zoo.beyond.fractional_laplacian import FractionalLaplacianLevyFlight

@@ -133,7 +133,7 @@ class NonlinearHawkesProcess(Process):
         )
 
     def _moment_propagation_cumulants(self, order: int) -> dict[int, float]:
-        res: dict[int, float] = {1: self.apply_activation(self.mu)}
+        res: dict[int, float] = {1: float(self.apply_activation(self.mu))}
         if order >= 2:
             res[2] = 1.0
         for k in range(3, order + 1):
@@ -157,7 +157,11 @@ class NonlinearHawkesProcess(Process):
         t_curr = 0.0
         r_state = 0.0
 
-        upper_bound = self.max_rate if self.activation == "sigmoid" else (self.apply_activation(self.mu) * 10.0 + 10.0)
+        upper_bound = (
+            self.max_rate
+            if self.activation == "sigmoid"
+            else (self.apply_activation(self.mu) * 10.0 + 10.0)
+        )
 
         while t_curr < t_max:
             dt = rng.exponential(1.0 / upper_bound)
@@ -194,10 +198,14 @@ class NonlinearHawkesProcess(Process):
     ) -> np.ndarray:
         r"""Simulate cumulative event count N_t across sample paths."""
         t_final = float(T if T is not None else (t_max if t_max is not None else 10.0))
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 100))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 100)
+        )
 
         if t_grid is None or isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 50))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 50)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)

@@ -170,8 +170,12 @@ class SchrammLoewnerEvolution(Process):
     ) -> np.ndarray:
         r"""Simulate sample paths of the real horizontal coordinate Re(γ(t))."""
         t_final = float(T if T is not None else (t_max if t_max is not None else 1.0))
-        steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 100))
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 50))
+        steps = int(
+            n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+        )
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 50)
+        )
 
         re_paths = np.empty((paths_count, steps + 1), dtype=np.float64)
         for p in range(paths_count):

@@ -230,6 +230,77 @@ from spxa.zoo.beyond.quadratic_rough_heston import (
 )
 
 from .mmpp import MarkovModulatedPoissonProcess
+from spxa.zoo.beyond.four_two import FourTwoModel, FourTwoProcess, Grasselli42
+from spxa.zoo.beyond.shifted_sabr import FreeBoundarySABR, ShiftedSABRProcess
+from spxa.zoo.beyond.zumbach import ZumbachFeedbackProcess, ZumbachProcess
+from spxa.zoo.beyond.fractional_ou import (
+    FractionalOU,
+    FractionalOUProcess,
+    FractionalOrnsteinUhlenbeck,
+)
+from spxa.zoo.beyond.mrw import MRWProcess, MultifractalRandomWalk
+from spxa.zoo.beyond.double_mean_reverting import (
+    DoubleMeanRevertingSV,
+    TwoScaleSVProcess,
+)
+from spxa.zoo.beyond.sticky_bm import StickyBM, StickyBrownianMotion
+from spxa.zoo.beyond.reflected_bm import ReflectedBM, ReflectedBrownianMotion
+from spxa.zoo.beyond.skew_bm import SkewBM, SkewBrownianMotion
+from spxa.zoo.beyond.reflected_ou import ReflectedOU, ReflectedOrnsteinUhlenbeck
+from spxa.zoo.beyond.absorbing_bachelier import (
+    AbsorbingBachelierProcess,
+    DefaultableBachelier,
+)
+from spxa.zoo.beyond.noncentral_bessel import (
+    DriftedBesselProcess,
+    NonCentralBesselProcess,
+)
+from spxa.zoo.beyond.ho_lee import HoLeeModel, HoLeeProcess
+from spxa.zoo.beyond.black_derman_toy import BDTProcess, BlackDermanToyProcess
+from spxa.zoo.beyond.bk_two_factor import BKTwoFactor, BlackKarasinskiTwoFactor
+from spxa.zoo.beyond.hjm import HJMField, HJMProcess
+from spxa.zoo.beyond.bgm import BGMProcess, LiborMarketModel
+from spxa.zoo.beyond.contagion_intensity import (
+    BieleckiRutkowskiProcess,
+    ContagionIntensityProcess,
+)
+from spxa.zoo.beyond.cir_plus_plus import CIRPlusPlusProcess, ShiftedCIRModel
+from spxa.zoo.beyond.inhibitory_hawkes import (
+    CompetitiveHawkes,
+    InhibitoryHawkesProcess,
+)
+from spxa.zoo.beyond.nonlinear_hawkes import (
+    NonlinearHawkesProcess,
+    SigmoidalHawkes,
+)
+from spxa.zoo.beyond.quadratic_hawkes import QHawkes, QuadraticHawkesProcess
+from spxa.zoo.beyond.geometric_hawkes import GeometricHawkesProcess
+from spxa.zoo.beyond.affine_volterra_jump import AffineVolterraJumpProcess
+from spxa.zoo.beyond.ctrw import CTRWProcess, ContinuousTimeRandomWalk
+from spxa.zoo.beyond.fractional_laplacian import (
+    FractionalLaplacianLevyFlight,
+    LevyFlightProcess,
+)
+from spxa.zoo.beyond.run_and_tumble import (
+    ActiveBrownianMotion,
+    RunAndTumbleProcess,
+)
+from spxa.zoo.beyond.kpz import KPZInterfaceProcess, KPZProcess
+from spxa.zoo.beyond.schrodinger_diffusion import (
+    EntropicBridgeProcess,
+    SchrodingerDiffusion,
+)
+from spxa.zoo.beyond.riemannian_bm import ManifoldBM, RiemannianBrownianMotion
+from spxa.zoo.beyond.dyson_bm import DysonBrownianMotion
+from spxa.zoo.beyond.wishart import MatrixWishartProcess, WishartDiffusion
+from spxa.zoo.beyond.ginibre import GinibreEigenvalueProcess
+from spxa.zoo.beyond.airy_two import AiryTwoProcess, TracyWidomProcess
+from spxa.zoo.beyond.sle import SLEProcess, SchrammLoewnerEvolution
+from spxa.zoo.beyond.csbp import CSBPProcess, FellerBranchingImmigration
+from spxa.zoo.beyond.moran import MoranModel, MoranProcess
+from spxa.zoo.beyond.cannings import BetaCoalescentProcess, CanningsProcess
+from spxa.zoo.beyond.johnson_su import JohnsonSUDiffusion, SinhNormalDiffusion
+from spxa.zoo.beyond.bilinear_jump import BilinearJumpDiffusion
 
 __all__ = [
     "Bates96",
@@ -393,4 +464,81 @@ __all__ = [
     "Vasicek",
     "VasicekProcess",
     "MarkovModulatedPoissonProcess",
+    "FourTwoProcess",
+    "FourTwoModel",
+    "Grasselli42",
+    "ShiftedSABRProcess",
+    "FreeBoundarySABR",
+    "ZumbachProcess",
+    "ZumbachFeedbackProcess",
+    "FractionalOrnsteinUhlenbeck",
+    "FractionalOU",
+    "FractionalOUProcess",
+    "MultifractalRandomWalk",
+    "MRWProcess",
+    "DoubleMeanRevertingSV",
+    "TwoScaleSVProcess",
+    "StickyBrownianMotion",
+    "StickyBM",
+    "ReflectedBrownianMotion",
+    "ReflectedBM",
+    "SkewBrownianMotion",
+    "SkewBM",
+    "ReflectedOrnsteinUhlenbeck",
+    "ReflectedOU",
+    "AbsorbingBachelierProcess",
+    "DefaultableBachelier",
+    "NonCentralBesselProcess",
+    "DriftedBesselProcess",
+    "HoLeeProcess",
+    "HoLeeModel",
+    "BlackDermanToyProcess",
+    "BDTProcess",
+    "BlackKarasinskiTwoFactor",
+    "BKTwoFactor",
+    "HJMField",
+    "HJMProcess",
+    "BGMProcess",
+    "LiborMarketModel",
+    "ContagionIntensityProcess",
+    "BieleckiRutkowskiProcess",
+    "CIRPlusPlusProcess",
+    "ShiftedCIRModel",
+    "InhibitoryHawkesProcess",
+    "CompetitiveHawkes",
+    "NonlinearHawkesProcess",
+    "SigmoidalHawkes",
+    "QuadraticHawkesProcess",
+    "QHawkes",
+    "GeometricHawkesProcess",
+    "AffineVolterraJumpProcess",
+    "ContinuousTimeRandomWalk",
+    "CTRWProcess",
+    "FractionalLaplacianLevyFlight",
+    "LevyFlightProcess",
+    "RunAndTumbleProcess",
+    "ActiveBrownianMotion",
+    "KPZInterfaceProcess",
+    "KPZProcess",
+    "SchrodingerDiffusion",
+    "EntropicBridgeProcess",
+    "RiemannianBrownianMotion",
+    "ManifoldBM",
+    "DysonBrownianMotion",
+    "WishartDiffusion",
+    "MatrixWishartProcess",
+    "GinibreEigenvalueProcess",
+    "AiryTwoProcess",
+    "TracyWidomProcess",
+    "SchrammLoewnerEvolution",
+    "SLEProcess",
+    "CSBPProcess",
+    "FellerBranchingImmigration",
+    "MoranProcess",
+    "MoranModel",
+    "CanningsProcess",
+    "BetaCoalescentProcess",
+    "JohnsonSUDiffusion",
+    "SinhNormalDiffusion",
+    "BilinearJumpDiffusion",
 ]

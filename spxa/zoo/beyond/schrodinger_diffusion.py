@@ -170,12 +170,16 @@ class SchrodingerDiffusion(Process):
 
         t_final = self.t_terminal
         if t_grid is None or isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 100))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)
 
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 500))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 500)
+        )
         n_pts = len(times)
 
         # Jointly sample initial and terminal coupled endpoints

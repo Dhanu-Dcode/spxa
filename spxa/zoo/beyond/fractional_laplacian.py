@@ -74,7 +74,7 @@ class FractionalLaplacianLevyFlight(Process):
         node = CompositionNode(
             kind=NodeKind.PRIMITIVE,
             name=f"FractionalLaplacian(α={self.alpha}, scale={self.scale})",
-            math_note=f"Af(x) = -(-Δ)^{{α/2}} f(x); characteristic exponent Ψ(u) = -c |u|^α",
+            math_note="Af(x) = -(-Δ)^{α/2} f(x); characteristic exponent Ψ(u) = -c |u|^α",
             reference="Shlesinger, Zaslavsky & Frisch (1995), Lévy Flights and Related Topics in Physics",
         )
         super().__init__(exactness=ExactnessLevel.EXACT, _node=node)
@@ -148,15 +148,21 @@ class FractionalLaplacianLevyFlight(Process):
 
         if t_grid is None:
             t_final = float(T if T is not None else (t_max if t_max is not None else 1.0))
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         elif isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, float(t_grid), steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)
 
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 500))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 500)
+        )
         n_pts = len(times)
 
         x_paths = np.empty((paths_count, n_pts), dtype=np.float64)
@@ -166,7 +172,9 @@ class FractionalLaplacianLevyFlight(Process):
             # Gaussian increments
             for i in range(1, n_pts):
                 dt = times[i] - times[i - 1]
-                x_paths[:, i] = x_paths[:, i - 1] + math.sqrt(2.0 * dt) * self.scale * rng.standard_normal(paths_count)
+                x_paths[:, i] = x_paths[:, i - 1] + math.sqrt(
+                    2.0 * dt
+                ) * self.scale * rng.standard_normal(paths_count)
             return x_paths
 
         # Chambers-Mallows-Stuck algorithm for symmetric alpha-stable

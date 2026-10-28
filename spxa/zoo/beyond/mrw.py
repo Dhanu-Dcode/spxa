@@ -86,7 +86,7 @@ class MultifractalRandomWalk(Process):
         node = CompositionNode(
             kind=NodeKind.PRIMITIVE,
             name=f"MultifractalRandomWalk(λ²={self.lambda_sq}, T={self.integral_scale}, σ={self.sigma})",
-            math_note=f"X_t = ∫ e^{{ω(s)}} dW_s with parabolic spectrum ζ(q)=q(1/2+λ²) - λ²q²/2",
+            math_note="X_t = ∫ e^{ω(s)} dW_s with parabolic spectrum ζ(q)=q(1/2+λ²) - λ²q²/2",
             reference="Bacry, Delour & Muzy (2001), Phys. Rev. E 64(2), 026103",
         )
         super().__init__(exactness=ExactnessLevel.MOMENT_PROPAGATION, _node=node)
@@ -95,7 +95,9 @@ class MultifractalRandomWalk(Process):
     # Multifractal Scaling Spectrum
     # ------------------------------------------------------------------
 
-    def multifractal_scaling_exponent(self, q: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def multifractal_scaling_exponent(
+        self, q: Union[float, np.ndarray]
+    ) -> Union[float, np.ndarray]:
         r"""
         Exact parabolic multifractal scaling exponent ζ(q) = q (1/2 + λ²) - (λ² q² / 2).
         """
@@ -161,20 +163,25 @@ class MultifractalRandomWalk(Process):
 
         if t_grid is None:
             t_final = float(T if T is not None else (t_max if t_max is not None else 1.0))
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 256))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 256)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         elif isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 256))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 256)
+            )
             times = np.linspace(0.0, float(t_grid), steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)
 
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 500))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 500)
+        )
         n_pts = len(times)
         n_steps_actual = n_pts - 1
 
         dt = times[1] - times[0]
-        t_tot = times[-1]
 
         # Logarithmic covariance function C(tau) = lambda_sq * ln(T / (tau + dt))
         lags = np.arange(n_steps_actual) * dt

@@ -172,15 +172,21 @@ class AffineVolterraJumpProcess(Process):
 
         if t_grid is None:
             t_final = float(T if T is not None else (t_max if t_max is not None else 1.0))
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 100))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         elif isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 100))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+            )
             times = np.linspace(0.0, float(t_grid), steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)
 
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 200))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 200)
+        )
         n_pts = len(times)
         dt = times[1] - times[0]
 
@@ -204,7 +210,9 @@ class AffineVolterraJumpProcess(Process):
 
             # Poisson jumps
             n_jumps = rng.poisson(self.jump_intensity * dt, paths_count)
-            jump_sizes = np.where(n_jumps > 0, rng.exponential(self.jump_mean, paths_count) * n_jumps, 0.0)
+            jump_sizes = np.where(
+                n_jumps > 0, rng.exponential(self.jump_mean, paths_count) * n_jumps, 0.0
+            )
 
             prev_x = np.maximum(x_paths[:, i - 1], 0.0)
             drift_part = (self.b - self.beta * prev_x) * dt

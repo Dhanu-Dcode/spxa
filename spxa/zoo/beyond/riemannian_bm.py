@@ -132,7 +132,11 @@ class RiemannianBrownianMotion(Process):
         if rng is None:
             rng = np.random.default_rng()
 
-        times = np.linspace(0.0, 1.0 if t_grid is None else float(t_grid), 100) if isinstance(t_grid, (int, float, type(None))) else np.asarray(t_grid)
+        times = (
+            np.linspace(0.0, 1.0 if t_grid is None else float(t_grid), 100)
+            if isinstance(t_grid, (int, float, type(None)))
+            else np.asarray(t_grid)
+        )
         n_pts = len(times)
 
         # Initial point at North Pole (0, 0, R)
@@ -182,8 +186,14 @@ class RiemannianBrownianMotion(Process):
         t_max: Optional[float] = None,
     ) -> np.ndarray:
         r"""Simulate geodesic distance from North Pole d_R(X_t, (0,0,R))."""
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 100))
-        grid = t_grid if t_grid is not None else float(T if T is not None else (t_max if t_max is not None else 1.0))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 100)
+        )
+        grid = (
+            t_grid
+            if t_grid is not None
+            else float(T if T is not None else (t_max if t_max is not None else 1.0))
+        )
         p3d = self.simulate_sphere_3d(t_grid=grid, n_paths=paths_count, rng=rng)
 
         # Geodesic distance: R * arccos(z / R)

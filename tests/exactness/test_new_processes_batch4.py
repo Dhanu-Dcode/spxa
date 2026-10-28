@@ -8,7 +8,6 @@ Tests for Batch 4 point, jump and non-Markovian cluster processes:
 """
 
 import numpy as np
-import pytest
 
 from spxa.zoo.beyond.affine_volterra_jump import AffineVolterraJumpProcess
 from spxa.zoo.beyond.geometric_hawkes import GeometricHawkesProcess
@@ -53,7 +52,9 @@ def test_quadratic_hawkes_process():
 
 
 def test_geometric_hawkes_process():
-    gh = GeometricHawkesProcess(mu=0.05, sigma=0.15, hawkes_mu=0.5, hawkes_alpha=0.5, hawkes_beta=1.0, s0=100.0)
+    gh = GeometricHawkesProcess(
+        mu=0.05, sigma=0.15, hawkes_mu=0.5, hawkes_alpha=0.5, hawkes_beta=1.0, s0=100.0
+    )
     paths = gh.simulate(t_grid=0.5, n_paths=25, n_steps=20, rng=np.random.default_rng(42))
     assert paths.shape == (25, 21)
     assert np.all(paths[:, 0] == 100.0)
@@ -61,7 +62,9 @@ def test_geometric_hawkes_process():
 
 
 def test_affine_volterra_jump_process():
-    avj = AffineVolterraJumpProcess(hurst=0.3, b=0.1, beta=1.0, sigma=0.15, jump_intensity=0.5, x0=0.1)
+    avj = AffineVolterraJumpProcess(
+        hurst=0.3, b=0.1, beta=1.0, sigma=0.15, jump_intensity=0.5, x0=0.1
+    )
     assert avj.hurst == 0.3
     assert avj.kernel(1.0) > 0.0
 

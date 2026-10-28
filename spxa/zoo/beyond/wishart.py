@@ -144,7 +144,11 @@ class WishartDiffusion(Process):
         if rng is None:
             rng = np.random.default_rng()
 
-        times = np.linspace(0.0, 1.0 if t_grid is None else float(t_grid), 100) if isinstance(t_grid, (int, float, type(None))) else np.asarray(t_grid)
+        times = (
+            np.linspace(0.0, 1.0 if t_grid is None else float(t_grid), 100)
+            if isinstance(t_grid, (int, float, type(None)))
+            else np.asarray(t_grid)
+        )
         n_pts = len(times)
         d = self.dim
 
@@ -194,8 +198,14 @@ class WishartDiffusion(Process):
         t_max: Optional[float] = None,
     ) -> np.ndarray:
         r"""Simulate sample paths of the total variance trace Tr(Σ_t)."""
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 50))
-        grid = t_grid if t_grid is not None else float(T if T is not None else (t_max if t_max is not None else 1.0))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 50)
+        )
+        grid = (
+            t_grid
+            if t_grid is not None
+            else float(T if T is not None else (t_max if t_max is not None else 1.0))
+        )
         times = np.linspace(0.0, grid, 100) if isinstance(grid, (int, float)) else np.asarray(grid)
 
         trace_paths = np.empty((paths_count, len(times)), dtype=np.float64)

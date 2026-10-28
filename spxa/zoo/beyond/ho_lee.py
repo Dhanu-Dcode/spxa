@@ -77,12 +77,14 @@ class HoLeeProcess(Process):
         self.sigma = float(sigma)
         self.r0 = float(r0)
         self.theta_0 = float(theta_0)
-        self.theta_fn = theta_fn if theta_fn is not None else (lambda t: self.theta_0 + (self.sigma**2) * t)
+        self.theta_fn = (
+            theta_fn if theta_fn is not None else (lambda t: self.theta_0 + (self.sigma**2) * t)
+        )
 
         node = CompositionNode(
             kind=NodeKind.PRIMITIVE,
             name=f"HoLeeProcess(σ={self.sigma}, r0={self.r0})",
-            math_note=f"dr_t = θ(t) dt + σ dW_t; exact affine bond pricing B(t,T)=T-t",
+            math_note="dr_t = θ(t) dt + σ dW_t; exact affine bond pricing B(t,T)=T-t",
             reference="Ho & Lee (1986), Journal of Finance 41(5), 1011–1029",
         )
         super().__init__(exactness=ExactnessLevel.MOMENT_PROPAGATION, _node=node)
@@ -174,15 +176,21 @@ class HoLeeProcess(Process):
 
         if t_grid is None:
             t_final = float(T if T is not None else (t_max if t_max is not None else 1.0))
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         elif isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, float(t_grid), steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)
 
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 500))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 500)
+        )
         n_pts = len(times)
 
         r_paths = np.empty((paths_count, n_pts), dtype=np.float64)

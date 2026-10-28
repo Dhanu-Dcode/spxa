@@ -90,7 +90,7 @@ class BlackKarasinskiTwoFactor(Process):
         node = CompositionNode(
             kind=NodeKind.PRIMITIVE,
             name=f"BlackKarasinskiTwoFactor(κ1={self.kappa1}, κ2={self.kappa2}, r0={self.r0})",
-            math_note=f"r_t = exp(φ(t) + x_1 + x_2); two-factor lognormal Gaussian factors",
+            math_note="r_t = exp(φ(t) + x_1 + x_2); two-factor lognormal Gaussian factors",
             reference="Black & Karasinski (1991), Financial Analysts Journal 47(4), 52–59",
         )
         super().__init__(exactness=ExactnessLevel.MOMENT_PROPAGATION, _node=node)
@@ -151,15 +151,21 @@ class BlackKarasinskiTwoFactor(Process):
 
         if t_grid is None:
             t_final = float(T if T is not None else (t_max if t_max is not None else 1.0))
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         elif isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, float(t_grid), steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)
 
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 500))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 500)
+        )
         n_pts = len(times)
 
         x1 = np.zeros((paths_count, n_pts), dtype=np.float64)
@@ -170,7 +176,6 @@ class BlackKarasinskiTwoFactor(Process):
 
         for i in range(1, n_pts):
             dt = times[i] - times[i - 1]
-            sqrt_dt = math.sqrt(dt)
 
             z1 = rng.standard_normal(paths_count)
             z2 = rng.standard_normal(paths_count)

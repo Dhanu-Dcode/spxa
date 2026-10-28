@@ -33,7 +33,6 @@ diffusion: a fractional dynamics approach. *Physics Reports*, 339(1), 1–77.
 
 from __future__ import annotations
 
-import math
 from typing import Optional, Union
 
 import numpy as np
@@ -162,15 +161,21 @@ class ContinuousTimeRandomWalk(Process):
 
         if t_grid is None:
             t_final = float(T if T is not None else (t_max if t_max is not None else 1.0))
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 100))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         elif isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 100))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+            )
             times = np.linspace(0.0, float(t_grid), steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)
 
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 200))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 200)
+        )
         n_pts = len(times)
         x_paths = np.empty((paths_count, n_pts), dtype=np.float64)
 

@@ -185,15 +185,21 @@ class BilinearJumpDiffusion(Process):
 
         if t_grid is None:
             t_final = float(T if T is not None else (t_max if t_max is not None else 1.0))
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         elif isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, float(t_grid), steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)
 
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 500))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 500)
+        )
         n_pts = len(times)
 
         s_paths = np.empty((paths_count, n_pts), dtype=np.float64)
@@ -221,11 +227,17 @@ class BilinearJumpDiffusion(Process):
             n_jumps = rng.poisson(lam_t * dt)
 
             # Jump sizes in asset price and variance
-            y_jump = np.where(n_jumps > 0, rng.normal(self.jump_mu, self.jump_sigma, paths_count) * n_jumps, 0.0)
-            var_jump = np.where(n_jumps > 0, rng.exponential(self.var_jump_mean, paths_count) * n_jumps, 0.0)
+            y_jump = np.where(
+                n_jumps > 0, rng.normal(self.jump_mu, self.jump_sigma, paths_count) * n_jumps, 0.0
+            )
+            var_jump = np.where(
+                n_jumps > 0, rng.exponential(self.var_jump_mean, paths_count) * n_jumps, 0.0
+            )
 
             # Spot log-price update
-            d_log_s = (self.mu0 + self.mu1 * v_pos - 0.5 * v_pos) * dt + sqrt_v * sqrt_dt * zs + y_jump
+            d_log_s = (
+                (self.mu0 + self.mu1 * v_pos - 0.5 * v_pos) * dt + sqrt_v * sqrt_dt * zs + y_jump
+            )
             s_curr = s_curr * np.exp(d_log_s)
 
             # Variance update with variance jump spike

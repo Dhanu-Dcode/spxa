@@ -40,7 +40,6 @@ import math
 from typing import Optional, Union
 
 import numpy as np
-from scipy.stats import beta
 
 from spxa.core.exactness import ExactnessLevel
 from spxa.core.exceptions import ExactnessError
@@ -92,7 +91,7 @@ class MoranProcess(Process):
         node = CompositionNode(
             kind=NodeKind.PRIMITIVE,
             name=f"MoranProcess(s={self.selection}, u={self.mutation_u}, v={self.mutation_v}, Ne={self.pop_size})",
-            math_note=f"dp = [s p(1-p) + u(1-p) - vp] dt + √(p(1-p)/Ne) dW on [0, 1]",
+            math_note="dp = [s p(1-p) + u(1-p) - vp] dt + √(p(1-p)/Ne) dW on [0, 1]",
             reference="Moran (1958), Math. Proc. Camb. Philos. Soc. 54(1), 60–71; Etheridge (2011)",
         )
         super().__init__(exactness=ExactnessLevel.MOMENT_PROPAGATION, _node=node)
@@ -130,7 +129,9 @@ class MoranProcess(Process):
         return ProcessProperties(
             has_stationary_increments=False,
             has_independent_increments=False,
-            is_martingale=(self.selection == 0.0 and self.mutation_u == 0.0 and self.mutation_v == 0.0),
+            is_martingale=(
+                self.selection == 0.0 and self.mutation_u == 0.0 and self.mutation_v == 0.0
+            ),
             has_finite_variance=True,
             has_finite_mean=True,
             self_similarity_index=None,
@@ -176,15 +177,21 @@ class MoranProcess(Process):
 
         if t_grid is None:
             t_final = float(T if T is not None else (t_max if t_max is not None else 1.0))
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         elif isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, float(t_grid), steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)
 
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 500))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 500)
+        )
         n_pts = len(times)
 
         p_paths = np.empty((paths_count, n_pts), dtype=np.float64)

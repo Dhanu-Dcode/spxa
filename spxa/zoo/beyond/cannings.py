@@ -36,7 +36,6 @@ Schweinsberg, J. (2003). Coalescent processes with multiple collisions.
 
 from __future__ import annotations
 
-import math
 from typing import Optional, Union
 
 import numpy as np
@@ -195,10 +194,14 @@ class CanningsProcess(Process):
     ) -> np.ndarray:
         r"""Simulate sample paths of the active lineage count B(t) across time."""
         t_final = float(T if T is not None else (t_max if t_max is not None else 2.0))
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 100))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 100)
+        )
 
         if t_grid is None or isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 50))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 50)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)

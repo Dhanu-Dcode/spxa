@@ -157,8 +157,12 @@ class BGMProcess(Process):
         if rng is None:
             rng = np.random.default_rng()
 
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 500))
-        steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 50))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 500)
+        )
+        steps = int(
+            n_steps if n_steps is not None else (num_steps if num_steps is not None else 50)
+        )
         t_final = float(self.tenors[-2])  # evaluate up to penultimate tenor
         times = np.linspace(0.0, t_final, steps + 1)
 

@@ -10,7 +10,6 @@ Tests for Batch 1 advanced volatility processes:
 
 import math
 import numpy as np
-import pytest
 
 from spxa.zoo.beyond.double_mean_reverting import DoubleMeanRevertingSV
 from spxa.zoo.beyond.four_two import FourTwoProcess
@@ -94,9 +93,15 @@ def test_mrw_spectrum_and_simulation():
 
 def test_double_mean_reverting_sv():
     dmr = DoubleMeanRevertingSV(
-        kappa1=8.0, theta1=0.02, sigma1=0.3, rho1=-0.6,
-        kappa2=0.8, theta2=0.02, sigma2=0.15, rho2=-0.4,
-        s0=100.0
+        kappa1=8.0,
+        theta1=0.02,
+        sigma1=0.3,
+        rho1=-0.6,
+        kappa2=0.8,
+        theta2=0.02,
+        sigma2=0.15,
+        rho2=-0.4,
+        s0=100.0,
     )
     assert abs(dmr.total_initial_variance - 0.04) < 1e-12
     assert abs(dmr.total_long_term_variance - 0.04) < 1e-12

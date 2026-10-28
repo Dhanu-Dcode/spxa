@@ -78,7 +78,7 @@ class HJMField(Process):
         node = CompositionNode(
             kind=NodeKind.PRIMITIVE,
             name=f"HJMField(σ={self.sigma}, λ={self.lam}, f0={self.f0})",
-            math_note=f"df(t,T) = α(t,T)dt + σ e^{{-λ(T-t)}} dW_t with no-arbitrage drift α",
+            math_note="df(t,T) = α(t,T)dt + σ e^{-λ(T-t)} dW_t with no-arbitrage drift α",
             reference="Heath, Jarrow & Morton (1992), Econometrica 60(1), 77–105",
         )
         super().__init__(exactness=ExactnessLevel.MOMENT_PROPAGATION, _node=node)
@@ -198,15 +198,21 @@ class HJMField(Process):
 
         if t_grid is None:
             t_final = float(T if T is not None else (t_max if t_max is not None else 1.0))
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         elif isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, float(t_grid), steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)
 
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 500))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 500)
+        )
         n_pts = len(times)
 
         r_paths = np.empty((paths_count, n_pts), dtype=np.float64)

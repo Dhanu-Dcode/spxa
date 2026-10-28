@@ -31,7 +31,6 @@ Hedging*. Springer Science & Business Media.
 
 from __future__ import annotations
 
-import math
 from typing import Optional, Union
 
 import numpy as np
@@ -73,12 +72,16 @@ class ContagionIntensityProcess(Process):
 
         if contagion_matrix is None:
             # Default symmetric contagion of 50 bps jump on counterparty default
-            self.contagion = np.full((self.num_entities, self.num_entities), 0.005, dtype=np.float64)
+            self.contagion = np.full(
+                (self.num_entities, self.num_entities), 0.005, dtype=np.float64
+            )
             np.fill_diagonal(self.contagion, 0.0)
         else:
             self.contagion = np.asarray(contagion_matrix, dtype=np.float64)
             if self.contagion.shape != (self.num_entities, self.num_entities):
-                raise ValueError(f"Contagion matrix shape must be ({self.num_entities}, {self.num_entities})")
+                raise ValueError(
+                    f"Contagion matrix shape must be ({self.num_entities}, {self.num_entities})"
+                )
 
         node = CompositionNode(
             kind=NodeKind.PRIMITIVE,
@@ -191,13 +194,17 @@ class ContagionIntensityProcess(Process):
         Simulate sample paths of cumulative default count N_t = ∑ 1_{τ_i ≤ t}.
         """
         t_final = float(T if T is not None else (t_max if t_max is not None else 5.0))
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 500))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 500)
+        )
 
         # Sample default times
         tau_mat = self.simulate_defaults(t_max=t_final, n_paths=paths_count, rng=rng)
 
         if t_grid is None or isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 50))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 50)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)

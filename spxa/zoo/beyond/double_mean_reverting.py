@@ -208,15 +208,21 @@ class DoubleMeanRevertingSV(Process):
 
         if t_grid is None:
             t_final = float(T if T is not None else (t_max if t_max is not None else 1.0))
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         elif isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, float(t_grid), steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)
 
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 1000))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 1000)
+        )
         n_pts = len(times)
 
         s_paths = np.empty((paths_count, n_pts), dtype=np.float64)
@@ -252,10 +258,18 @@ class DoubleMeanRevertingSV(Process):
             s_curr = s_curr * np.exp((self.mu - 0.5 * v_tot) * dt + sqrt_v_tot * sqrt_dt * zs)
 
             # Fast variance factor update
-            v1_curr = v1_curr + self.kappa1 * (self.theta1 - v1_pos) * dt + self.sigma1 * np.sqrt(v1_pos) * sqrt_dt * zv1
+            v1_curr = (
+                v1_curr
+                + self.kappa1 * (self.theta1 - v1_pos) * dt
+                + self.sigma1 * np.sqrt(v1_pos) * sqrt_dt * zv1
+            )
 
             # Slow variance factor update
-            v2_curr = v2_curr + self.kappa2 * (self.theta2 - v2_pos) * dt + self.sigma2 * np.sqrt(v2_pos) * sqrt_dt * zv2
+            v2_curr = (
+                v2_curr
+                + self.kappa2 * (self.theta2 - v2_pos) * dt
+                + self.sigma2 * np.sqrt(v2_pos) * sqrt_dt * zv2
+            )
 
             s_paths[:, i] = s_curr
 

@@ -162,7 +162,11 @@ class RunAndTumbleProcess(Process):
         if rng is None:
             rng = np.random.default_rng()
 
-        times = np.linspace(0.0, 1.0 if t_grid is None else float(t_grid), 252) if isinstance(t_grid, (int, float, type(None))) else np.asarray(t_grid)
+        times = (
+            np.linspace(0.0, 1.0 if t_grid is None else float(t_grid), 252)
+            if isinstance(t_grid, (int, float, type(None)))
+            else np.asarray(t_grid)
+        )
         n_pts = len(times)
 
         x_paths = np.empty((n_paths, n_pts), dtype=np.float64)
@@ -209,8 +213,14 @@ class RunAndTumbleProcess(Process):
         t_max: Optional[float] = None,
     ) -> np.ndarray:
         r"""Simulate radial displacement R_t = √((X_t - x_0)² + (Y_t - y_0)²)."""
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 200))
-        grid = t_grid if t_grid is not None else float(T if T is not None else (t_max if t_max is not None else 1.0))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 200)
+        )
+        grid = (
+            t_grid
+            if t_grid is not None
+            else float(T if T is not None else (t_max if t_max is not None else 1.0))
+        )
         xs, ys = self.simulate_2d(t_grid=grid, n_paths=paths_count, rng=rng)
         return np.sqrt((xs - self.x0) ** 2 + (ys - self.y0) ** 2)
 

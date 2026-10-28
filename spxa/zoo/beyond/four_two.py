@@ -187,7 +187,9 @@ class FourTwoProcess(Process):
         res: dict[int, float] = {1: self.s0 * math.exp(self.mu)}
         if order >= 2:
             res[2] = (
-                self.stationary_mean_variance if math.isfinite(self.stationary_mean_variance) else 1.0
+                self.stationary_mean_variance
+                if math.isfinite(self.stationary_mean_variance)
+                else 1.0
             )
         for k in range(3, order + 1):
             res[k] = 0.0
@@ -223,15 +225,21 @@ class FourTwoProcess(Process):
 
         if t_grid is None:
             t_final = float(T if T is not None else (t_max if t_max is not None else 1.0))
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         elif isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, float(t_grid), steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)
 
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 1000))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 1000)
+        )
         n_pts = len(times)
 
         s_paths = np.empty((paths_count, n_pts), dtype=np.float64)
@@ -267,7 +275,11 @@ class FourTwoProcess(Process):
             s_curr = s_curr * np.exp(d_log_s)
 
             # SDE update for variance CIR (full truncation)
-            v_curr = v_curr + self.kappa * (self.theta - v_pos) * dt + self.sigma_v * sqrt_v * sqrt_dt * zv
+            v_curr = (
+                v_curr
+                + self.kappa * (self.theta - v_pos) * dt
+                + self.sigma_v * sqrt_v * sqrt_dt * zv
+            )
 
             s_paths[:, i] = s_curr
 

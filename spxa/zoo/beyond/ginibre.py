@@ -72,7 +72,7 @@ class GinibreEigenvalueProcess(Process):
         node = CompositionNode(
             kind=NodeKind.PRIMITIVE,
             name=f"GinibreEigenvalues(N={self.num_particles}, γ={self.confinement})",
-            math_note=f"2D complex Coulomb gas dz_i = (1/√(2N)) dW_C + (1/N) ∑ 1/(z_i^* - z_j^*) dt - γ z_i dt",
+            math_note="2D complex Coulomb gas dz_i = (1/√(2N)) dW_C + (1/N) ∑ 1/(z_i^* - z_j^*) dt - γ z_i dt",
             reference="Ginibre (1965), J. Math. Phys. 6(3), 440–449",
         )
         super().__init__(exactness=ExactnessLevel.MOMENT_PROPAGATION, _node=node)
@@ -128,7 +128,11 @@ class GinibreEigenvalueProcess(Process):
         if rng is None:
             rng = np.random.default_rng()
 
-        times = np.linspace(0.0, 1.0 if t_grid is None else float(t_grid), 100) if isinstance(t_grid, (int, float, type(None))) else np.asarray(t_grid)
+        times = (
+            np.linspace(0.0, 1.0 if t_grid is None else float(t_grid), 100)
+            if isinstance(t_grid, (int, float, type(None)))
+            else np.asarray(t_grid)
+        )
         n_pts = len(times)
         n_p = self.num_particles
 
@@ -177,8 +181,14 @@ class GinibreEigenvalueProcess(Process):
         t_max: Optional[float] = None,
     ) -> np.ndarray:
         r"""Simulate sample paths of the spectral radius R_max(t) = max_i |z_i(t)|."""
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 30))
-        grid = t_grid if t_grid is not None else float(T if T is not None else (t_max if t_max is not None else 1.0))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 30)
+        )
+        grid = (
+            t_grid
+            if t_grid is not None
+            else float(T if T is not None else (t_max if t_max is not None else 1.0))
+        )
         times = np.linspace(0.0, grid, 50) if isinstance(grid, (int, float)) else np.asarray(grid)
 
         r_paths = np.empty((paths_count, len(times)), dtype=np.float64)

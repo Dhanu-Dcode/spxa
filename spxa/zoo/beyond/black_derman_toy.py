@@ -80,7 +80,7 @@ class BlackDermanToyProcess(Process):
         node = CompositionNode(
             kind=NodeKind.PRIMITIVE,
             name=f"BlackDermanToy(σ={self.sigma}, r0={self.r0})",
-            math_note=f"d(ln r_t) = θ(t) dt + σ dW_t; lognormal strictly positive rates",
+            math_note="d(ln r_t) = θ(t) dt + σ dW_t; lognormal strictly positive rates",
             reference="Black, Derman & Toy (1990), Financial Analysts Journal 46(1), 33–39",
         )
         super().__init__(exactness=ExactnessLevel.MOMENT_PROPAGATION, _node=node)
@@ -141,15 +141,21 @@ class BlackDermanToyProcess(Process):
 
         if t_grid is None:
             t_final = float(T if T is not None else (t_max if t_max is not None else 1.0))
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         elif isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, float(t_grid), steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)
 
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 500))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 500)
+        )
         n_pts = len(times)
 
         log_r = np.empty((paths_count, n_pts), dtype=np.float64)

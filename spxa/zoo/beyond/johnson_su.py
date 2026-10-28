@@ -107,7 +107,9 @@ class JohnsonSUDiffusion(Process):
     def stationary_density(self, x: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
         r"""Exact probability density function of stationary Johnson S_U law."""
         x_arr = np.asarray(x, dtype=np.float64)
-        pdf = johnsonsu.pdf(x_arr, a=self.gamma_param, b=self.delta_param, loc=self.xi, scale=self.lam)
+        pdf = johnsonsu.pdf(
+            x_arr, a=self.gamma_param, b=self.delta_param, loc=self.xi, scale=self.lam
+        )
         if np.isscalar(x):
             return float(pdf)
         return pdf
@@ -175,15 +177,21 @@ class JohnsonSUDiffusion(Process):
 
         if t_grid is None:
             t_final = float(T if T is not None else (t_max if t_max is not None else 1.0))
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         elif isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 252))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 252)
+            )
             times = np.linspace(0.0, float(t_grid), steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)
 
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 500))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 500)
+        )
         n_pts = len(times)
 
         x_paths = np.empty((paths_count, n_pts), dtype=np.float64)

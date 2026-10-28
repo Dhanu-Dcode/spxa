@@ -9,7 +9,6 @@ Tests for Batch 2 singular, reflected and boundary-constrained diffusions:
 """
 
 import numpy as np
-import pytest
 
 from spxa.zoo.beyond.absorbing_bachelier import AbsorbingBachelierProcess
 from spxa.zoo.beyond.noncentral_bessel import NonCentralBesselProcess

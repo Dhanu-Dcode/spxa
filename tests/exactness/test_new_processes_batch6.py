@@ -8,7 +8,6 @@ Tests for Batch 6 random matrix theory, eigenvalue diffusions and interacting sy
 """
 
 import numpy as np
-import pytest
 
 from spxa.zoo.beyond.airy_two import AiryTwoProcess
 from spxa.zoo.beyond.dyson_bm import DysonBrownianMotion

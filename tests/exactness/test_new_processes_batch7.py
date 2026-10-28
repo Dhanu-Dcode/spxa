@@ -8,7 +8,6 @@ Tests for Batch 7 population genetics, non-linear and bilinear jump-diffusions:
 """
 
 import numpy as np
-import pytest
 
 from spxa.zoo.beyond.bilinear_jump import BilinearJumpDiffusion
 from spxa.zoo.beyond.cannings import CanningsProcess

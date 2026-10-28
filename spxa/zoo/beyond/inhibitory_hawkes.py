@@ -36,7 +36,6 @@ for Hawkes processes. *Journal of the Royal Statistical Society: Series B*, 77(3
 
 from __future__ import annotations
 
-import math
 from typing import Optional, Union
 
 import numpy as np
@@ -97,7 +96,7 @@ class InhibitoryHawkesProcess(Process):
         node = CompositionNode(
             kind=NodeKind.PRIMITIVE,
             name=f"InhibitoryHawkes(dim={self.dim})",
-            math_note=f"λ_i(t) = max(0, μ_i + ∑ α_ij e^{{-β_ij(t-s)}} dN_j(s)) with cross-inhibition",
+            math_note="λ_i(t) = max(0, μ_i + ∑ α_ij e^{-β_ij(t-s)} dN_j(s)) with cross-inhibition",
             reference="Brémaud & Massoulié (1996), Ann. Probab. 24(3), 1563–1588",
         )
         super().__init__(exactness=ExactnessLevel.MOMENT_PROPAGATION, _node=node)
@@ -207,10 +206,14 @@ class InhibitoryHawkesProcess(Process):
         Simulate total cumulative event count N_t = ∑_i N_i(t) across sample paths.
         """
         t_final = float(T if T is not None else (t_max if t_max is not None else 10.0))
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 100))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 100)
+        )
 
         if t_grid is None or isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 50))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 50)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)
@@ -220,7 +223,9 @@ class InhibitoryHawkesProcess(Process):
 
         for p in range(paths_count):
             hist = self.simulate_events(t_max=t_final, rng=rng)
-            all_events = np.sort(np.concatenate(hist) if any(len(h) > 0 for h in hist) else np.array([]))
+            all_events = np.sort(
+                np.concatenate(hist) if any(len(h) > 0 for h in hist) else np.array([])
+            )
             counts[p, :] = np.searchsorted(all_events, times, side="right")
 
         return counts

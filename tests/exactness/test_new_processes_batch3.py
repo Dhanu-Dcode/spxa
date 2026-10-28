@@ -9,9 +9,7 @@ Tests for Batch 3 term structure, fixed income and credit contagion processes:
 - CIRPlusPlusProcess (Shifted CIR++ Model)
 """
 
-import math
 import numpy as np
-import pytest
 
 from spxa.zoo.beyond.bgm import BGMProcess
 from spxa.zoo.beyond.bk_two_factor import BlackKarasinskiTwoFactor
@@ -40,7 +38,9 @@ def test_black_derman_toy_process():
 
 
 def test_black_karasinski_two_factor():
-    bk2 = BlackKarasinskiTwoFactor(kappa1=1.0, sigma1=0.15, kappa2=0.1, sigma2=0.08, rho=-0.2, r0=0.03)
+    bk2 = BlackKarasinskiTwoFactor(
+        kappa1=1.0, sigma1=0.15, kappa2=0.1, sigma2=0.08, rho=-0.2, r0=0.03
+    )
     paths = bk2.simulate(t_grid=0.5, n_paths=40, n_steps=20, rng=np.random.default_rng(42))
     assert paths.shape == (40, 21)
     assert np.all(paths > 0.0)
@@ -53,7 +53,9 @@ def test_hjm_forward_field():
 
     # Simulate forward curve at t=1.0 across tenors
     tenors = np.array([1.0, 2.0, 3.0, 5.0])
-    curve = hjm.simulate_curve(t_eval=0.5, tenors=tenors, n_paths=20, n_steps=10, rng=np.random.default_rng(42))
+    curve = hjm.simulate_curve(
+        t_eval=0.5, tenors=tenors, n_paths=20, n_steps=10, rng=np.random.default_rng(42)
+    )
     assert curve.shape == (20, 4)
 
     # Simulate short rate

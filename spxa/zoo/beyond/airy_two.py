@@ -132,15 +132,21 @@ class AiryTwoProcess(Process):
 
         if t_grid is None:
             t_final = float(T if T is not None else (t_max if t_max is not None else 1.0))
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 100))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+            )
             times = np.linspace(0.0, t_final, steps + 1)
         elif isinstance(t_grid, (int, float)):
-            steps = int(n_steps if n_steps is not None else (num_steps if num_steps is not None else 100))
+            steps = int(
+                n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+            )
             times = np.linspace(0.0, float(t_grid), steps + 1)
         else:
             times = np.asarray(t_grid, dtype=np.float64)
 
-        paths_count = int(n_paths if n_paths is not None else (num_paths if num_paths is not None else 50))
+        paths_count = int(
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 50)
+        )
         n_pts = len(times)
 
         # Approximate Airy_2 via local Brownian motion with parabolic drift and TW initial shift
@@ -153,7 +159,9 @@ class AiryTwoProcess(Process):
 
         for p in range(paths_count):
             # Sample initial TW_2 from random matrix GUE
-            h = (rng.standard_normal((n_mat, n_mat)) + 1j * rng.standard_normal((n_mat, n_mat))) / sqrt_2
+            h = (
+                rng.standard_normal((n_mat, n_mat)) + 1j * rng.standard_normal((n_mat, n_mat))
+            ) / sqrt_2
             gue = 0.5 * (h + h.conj().T) / math.sqrt(n_mat)
             top_eig = np.max(np.linalg.eigvalsh(gue))
             # Tracy-Widom rescaling: (lambda_max - 2) * n^{2/3}
@@ -164,7 +172,6 @@ class AiryTwoProcess(Process):
 
             for i in range(1, n_pts):
                 dt = times[i] - times[i - 1]
-                t_mid = times[i - 1]
                 # SDE: d A_2 = -2 t dt + √2 dW with Ornstein-Uhlenbeck style mean reversion
                 drift = -0.5 * (path[i - 1] - self.tw_mean * self.scale) * dt
                 noise = math.sqrt(2.0 * dt) * rng.standard_normal() * self.scale
