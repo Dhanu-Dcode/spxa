@@ -229,5 +229,76 @@ Advanced operators that transform stochastic paths and boundary conditions algeb
 - **Stratonovich $\leftrightarrow$ Itô Conversion (`StratonovichToItoNode`, `ItoToStratonovichNode`)**:
   Transitions between Itô and Stratonovich calculus by adding or subtracting the midpoint drift correction $\frac{1}{2}\sigma(x)\sigma'(x)$.
 
+---
+
+## 8. Statistical Information Geometry & Manifold Calibration (`spxa.geom`, `spxa.graph.geom`)
+
+Information geometry equips stochastic process parameter spaces $\mathcal{M} = \{\theta \in \Theta\}$ with intrinsic Riemannian manifolds rather than flat Euclidean spaces:
+
+### A. Fisher Information Metric (FIM)
+The Fisher metric tensor measures informational distance between stochastic transition densities:
+$$g_{ij}(\theta) = \mathbb{E}_\theta \left[ \frac{\partial \log p}{\partial \theta_i} \frac{\partial \log p}{\partial \theta_j} \right] = - \mathbb{E}_\theta \left[ \frac{\partial^2 \log p}{\partial \theta_i \partial \theta_j} \right]$$
+- **Exact Closed Forms**: Computed analytically for Gaussians $g = \text{diag}(1/\sigma^2, 2/\sigma^2)$ and Ornstein-Uhlenbeck transition densities.
+- **Numerical & Empirical Score Covariance**: Automatically evaluated via finite-difference Hessians and pathwise score vectors.
+
+### B. Connections & Geodesic Flow
+- **Levi-Civita Connection & Christoffel Symbols**: $\Gamma^k_{ij}(\theta) = \frac{1}{2} g^{kl} (\partial_i g_{jl} + \partial_j g_{il} - \partial_l g_{ij})$.
+- **Amari $\alpha$-Connections**: $\Gamma^{(\alpha), k}_{ij} = \Gamma^k_{ij} - \frac{\alpha}{2} g^{kl} T_{ijl}$ where $T_{ijl}$ is the skewness tensor ($\alpha = 0$ Riemannian, $\alpha = 1$ exponential, $\alpha = -1$ mixture).
+- **Rao Hyperbolic Distance (`GeodesicFlow`)**: Integrates geodesic paths $\ddot{\theta}^k + \Gamma^k_{ij} \dot{\theta}^i \dot{\theta}^j = 0$ via shooting solvers to measure true model distance $d_R(\theta_1, \theta_2) = \int \sqrt{g_{ij} \dot{\theta}^i \dot{\theta}^j} dt$.
+
+### C. Natural Gradient Optimization (`NaturalGradientCalibratorNode`)
+Replaces naive Euclidean gradient descent with Riemannian manifold updates:
+$$\tilde{\nabla}_\theta \mathcal{L} = g^{-1}(\theta) \nabla_\theta \mathcal{L}, \quad \theta_{t+1} = \theta_t - \eta \tilde{\nabla}_\theta \mathcal{L}$$
+eliminating ill-conditioned ravines, Feller boundary sticking, and parameterization distortions.
+
+---
+
+## 9. Rough Paths & Tensor Signature Calculus (`spxa.signature`, `spxa.graph.signature`)
+
+Path signatures provide a non-parametric, coordinate-free encoding of continuous and jump paths:
+
+### A. Truncated Tensor Signature & Chen's Identity (`PathSignature`)
+For a multidimensional path $X: [0, T] \to \mathbb{R}^d$, the truncated signature of order $M$ is:
+$$S(X)_{s,t}^{(M)} = \bigoplus_{k=0}^M \int_{s < u_1 < \dots < u_k < t} dX_{u_1} \otimes \dots \otimes dX_{u_k} \in T^{(M)}(\mathbb{R}^d)$$
+Satisfies Chen's multiplicative identity:
+$$S(X)_{0,T} = S(X)_{0,t} \otimes S(X)_{t,T}$$
+
+### B. Shuffle Algebra & Free Lie Log-Signature (`SignatureAlgebra`)
+- **Shuffle Product**: Iterated integrals multiply via shuffles: $S^u \cdot S^v = \sum_{w \in u \sqcup v} S^w$.
+- **Log-Signature Projection**: Projects signatures onto the free Lie algebra $\mathfrak{g}^{(M)}(\mathbb{R}^d)$ via Campbell-Baker-Hausdorff / Dynkin operators, reducing dimensionality according to Witt's formula (e.g. $15 \to 5$ at depth 3 for 2D paths, a 66.7% compression without information loss).
+
+### C. Signature Kernels via 2D Hyperbolic Goursat PDE (`SignatureKernel`)
+Computes the infinite-dimensional inner product $K(X, Y) = \langle S(X), S(Y) \rangle$ without tensor truncation by solving the hyperbolic PDE:
+$$\frac{\partial^2 K}{\partial s \partial t}(s, t) = K(s, t) \langle \dot{X}_s, \dot{Y}_t \rangle, \quad K(s, 0) = 1, \quad K(0, t) = 1$$
+Runs in polynomial $O(N_X \cdot N_Y)$ time.
+
+### D. Universal Linear Pricing (`SignatureLinearPricerNode`)
+Represents arbitrary path-dependent payoffs (Asian, lookbacks, barriers) as linear functionals on the expected signature:
+$$\text{Price} \approx \langle \mathbf{w}, \mathbb{E}[S(X)_{0,T}] \rangle$$
+
+---
+
+## 10. Rough Volatility & Volterra Stochastic Calculus (`spxa.rough`, `spxa.graph.rough`)
+
+Extends stochastic modeling to sub-diffusive, non-Markovian volatility surfaces:
+
+### A. Fractional Singular Kernels & Hybrid Convolution (`FractionalKernel`)
+- Riemann-Liouville fractional power kernel with Hurst exponent $H \in (0, 1/2)$:
+  $$K_H(t) = \frac{\sqrt{2H}}{\Gamma(H + 1/2)} t^{H - 1/2}$$
+- **Bennedsen-Lunde-Pakkanen Hybrid Scheme**: Decomposes $\int_0^t (t-s)^{H-1/2} dW_s$ into exact analytic integration for the singular neighborhood $s \approx t$ and FFT-accelerated convolution for the regular tail.
+- **Exact Fractional Brownian Motion**: Cholesky covariance sampling of $R_H(t, s) = \frac{1}{2}(t^{2H} + s^{2H} - |t - s|^{2H})$.
+
+### B. Rough Bergomi Model (`RoughBergomi`)
+Asset and variance dynamics:
+$$S_t = S_0 \mathcal{E}\left( \int_0^t \sqrt{v_s} dW_s \right), \quad v_t = \xi_0 \exp\left( \eta \sqrt{2H} \tilde{W}_t^H - \frac{1}{2} \eta^2 t^{2H} \right)$$
+Reproduces the empirical power-law blow-up of short-time at-the-money implied volatility skews:
+$$\psi(\tau) = \left|\frac{\partial \sigma_{BS}}{\partial k}\right|_{k=0} \approx \frac{|\rho| \eta}{2} \frac{\sqrt{2H}}{H + 1/2} \tau^{H - 1/2}$$
+
+### C. Fractional Adams-Bashforth-Moulton Riccati Solver (`FractionalRiccatiSolver`)
+Solves the non-local fractional Riccati Volterra integral equation:
+$$h(t) = \int_0^t \frac{(t-s)^{H-1/2}}{\Gamma(H + 1/2)} F(u, h(s)) ds$$
+providing exact, highly stable characteristic functions $\mathbb{E}[e^{i u X_T}]$ for the Rough Heston model.
+
+
 
 
