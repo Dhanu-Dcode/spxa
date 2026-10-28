@@ -23,6 +23,7 @@ NODE_COLORS = {
     NodeKind.SCALING: "#FFE082",  # Light amber
     NodeKind.SUBORDINATION: "#E1BEE7",  # Light purple
     NodeKind.MOMENT_APPROX: "#FFCDD2",  # Light red
+    NodeKind.MORPH: "#D1C4E9",  # Soft deep lilac/cyan
 }
 
 NODE_BORDER_COLORS = {
@@ -31,6 +32,7 @@ NODE_BORDER_COLORS = {
     NodeKind.SCALING: "#FFA000",
     NodeKind.SUBORDINATION: "#8E24AA",
     NodeKind.MOMENT_APPROX: "#D32F2F",
+    NodeKind.MORPH: "#5E35B1",
 }
 
 

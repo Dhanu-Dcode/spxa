@@ -207,3 +207,50 @@ class ProcessProperties:
             hurst_index=None,
             notes=notes,
         )
+
+    @staticmethod
+    def combine_morph(
+        p: ProcessProperties,
+        q: ProcessProperties,
+        alpha: float,
+    ) -> ProcessProperties:
+        r"""
+        Propagate properties through homotopy morphing P_α = (1-α)P_0 + α P_1.
+        """
+        notes = list(p.notes + q.notes)
+        if alpha <= 0.0:
+            return p
+        if alpha >= 1.0:
+            return q
+
+        # Tail index is dominated by the heavier tail (smaller tail index)
+        if p.tail_index is not None and q.tail_index is not None:
+            tail = min(p.tail_index, q.tail_index)
+        elif p.tail_index is not None:
+            tail = p.tail_index
+        else:
+            tail = q.tail_index
+
+        self_sim = (
+            p.self_similarity_index
+            if (p.self_similarity_index == q.self_similarity_index)
+            else None
+        )
+
+        martingale = p.is_martingale and q.is_martingale
+        if not martingale and (p.is_martingale or q.is_martingale):
+            notes.append("Martingale property lost: only one operand is a martingale.")
+
+        return ProcessProperties(
+            has_stationary_increments=p.has_stationary_increments and q.has_stationary_increments,
+            has_independent_increments=p.has_independent_increments
+            and q.has_independent_increments,
+            is_martingale=martingale,
+            has_finite_variance=p.has_finite_variance and q.has_finite_variance,
+            has_finite_mean=p.has_finite_mean and q.has_finite_mean,
+            self_similarity_index=self_sim,
+            tail_index=tail,
+            is_subordinator=p.is_subordinator and q.is_subordinator,
+            hurst_index=p.hurst_index if p.hurst_index == q.hurst_index else None,
+            notes=notes,
+        )
