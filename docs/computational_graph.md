@@ -182,4 +182,52 @@ $$dY_t = \left(\frac{\partial f}{\partial t} + \mu \frac{\partial f}{\partial x}
 - Simulates the first variation process $Y_t = \partial X_t / \partial x_0$ alongside $X_t$.
 - Evaluates pathwise Bismut weights $\pi_T = \frac{1}{T} \int_0^T \frac{Y_t}{\sigma(X_t)} dW_t$, computing exact Greek sensitivities of discontinuous payoffs without payoff mollification.
 
+---
+
+## 7. Advanced Stochastic Foundations
+
+The engine includes three theoretical pillars bridging stochastic analysis and computational graphs:
+
+### A. Semimartingale Decomposition Wires & Algebra (`spxa.graph.semimartingale`)
+In continuous-time stochastic calculus, semimartingales form the largest class of processes with respect to which stochastic integrals can be defined.
+- **Typed Semimartingale Wires (`SemimartingaleWire`)**: Graph edges carry continuous-time processes decomposed into their canonical components:
+  $$X_t = X_0 + A_t + M_t^c + J_t$$
+  where $A_t$ is continuous of finite variation, $M_t^c$ is a continuous local martingale, and $J_t$ is a pure jump process.
+- **Quadratic Covariation Operator (`QuadraticCovariationNode`)**: Computes the pathwise and predictable bracket $[X, Y]_t$ and $\langle X^c, Y^c \rangle_t$:
+  $$[X, Y]_t = \lim_{|\Pi| \to 0} \sum_{i} (X_{t_{i+1}} - X_{t_i})(Y_{t_{i+1}} - Y_{t_i})$$
+- **Stochastic Product & Integration by Parts (`StochasticProductNode`)**: Evaluates the product $Z_t = X_t Y_t$ verifying the stochastic integration by parts formula:
+  $$d(X_t Y_t) = X_{t-} dY_t + Y_{t-} dX_t + d[X, Y]_t$$
+  achieving machine-precision bracket balance ($\epsilon \sim 10^{-15}$).
+- **Predictable Itô Integrals (`StochasticIntegralNode`)**: Computes $(H \cdot X)_t = \int_0^t H_s dX_s$ with exact Itô isometry $\mathbb{E}[(H \cdot M)_t^2] = \mathbb{E}\left[\int_0^t H_s^2 d\langle M \rangle_s\right]$.
+
+### B. Four-Facet Representation Duality Engine (`spxa.graph.duality`)
+Processes are mathematically dual across four equivalent representations:
+1. **SDE Facet (`SDEFacet`)**: $dX_t = \mu(X_t) dt + \sigma(X_t) dW_t + J_t$.
+2. **Infinitesimal Generator Facet (`GeneratorFacet`)**: $\mathcal{A} f(x) = \mu(x) f'(x) + \frac{1}{2}\sigma^2(x) f''(x)$.
+3. **Fourier Characteristic Exponent Facet (`FourierFacet`)**: $\mathbb{E}[e^{i u X_t}] = \exp(t \Psi(u))$.
+4. **Speed / Scale Density Facet (`DensityFacet`)**: Invariant measure $\pi(x) \propto m(x)$.
+
+The `ProcessDualityCore` automatically synthesizes missing representations:
+- Given an SDE, derives the infinitesimal generator and speed/scale density.
+- Given an infinitesimal generator, inverts for the drift $\mu(x) = \mathcal{A}(\text{id})(x)$ and diffusion $\sigma^2(x) = \mathcal{A}(x^2) - 2x\mathcal{A}(x)$.
+- **Lévy-Khintchine Triplet Compiler (`compile_levy_khintchine`, `triplet_to_fourier_facet`)**: Directly compiles arbitrary triplets $(b, \sigma^2, \nu)$ into executable characteristic exponents:
+  $$\Psi(u) = i b u - \frac{1}{2} \sigma^2 u^2 + \int_{\mathbb{R}} \left( e^{i u y} - 1 - i u y \mathbf{1}_{|y|\le 1} \right) \nu(dy)$$
+
+### C. Algebraic Process Surgery Operators (`spxa.graph.surgery`)
+Advanced operators that transform stochastic paths and boundary conditions algebraically:
+- **Doléans Exponential & Stochastic Logarithm (`DoleansExponentialNode`, `StochasticLogarithmNode`)**:
+  Computes the stochastic exponential martingale:
+  $$\mathcal{E}(X)_t = \exp\left(X_t - X_0 - \frac{1}{2}\langle X^c \rangle_t\right) \prod_{s \le t} (1 + \Delta X_s) e^{-\Delta X_s}$$
+  and its inverse, the stochastic logarithm $\mathcal{L}(Z)_t = \int \frac{dZ_s}{Z_{s-}}$.
+- **Tanaka Decomposition & Local Time Extraction (`TanakaDecompositionNode`)**:
+  Decomposes positive convex envelopes and isolates local time $L_t^a(X)$ at strike $a$:
+  $$(X_t - a)^+ = (X_0 - a)^+ + \int_0^t \mathbf{1}_{\{X_s > a\}} dX_s + \frac{1}{2} L_t^a(X)$$
+- **Doob $h$-Transform (`DoobHTransformNode`)**:
+  Conditions diffusion paths on staying in a sub-domain or reaching a target via excessive harmonic functions $h$:
+  $$\mu^h(t, x) = \mu(t, x) + \sigma^2(t, x) \frac{h'(x)}{h(x)}$$
+  (e.g., standard Brownian motion conditioned to stay positive produces the 3D Bessel process drift $1/x$).
+- **Stratonovich $\leftrightarrow$ Itô Conversion (`StratonovichToItoNode`, `ItoToStratonovichNode`)**:
+  Transitions between Itô and Stratonovich calculus by adding or subtracting the midpoint drift correction $\frac{1}{2}\sigma(x)\sigma'(x)$.
+
+
 
