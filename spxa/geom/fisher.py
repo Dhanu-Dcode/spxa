@@ -148,11 +148,21 @@ class FisherInformationMetric:
         return hessian
 
     @staticmethod
-    def is_positive_definite(g: np.ndarray, tol: float = 1e-10) -> bool:
+    def is_positive_definite(g: np.ndarray, tol: float = 1e-8) -> bool:
         r"""Checks whether the metric tensor :math:`g` is symmetric positive-definite."""
         if g.ndim != 2 or g.shape[0] != g.shape[1]:
             return False
-        if not np.allclose(g, g.T, atol=tol):
+        if not np.allclose(g, g.T, atol=1e-6):
             return False
         eigvals = np.linalg.eigvalsh(g)
         return bool(np.all(eigvals > tol))
+
+    @staticmethod
+    def is_positive_semidefinite(g: np.ndarray, tol: float = -1e-8) -> bool:
+        r"""Checks whether the metric tensor :math:`g` is symmetric positive semi-definite."""
+        if g.ndim != 2 or g.shape[0] != g.shape[1]:
+            return False
+        if not np.allclose(g, g.T, atol=1e-6):
+            return False
+        eigvals = np.linalg.eigvalsh(g)
+        return bool(np.all(eigvals >= tol))

@@ -128,7 +128,7 @@ class GeodesicFlow:
             speeds.append(np.sqrt(speed_sq))
 
         # Trapezoidal integration
-        distance = float(np.trapz(speeds, t_eval))
+        distance = float(np.trapezoid(speeds, t_eval))
         return distance
 
     @staticmethod

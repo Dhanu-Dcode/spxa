@@ -67,7 +67,7 @@ class NaturalGradientCalibratorNode:
 
     def set_params(self, values: np.ndarray) -> None:
         for p, v in zip(self.parameters, values):
-            p.set_value(v)
+            p.value = float(v)
 
     def compute_euclidean_gradient(self, theta: np.ndarray, eps: float = 1e-5) -> np.ndarray:
         n = len(theta)
