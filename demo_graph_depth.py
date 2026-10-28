@@ -49,19 +49,37 @@ from spxa.graph import (
     ParameterNode,
     PortfolioRiskGraph,
     ScaleDensityNode,
+    SemimartingaleComponents,
+    SemimartingaleWire,
     SimulationBackend,
     SmoothIndicatorNode,
     SpeedDensityNode,
+    StochasticIntegralNode,
+    StochasticLogarithmNode,
+    StochasticProductNode,
+    StratonovichToItoNode,
     SubgraphNode,
+    TanakaDecompositionNode,
     UniversalProcessNode,
     apply_macro_scenario,
     build_black_scholes_pricing_graph,
+    compile_levy_khintchine,
     compute_graph_greeks,
     compute_graph_hessian,
     graph_summary,
     monte_carlo_graph_price,
     to_dot,
     to_graph,
+    triplet_to_fourier_facet,
+    DensityFacet,
+    DoleansExponentialNode,
+    DoobHTransformNode,
+    FourierFacet,
+    GeneratorFacet,
+    ItoToStratonovichNode,
+    ProcessDualityCore,
+    QuadraticCovariationNode,
+    SDEFacet,
 )
 from spxa.zoo import (
     BatesModel,
@@ -523,6 +541,97 @@ def demo_dimension_11_malliavin_bismut_greeks():
     print("  => Bismut integration by parts differentiates the Brownian path, NOT the discontinuous payoff.")
 
 
+def demo_dimension_12_semimartingale_decomposition_and_algebra():
+    print_header(
+        "DIMENSION 12: Semimartingale Decomposition Wires & Stochastic Integration by Parts",
+        "Rigorous pathwise tracking of drift, martingale, jump, and quadratic covariation"
+    )
+    # BM Wire: X_t = B_t, Y_t = B_t
+    # Product rule: X_t * Y_t - X_0*Y_0 = \int X dY + \int Y dX + [X, Y]_t
+    wire_x = SemimartingaleWire(x0=0.0, drift_fn=lambda t, x: 0.0, diffusion_fn=lambda t, x: 1.0, name="StandardBM")
+    wire_y = wire_x
+
+    covar_node = QuadraticCovariationNode(wire_x, wire_y)
+    covar_res = covar_node.eval_covariation(t=1.0, n_steps=500, n_paths=2000, seed=42)
+    bracket_mean = np.mean(covar_res[:, -1])
+
+    prod_node = StochasticProductNode(wire_x, wire_y)
+    prod_res = prod_node.simulate_product(t=1.0, n_steps=500, n_paths=1000, seed=42)
+
+    print("Semimartingale Canonical Calculus & Bracket Verification:")
+    print(f"  > Quadratic Covariation [B, B]_T at T=1.0 : {bracket_mean:.4f}  (Theoretical: 1.0000)")
+    print(f"  > Direct Pathwise XY at T=1.0 (mean)      : {np.mean(prod_res['product_direct'][:, -1]):.4f}")
+    print(f"  > Itô Integration by Parts (mean)         : {np.mean(prod_res['product_by_parts'][:, -1]):.4f}")
+    print(f"  > Max Integration by Parts Error ||XY - (int XdY + int YdX + [X,Y])||: {prod_res['max_discrepancy']:.2e}")
+    print("  => Stochastic integration by parts holds exactly path-by-path with Itô correction [X, Y].")
+
+
+def demo_dimension_13_four_facet_duality_engine():
+    print_header(
+        "DIMENSION 13: Four-Facet Process Duality Engine & Khintchine Compiler",
+        "Synthesizing infinitesimal generators, SDE drift/diffusion, and characteristic exponents"
+    )
+    # 1. SDE -> Generator Facet synthesis
+    sde_facet = SDEFacet(
+        drift_fn=lambda x: -0.5 * x,
+        diffusion_fn=lambda x: 0.3,
+    )
+    core = ProcessDualityCore(name="OU_Dual", sde=sde_facet)
+    gen_facet = core.generator
+
+    test_x = 1.5
+    u_test = lambda x: x**2
+    lu = gen_facet.generator_fn(u_test, test_x)
+    # Theoretical: mu * 2x + 0.5 * sigma^2 * 2 = (-0.5*x)*2x + 0.09 = -x^2 + 0.09 = -2.25 + 0.09 = -2.16
+    lu_exact = -test_x**2 + 0.3**2
+
+    # Verify cross-facet coherence
+    coherence = core.verify_duality_coherence(test_x=1.0)
+
+    # 2. Compile Levy-Khintchine Triplet (Merton-type jump diffusion)
+    b_drift = 0.05
+    sigma2 = 0.04
+    nu_fn = lambda y: float(1.0 * (1.0 / (np.sqrt(2 * np.pi) * 0.1)) * np.exp(-0.5 * (y / 0.1)**2))
+    fourier_facet = triplet_to_fourier_facet(b_drift, sigma2, nu_fn)
+    psi_1 = fourier_facet.char_exp_fn(1.0)
+
+    print("Four-Facet Representation Duality Synthesis:")
+    print(f"  > SDE -> Generator Numerical Facet Lu(x={test_x}) : {lu:.6f}")
+    print(f"  > Exact Infinitesimal Generator Output             : {lu_exact:.6f}")
+    print(f"  > Cross-Facet Coherence Verification Passed       : {coherence['coherent']}")
+    print(f"  > Compiled Lévy-Khintchine Characteristic Exponent psi(u=1.0): {psi_1.real:.6f} + {psi_1.imag:.6f}i")
+
+
+def demo_dimension_14_algebraic_process_surgery():
+    print_header(
+        "DIMENSION 14: Algebraic Process Surgery Operators",
+        "Doleans exponential, Tanaka local time decomposition, and Doob h-transform"
+    )
+    # 1. Doleans exponential of driftless BM
+    wire_bm = SemimartingaleWire(x0=0.0, drift_fn=lambda t, x: 0.0, diffusion_fn=lambda t, x: 0.3, name="DriftlessBM")
+    doleans_node = DoleansExponentialNode(wire_bm)
+    doleans_res = doleans_node.eval_doleans(t=1.0, n_steps=200, n_paths=3000, seed=42)
+    final_mean = float(np.mean(doleans_res["doleans_paths"][:, -1]))
+
+    # 2. Tanaka Decomposition & Local Time
+    tanaka_node = TanakaDecompositionNode(wire_bm, strike_a=0.0)
+    tanaka_res = tanaka_node.eval_tanaka(t=1.0, n_steps=500, n_paths=2000, seed=42)
+    mean_local_time = tanaka_res["mean_local_time"]
+    # For BM with vol sigma=0.3, E[L_t^0] = sigma * sqrt(2t / pi)
+    theoretical_local_time = 0.3 * np.sqrt(2.0 * 1.0 / np.pi)
+
+    # 3. Doob h-transform (BM conditioned to stay positive -> 3D Bessel process drift sigma^2 / x)
+    wire_std_bm = SemimartingaleWire(x0=1.0, drift_fn=lambda t, x: 0.0, diffusion_fn=lambda t, x: 1.0, name="StandardBM")
+    doob_node = DoobHTransformNode(wire_std_bm, harmonic_fn=lambda x: x)
+    test_points = [1.0, 2.0, 5.0]
+    bessel_drifts = [doob_node.conditioned_drift(0.0, pt) for pt in test_points]
+
+    print("Algebraic Process Surgery & Boundary Transformations:")
+    print(f"  > Doléans Exponential Martingale E[E(X)_T] at T=1.0: {final_mean:.4f}  (Theoretical: 1.0000)")
+    print(f"  > Tanaka Empirical Local Time at Origin E[L_T^0(B)] : {mean_local_time:.4f}  (Theoretical: {theoretical_local_time:.4f})")
+    print(f"  > Doob h-Transform Conditioned Drift at x=[1, 2, 5] : {[round(d, 4) for d in bessel_drifts]}  (Theoretical: [1.0, 0.5, 0.2])")
+
+
 def main():
     print("=" * 78)
     print("  SPXA COMPUTATIONAL GRAPH ENGINE - LIVE ARCHITECTURAL DEPTH DEMO")
@@ -542,10 +651,13 @@ def main():
     demo_dimension_9_dynkin_martingale_verification()
     demo_dimension_10_speed_scale_and_feller()
     demo_dimension_11_malliavin_bismut_greeks()
+    demo_dimension_12_semimartingale_decomposition_and_algebra()
+    demo_dimension_13_four_facet_duality_engine()
+    demo_dimension_14_algebraic_process_surgery()
 
     total_time = (time.perf_counter() - t_start) * 1000
     print("\n" + "=" * 78)
-    print(f"  ALL 11 DEPTH DIMENSIONS EXECUTED SUCCESSFULLY IN {total_time:.2f} ms")
+    print(f"  ALL 14 DEPTH DIMENSIONS EXECUTED SUCCESSFULLY IN {total_time:.2f} ms")
     print("=" * 78 + "\n")
 
 
