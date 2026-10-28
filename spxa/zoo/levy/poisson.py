@@ -123,7 +123,7 @@ class PoissonProcess(Process):
 
     def cumulants(self, order: int) -> dict[int, float]:
         """κ_n(X_t) = λ·c^n for all n ≥ 1. All cumulants of a Poisson distribution are equal to the mean."""
-        return {n: self.rate * (self.jump_size ** n) for n in range(1, order + 1)}
+        return {n: self.rate * (self.jump_size**n) for n in range(1, order + 1)}
 
     def simulate(
         self,

@@ -8,7 +8,12 @@ from spxa.ops.subordination import (
     bernstein_function,
     is_valid_subordination,
 )
-from spxa.ops.product import multiply, ProductProcess, cumulants_to_raw_moments, raw_moments_to_cumulants
+from spxa.ops.product import (
+    multiply,
+    ProductProcess,
+    cumulants_to_raw_moments,
+    raw_moments_to_cumulants,
+)
 from spxa.ops.integral import (
     ito_isometry_variance,
     stochastic_convolution_char_func,

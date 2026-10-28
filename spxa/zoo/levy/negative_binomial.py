@@ -160,8 +160,8 @@ class NegativeBinomialProcess(Process):
             name=f"NegativeBinomialProcess(r={r}, p={p})",
             math_note=(
                 f"φ(u;t) = ((1-p)/(1-p·e^{{iu}}))^{{rt}}; "
-                f"κ₁={r*p/(1-p):.4f}, κ₂={r*p/(1-p)**2:.4f}; "
-                f"finite activity: nu(R\\{{0}})=r*log(1/(1-p))={r*np.log(1/(1-p)):.4f}"
+                f"κ₁={r * p / (1 - p):.4f}, κ₂={r * p / (1 - p) ** 2:.4f}; "
+                f"finite activity: nu(R\\{{0}})=r*log(1/(1-p))={r * np.log(1 / (1 - p)):.4f}"
             ),
             reference="Quenouille (1949); Johnson et al. (2005) Ch. 5",
         )
@@ -241,7 +241,7 @@ class NegativeBinomialProcess(Process):
         if n == 3:
             return t * self.r * self.p * (1 + self.p) / q**3
         if n == 4:
-            return t * self.r * self.p * (1 + 4*self.p + self.p**2) / q**4
+            return t * self.r * self.p * (1 + 4 * self.p + self.p**2) / q**4
         # Higher orders: κ_n = t·r·p · (d/dp)^{n-1}[p/(1-p)^n] evaluated at p
         # Use the Lévy measure moment: κ_n = t · ∫ x^n ν(dx) for n ≥ 2,
         # κ_1 = t·(b + ∫_{|x|>1} x ν(dx)) = t·mean

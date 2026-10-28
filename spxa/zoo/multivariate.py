@@ -1,4 +1,4 @@
-"""
+r"""
 Multivariate Lévy processes.
 
 Extends the 1-dimensional algebra to ℝᵈ. The Lévy–Khintchine formula
@@ -52,7 +52,7 @@ from spxa.story.narrator import CompositionNode, NodeKind
 
 @dataclass(frozen=True)
 class MultivariateLevyTriplet:
-    """
+    r"""
     d-dimensional Lévy–Khintchine characteristic triplet (b, Σ, ν).
 
     Parameters
@@ -119,8 +119,7 @@ class MultivariateLevyTriplet:
 
         def image_density(x: np.ndarray) -> np.ndarray:
             raise NotImplementedError(
-                "Image measure density not implemented for general A. "
-                "Use numeric simulation."
+                "Image measure density not implemented for general A. Use numeric simulation."
             )
 
         image_nu = DensityLevyMeasure(
@@ -217,6 +216,7 @@ class MultivariateBrownianMotion(Process):
 
     def _triplet(self) -> LevyTriplet:
         from spxa.zoo.levy.brownian import _ZeroLevyMeasure
+
         # Return 1-d projection triplet (trace of Σ as effective scalar)
         return LevyTriplet(
             b=float(np.sum(self.mu)),
@@ -227,6 +227,7 @@ class MultivariateBrownianMotion(Process):
     def multivariate_triplet(self) -> MultivariateLevyTriplet:
         """Return the full d-dimensional characteristic triplet."""
         from spxa.zoo.levy.brownian import _ZeroLevyMeasure
+
         return MultivariateLevyTriplet(
             b=self.mu.copy(),
             sigma=self.sigma_mat.copy(),
@@ -322,9 +323,7 @@ class CorrelatedLevy(Process):
     def __init__(self, processes: list[Process], A: np.ndarray) -> None:
         A = np.atleast_2d(np.asarray(A, dtype=float))
         if A.shape[1] != len(processes):
-            raise ValueError(
-                f"A has {A.shape[1]} columns but {len(processes)} processes supplied."
-            )
+            raise ValueError(f"A has {A.shape[1]} columns but {len(processes)} processes supplied.")
         self.processes = processes
         self.A = A
         self.dim_in = len(processes)
@@ -361,14 +360,16 @@ class CorrelatedLevy(Process):
         b_Z = self.A @ b_vec
         sigma_Z = self.A @ sigma_diag @ self.A.T
         nu_Z = CompoundLevyMeasure([p._triplet().nu for p in self.processes])
-        return MultivariateLevyTriplet(
-            b=b_Z, sigma=sigma_Z, nu=nu_Z, dim=self.dim_out
-        )
+        return MultivariateLevyTriplet(b=b_Z, sigma=sigma_Z, nu=nu_Z, dim=self.dim_out)
 
     def _properties(self) -> ProcessProperties:
         combined = ProcessProperties(
-            has_stationary_increments=all(p.properties.has_stationary_increments for p in self.processes),
-            has_independent_increments=all(p.properties.has_independent_increments for p in self.processes),
+            has_stationary_increments=all(
+                p.properties.has_stationary_increments for p in self.processes
+            ),
+            has_independent_increments=all(
+                p.properties.has_independent_increments for p in self.processes
+            ),
             is_martingale=all(p.properties.is_martingale for p in self.processes),
             has_finite_variance=all(p.properties.has_finite_variance for p in self.processes),
             has_finite_mean=all(p.properties.has_finite_mean for p in self.processes),
@@ -400,8 +401,7 @@ class CorrelatedLevy(Process):
 
     def __repr__(self) -> str:
         return (
-            f"CorrelatedLevy(processes={[repr(p) for p in self.processes]}, "
-            f"A_shape={self.A.shape})"
+            f"CorrelatedLevy(processes={[repr(p) for p in self.processes]}, A_shape={self.A.shape})"
         )
 
 

@@ -33,17 +33,17 @@ class TestInverseGaussianProcess:
 
     @pytest.mark.exactness
     def test_ig_cumulant_2(self) -> None:
-        """κ₂(X₁) = 3μ³/λ. Tweedie (1957), eq (2.5): (2·2-1)!!=3, μ^3/λ^1 → 3μ³/λ."""
+        """κ₂(X₁) = μ³/λ. Variance of IG(μ, λ)."""
         mu, lam = 1.5, 3.0
         ig = InverseGaussianProcess(mu=mu, lam=lam)
-        assert ig.cumulant_exact(2) == pytest.approx(3 * mu**3 / lam, rel=1e-10)
+        assert ig.cumulant_exact(2) == pytest.approx(mu**3 / lam, rel=1e-10)
 
     @pytest.mark.exactness
     def test_ig_cumulant_3(self) -> None:
-        """κ₃(X₁) = 15μ⁵/λ². Tweedie (1957): (2·3-1)!!=15, μ^5/λ^2 → 15μ⁵/λ²."""
+        """κ₃(X₁) = 3μ⁵/λ². Tweedie (1957); Johnson et al. (1994): (2·3-3)!!=3."""
         mu, lam = 1.0, 2.0
         ig = InverseGaussianProcess(mu=mu, lam=lam)
-        assert ig.cumulant_exact(3) == pytest.approx(15 * mu**5 / lam**2, rel=1e-10)
+        assert ig.cumulant_exact(3) == pytest.approx(3 * mu**5 / lam**2, rel=1e-10)
 
     @pytest.mark.exactness
     def test_ig_bernstein_function(self) -> None:
@@ -168,7 +168,7 @@ class TestMeixnerProcess:
         """κ₂ = δα²/(2cos²(β/2)). Schoutens & Teugels (1998), eq. (6)."""
         a, b, d = 0.4, -1.0, 0.5
         mx = MeixnerProcess(alpha=a, beta=b, delta=d)
-        expected = d * a**2 / (2 * np.cos(b / 2)**2)
+        expected = d * a**2 / (2 * np.cos(b / 2) ** 2)
         assert mx.cumulant_exact(2) == pytest.approx(expected, rel=1e-10)
 
     @pytest.mark.exactness
@@ -176,7 +176,7 @@ class TestMeixnerProcess:
         """κ₃ = δα³ sin(β/2)/(2cos³(β/2)). Schoutens & Teugels (1998), eq. (7)."""
         a, b, d = 0.4, -1.0, 0.5
         mx = MeixnerProcess(alpha=a, beta=b, delta=d)
-        expected = d * a**3 * np.sin(b / 2) / (2 * np.cos(b / 2)**3)
+        expected = d * a**3 * np.sin(b / 2) / (2 * np.cos(b / 2) ** 3)
         assert mx.cumulant_exact(3) == pytest.approx(expected, rel=1e-10)
 
     @pytest.mark.exactness
@@ -184,7 +184,7 @@ class TestMeixnerProcess:
         """κ₄ = δα⁴(2+cosβ)/(8cos⁴(β/2)). Schoutens & Teugels (1998), eq. (8)."""
         a, b, d = 0.4, -1.0, 0.5
         mx = MeixnerProcess(alpha=a, beta=b, delta=d)
-        expected = d * a**4 * (2 + np.cos(b)) / (8 * np.cos(b / 2)**4)
+        expected = d * a**4 * (2 + np.cos(b)) / (8 * np.cos(b / 2) ** 4)
         assert mx.cumulant_exact(4) == pytest.approx(expected, rel=1e-10)
 
     @pytest.mark.exactness

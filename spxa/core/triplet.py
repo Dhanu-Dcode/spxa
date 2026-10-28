@@ -1,4 +1,4 @@
-"""
+r"""
 Lévy–Khintchine triplet.
 
 Every Lévy process X on ℝ is uniquely associated with a characteristic triplet
@@ -15,12 +15,11 @@ Reference: Sato (1999), Theorem 8.1.
 
 from __future__ import annotations
 
-import warnings
 from dataclasses import dataclass
 
 import numpy as np
 
-from spxa.core.levy_measure import CompoundLevyMeasure, LevyMeasure, ScaledLevyMeasure
+from spxa.core.levy_measure import LevyMeasure, ScaledLevyMeasure
 
 
 @dataclass(frozen=True)
@@ -122,13 +121,12 @@ class LevyTriplet:
             raise ValueError("Cumulant order must be >= 1")
         if n == 1:
             from scipy import integrate  # type: ignore[import-untyped]
+
             tail_correction, _ = integrate.quad(
-                lambda x: float(self.nu.density(np.array([x]))[0]) * x,
-                -np.inf, -1.0
+                lambda x: float(self.nu.density(np.array([x]))[0]) * x, -np.inf, -1.0
             )
             tail_correction2, _ = integrate.quad(
-                lambda x: float(self.nu.density(np.array([x]))[0]) * x,
-                1.0, np.inf
+                lambda x: float(self.nu.density(np.array([x]))[0]) * x, 1.0, np.inf
             )
             return self.b + tail_correction + tail_correction2
         if n == 2:

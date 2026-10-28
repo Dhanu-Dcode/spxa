@@ -77,6 +77,7 @@ def test_cgmy_cumulant_1() -> None:
     Carr et al. (2002), equation (2).
     """
     from scipy.special import gamma as gamma_fn
+
     C, G, M, Y = 1.0, 5.0, 7.0, 0.5
     cgmy = CGMY(C=C, G=G, M=M, Y=Y)
     expected = C * float(gamma_fn(1 - Y)) * (M ** (Y - 1) - G ** (Y - 1))
@@ -90,6 +91,7 @@ def test_cgmy_cumulant_2() -> None:
     Carr et al. (2002), equation (2).
     """
     from scipy.special import gamma as gamma_fn
+
     C, G, M, Y = 1.0, 5.0, 7.0, 0.5
     cgmy = CGMY(C=C, G=G, M=M, Y=Y)
     expected = C * float(gamma_fn(2 - Y)) * (M ** (Y - 2) + G ** (Y - 2))

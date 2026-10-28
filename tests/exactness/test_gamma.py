@@ -33,12 +33,13 @@ def test_gamma_no_gaussian_component() -> None:
 
 @pytest.mark.exactness
 def test_gamma_infinite_activity() -> None:
-    """
+    r"""
     GammaProcess has infinite activity: ν(ℝ\{0}) = ∞.
     The Lévy density ∫_0^∞ a·x^{-1}·e^{-bx} dx diverges at 0.
     Cont & Tankov (2004), Table 4.1.
     """
     import numpy as np
+
     g = GammaProcess(a=1.0, b=1.0)
     assert np.isinf(g.triplet.nu.total_mass())
 

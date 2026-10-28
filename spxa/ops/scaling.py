@@ -1,4 +1,4 @@
-"""
+r"""
 Scalar multiplication and linear transformation of Lévy processes.
 
 Mathematical basis

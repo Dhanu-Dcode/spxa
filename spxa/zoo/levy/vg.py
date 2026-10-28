@@ -60,10 +60,8 @@ def _vg_levy_measure(sigma: float, nu: float, theta: float) -> DensityLevyMeasur
 
     def tail(xv: float) -> float:
         from scipy import integrate  # type: ignore[import-untyped]
-        result, _ = integrate.quad(
-            lambda t: (C / t) * np.exp(A * t - B * t),
-            xv, np.inf, limit=200
-        )
+
+        result, _ = integrate.quad(lambda t: (C / t) * np.exp(A * t - B * t), xv, np.inf, limit=200)
         return result
 
     def moment_1() -> float:
@@ -76,8 +74,7 @@ def _vg_levy_measure(sigma: float, nu: float, theta: float) -> DensityLevyMeasur
         return 2 * theta**3 * nu**2 + 3 * sigma**2 * theta * nu
 
     def moment_4() -> float:
-        return (3 * sigma**4 * nu + 12 * sigma**2 * theta**2 * nu**2
-                + 6 * theta**4 * nu**3)
+        return 3 * sigma**4 * nu + 12 * sigma**2 * theta**2 * nu**2 + 6 * theta**4 * nu**3
 
     return DensityLevyMeasure(
         _density_fn=density,
@@ -135,8 +132,8 @@ class VarianceGamma(Process):
             name=f"VarianceGamma(sigma={sigma}, nu={nu}, theta={theta})",
             math_note=(
                 f"Lévy density: C/|x|·exp(Ax - B|x|) with "
-                f"C=1/ν={1/nu:.4f}, A=θ/σ²={theta/sigma**2:.4f}, "
-                f"B=sqrt(θ²/σ⁴+2/(σ²ν))={np.sqrt(theta**2/sigma**4+2/(sigma**2*nu)):.4f}"
+                f"C=1/ν={1 / nu:.4f}, A=θ/σ²={theta / sigma**2:.4f}, "
+                f"B=sqrt(θ²/σ⁴+2/(σ²ν))={np.sqrt(theta**2 / sigma**4 + 2 / (sigma**2 * nu)):.4f}"
             ),
             reference="Madan, Carr & Chang (1998); Cont & Tankov (2004) Table 4.2",
         )
@@ -161,13 +158,11 @@ class VarianceGamma(Process):
 
         # ∫_1^∞ x * k(x) dx  (positive side, no singularity at origin)
         tail_pos, _ = integrate.quad(
-            lambda x: (C / x) * np.exp(A * x - B * x) * x,
-            1.0, np.inf, limit=200
+            lambda x: (C / x) * np.exp(A * x - B * x) * x, 1.0, np.inf, limit=200
         )
         # ∫_{-∞}^{-1} x * k(x) dx = -∫_1^∞ x * k(-x) dx
         tail_neg, _ = integrate.quad(
-            lambda x: (C / x) * np.exp(-A * x - B * x) * (-x),
-            1.0, np.inf, limit=200
+            lambda x: (C / x) * np.exp(-A * x - B * x) * (-x), 1.0, np.inf, limit=200
         )
         # b = mean - tail_correction
         b_drift = self.theta - tail_pos - tail_neg
@@ -276,7 +271,9 @@ class VarianceGamma(Process):
             size=(n_paths, n_steps),
         )
         normals = rng.standard_normal(size=(n_paths, n_steps))
-        increments = self.theta * gamma_increments + self.sigma * np.sqrt(gamma_increments) * normals
+        increments = (
+            self.theta * gamma_increments + self.sigma * np.sqrt(gamma_increments) * normals
+        )
 
         paths = np.zeros((n_paths, n_steps + 1))
         paths[:, 1:] = np.cumsum(increments, axis=1)

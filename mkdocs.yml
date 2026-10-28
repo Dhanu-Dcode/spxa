@@ -65,7 +65,10 @@ nav:
       - First composition: tutorials/01_first_composition.ipynb
       - Finance models: tutorials/02_finance_models.ipynb
       - Physics applications: tutorials/03_physics_applications.ipynb
-  - API reference: api/
-  - Process registry: process_registry.md
+  - API reference: api.md
+  - Differentiable SDEs: diff.md
+  - Portfolio & Risk: risk.md
+  - Stochastic Calculus: calculus.md
+  - Process registry: https://github.com/Nityahapani/spxa/blob/main/PROCESS_REGISTRY.md
   - Contributing: contributing.md
   - Changelog: changelog.md

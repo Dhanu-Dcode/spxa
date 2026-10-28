@@ -20,7 +20,7 @@ Ogata, Y. (1981). On Lewis' simulation method for point processes.
 
 from __future__ import annotations
 
-from typing import Callable, Optional
+from typing import Optional
 
 import numpy as np
 
@@ -83,7 +83,7 @@ class HawkesProcess(Process):
         if alpha >= beta:
             raise ValueError(
                 f"Process is supercritical: requires alpha < beta (α/β < 1), "
-                f"got alpha={alpha}, beta={beta}, ratio={alpha/beta:.3f}"
+                f"got alpha={alpha}, beta={beta}, ratio={alpha / beta:.3f}"
             )
 
         self.mu = mu
@@ -111,6 +111,16 @@ class HawkesProcess(Process):
         Hawkes (1971), equation (3.5).
         """
         return self.mu / (1 - self._branching_ratio)
+
+    @property
+    def branching_ratio(self) -> float:
+        """Branching ratio eta = alpha / beta."""
+        return self._branching_ratio
+
+    @property
+    def stationary_intensity(self) -> float:
+        """Stationary arrival intensity lambda_inf = mu / (1 - alpha / beta)."""
+        return self.mean_intensity
 
     @property
     def asymptotic_variance_rate(self) -> float:
@@ -159,7 +169,7 @@ class HawkesProcess(Process):
             notes=[
                 f"Hawkes process: branching ratio α/β={self._branching_ratio:.4f} < 1 (subcritical).",
                 "Increments are positively correlated — not a Lévy process.",
-                f"Fano factor F={(1+self._branching_ratio)/(1-self._branching_ratio)**2:.4f} > 1 (overdispersed).",
+                f"Fano factor F={(1 + self._branching_ratio) / (1 - self._branching_ratio) ** 2:.4f} > 1 (overdispersed).",
             ],
         )
 
@@ -179,52 +189,40 @@ class HawkesProcess(Process):
 
     def simulate(
         self,
-        n_steps: int,
-        n_paths: int = 1,
-        T: float = 1.0,
+        n_steps: Optional[int] = None,
+        n_paths: Optional[int] = None,
+        T: Optional[float] = None,
         rng: Optional[np.random.Generator] = None,
+        *,
+        num_steps: Optional[int] = None,
+        num_paths: Optional[int] = None,
+        t_max: Optional[float] = None,
     ) -> np.ndarray:
         """
         Simulate Hawkes process paths via Ogata's thinning algorithm.
-
-        The thinning algorithm (Ogata 1981):
-          1. Propose next event time from a Poisson process with rate λ*(t)
-             = current upper bound on λ(t).
-          2. Accept with probability λ(t_proposed) / λ*(t_proposed).
-          3. Update the intensity and repeat until T is reached.
-
-        Returns the counting process N_t on a grid of n_steps+1 points.
-
-        Parameters
-        ----------
-        n_steps :
-            Number of output time grid points minus 1.
-        n_paths :
-            Number of independent realisations.
-        T :
-            Terminal time.
-        rng :
-            Random number generator.
-
-        Returns
-        -------
-        np.ndarray
-            Shape (n_paths, n_steps + 1). Integer-valued counting process.
         """
-        rng = rng or np.random.default_rng()
-        time_grid = np.linspace(0, T, n_steps + 1)
-        paths = np.zeros((n_paths, n_steps + 1))
+        final_steps = (
+            n_steps if n_steps is not None else (num_steps if num_steps is not None else 100)
+        )
+        final_paths = (
+            n_paths if n_paths is not None else (num_paths if num_paths is not None else 1)
+        )
+        final_t = T if T is not None else (t_max if t_max is not None else 1.0)
 
-        for path_idx in range(n_paths):
+        rng = rng or np.random.default_rng()
+        time_grid = np.linspace(0, final_t, final_steps + 1)
+        paths = np.zeros((final_paths, final_steps + 1))
+
+        for path_idx in range(final_paths):
             event_times: list[float] = []
             t = 0.0
             lambda_star = self.mu
 
-            while t < T:
+            while t < final_t:
                 dt = rng.exponential(1.0 / lambda_star)
                 t_proposed = t + dt
 
-                if t_proposed > T:
+                if t_proposed > final_t:
                     break
 
                 lambda_t = self.mu + self.alpha * sum(

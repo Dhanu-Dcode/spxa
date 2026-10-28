@@ -54,6 +54,7 @@ def _meixner_levy_measure(alpha: float, beta: float, delta: float) -> DensityLev
 
     Schoutens (2002), p. 53.
     """
+
     def density(x: np.ndarray) -> np.ndarray:
         out = np.zeros_like(x, dtype=float)
         nz = x != 0
@@ -69,9 +70,12 @@ def _meixner_levy_measure(alpha: float, beta: float, delta: float) -> DensityLev
 
     def tail(xv: float) -> float:
         from scipy import integrate  # type: ignore[import-untyped]
+
         result, _ = integrate.quad(
             lambda t: delta * np.exp(beta * t / alpha) / (t * np.sinh(np.pi * t / alpha)),
-            xv, np.inf, limit=200
+            xv,
+            np.inf,
+            limit=200,
         )
         return result
 
@@ -160,8 +164,8 @@ class MeixnerProcess(Process):
             math_note=(
                 f"φ(u;t) = exp(imu)·(cos(β/2)/cosh((αu-iβ)/2))^{{2δt}}; "
                 f"Lévy density: δ·exp(βx/α)/(x·sinh(πx/α)); "
-                f"κ₁={delta*alpha*np.tan(beta/2)+m:.4f}, "
-                f"κ₂={delta*alpha**2/(2*cos_half**2):.4f}"
+                f"κ₁={delta * alpha * np.tan(beta / 2) + m:.4f}, "
+                f"κ₂={delta * alpha**2 / (2 * cos_half**2):.4f}"
             ),
             reference="Schoutens & Teugels (1998); Schoutens (2002); Cont & Tankov (2004) Ch. 4",
         )
@@ -169,6 +173,7 @@ class MeixnerProcess(Process):
 
     def _triplet(self) -> LevyTriplet:
         from scipy import integrate  # type: ignore[import-untyped]
+
         nu = _meixner_levy_measure(self.alpha, self.beta, self.delta)
 
         def integrand(x: float) -> float:
@@ -220,7 +225,7 @@ class MeixnerProcess(Process):
         cosh_z = np.cosh(z)
         log_cosh = np.log(np.where(np.abs(cosh_z) > 1e-300, cosh_z, 1e-300 + 0j))
         log_ratio = np.log(cos_half + 0j) - log_cosh
-        exponent = 1j * self.m * u_arr + 2 * self.delta * t * log_ratio
+        exponent = 1j * self.m * t * u_arr + 2 * self.delta * t * log_ratio
         result = np.exp(exponent)
         return result if result.shape != (1,) else result[0]
 
@@ -249,9 +254,13 @@ class MeixnerProcess(Process):
             return t * d * a**4 * (2 + np.cos(b)) / (8 * cos_h**4)
         # Higher orders via numerical differentiation of log char_func
         from scipy.misc import derivative  # type: ignore[import-untyped]
-        log_cf = lambda u: np.log(complex(self.char_func_exact(u, t=t)) + 1e-300)
-        kappa = (1j)**(-n) * derivative(lambda u: log_cf(u).real if n % 2 == 0
-                                         else log_cf(u).imag, 0.0, dx=1e-4, n=n)
+
+        def log_cf(u_val: float) -> complex:
+            return np.log(complex(self.char_func_exact(u_val, t=t)) + 1e-300)
+
+        kappa = (1j) ** (-n) * derivative(
+            lambda u: log_cf(u).real if n % 2 == 0 else log_cf(u).imag, 0.0, dx=1e-4, n=n
+        )
         return float(kappa.real)
 
     def cumulants(self, order: int) -> dict[int, float]:
@@ -300,8 +309,6 @@ class MeixnerProcess(Process):
         n_u = 2000
         u_max = min(200.0 / self.alpha, 800.0)
         u_grid = np.linspace(1e-6, u_max, n_u)
-        du = u_grid[1] - u_grid[0]
-
         cf_vals = self.char_func_exact(u=u_grid, t=dt)
         pdf = np.zeros(n_x)
         for j, x in enumerate(x_grid):
@@ -321,4 +328,6 @@ class MeixnerProcess(Process):
         return paths
 
     def __repr__(self) -> str:
-        return f"MeixnerProcess(alpha={self.alpha}, beta={self.beta}, delta={self.delta}, m={self.m})"
+        return (
+            f"MeixnerProcess(alpha={self.alpha}, beta={self.beta}, delta={self.delta}, m={self.m})"
+        )

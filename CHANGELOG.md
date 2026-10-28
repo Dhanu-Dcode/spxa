@@ -2,6 +2,362 @@
 
 All notable changes to spxa are documented here. Follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- `calibration/` — Comprehensive institutional-grade model calibration, time-series estimation, state filtering, and diagnostic validation suite (`spxa.calibration`):
+  - **Surface Calibration (`spxa.calibration.surface`)**:
+    - Data containers: `MarketQuote`, `MarketSlice`, and `MarketSurface` with 2D coordinate projections, smile interpolation, and discount curve support.
+    - Loss functions: `RMSELoss`, `VegaWeightedLoss`, `RelativeErrorLoss`, and `ArbitragePenalizedLoss` (penalizing calendar spread and butterfly arbitrage violations).
+    - Optimizers: `LeastSquaresOptimizer` (Levenberg-Marquardt / Trust-Region Reflective), `DifferentialEvolutionOptimizer` (global stochastic optimization), and `HybridOptimizer` (global exploration followed by local refinement).
+    - Specialized surface calibrators: `SABRCalibrator` (Hagan et al. 2002 asymptotic formula), `HestonCalibrator` (Fourier call pricer with Feller regularization), `BatesCalibrator` (joint SV and compound Poisson jumps), `DoubleHestonCalibrator` (two-factor stochastic volatility), and `CEVHestonCalibrator` (local-stochastic volatility).
+  - **Time-Series Maximum Likelihood & GMM (`spxa.calibration.mle`)**:
+    - Closed-form Gaussian MLE: `OrnsteinUhlenbeckMLE` (`VasicekMLE`), `BrownianMotionMLE`, and `GeometricBrownianMotionMLE`.
+    - Exact transition density MLE: `CIRMaximumLikelihood` (`CIRMLE`) using non-central chi-square distribution with Bessel-scaled evaluation, and `BESQMaximumLikelihood` (`BESQMLE`).
+    - Heavy-tailed MLE: `StudentTInnovationsMLE` and `NormalInverseGaussianMLE` (`NIGMLE`).
+    - GMM & spectral HAC: `GeneralizedMethodOfMoments` (`GMMEstimator`, `GMM`), `newey_west_hac` robust covariance estimator with Bartlett kernel, `hansen_j_test` test of overidentifying restrictions, `OrnsteinUhlenbeckGMM`, and `CIRGMM`.
+    - `ECFEstimator`: Empirical Characteristic Function estimator minimizing continuum integrated weighted distance.
+  - **Latent State Filtering (`spxa.calibration.filter`)**:
+    - `MerweScaledSigmaPoints`: Scaled unscented transformation with parameters $(\alpha, \beta, \kappa)$.
+    - `UnscentedKalmanFilter` (`UKF`): Nonlinear state filtering with innovation Gaussian pseudo log-likelihood.
+    - `QuasiMaximumLikelihoodEstimator` (`QMLE`): Calibrating state-space parameters using UKF prediction errors.
+    - Sequential Monte Carlo: `BootstrapParticleFilter` (`ParticleFilter`, `SequentialMonteCarlo`) with systematic, stratified, and multinomial resampling schemes, and ESS tracking.
+    - Domain filters: `HestonVarianceFilter` (recovering latent variance $v_t = \exp(x_t) > 0$ from returns via log-variance UKF), `SchwartzTwoFactorFilter` (filtering unobserved commodity convenience yield from futures curves), and `DefaultIntensityFilter` (filtering hazard rates from CDS spreads).
+  - **Diagnostics, Standard Errors, & Reporting (`spxa.calibration.diagnostics`)**:
+    - `compute_numerical_hessian`, `fisher_information_matrix`, and `sandwich_covariance_matrix` (Godambe robust covariance).
+    - `compute_parameter_inference`: Standard errors, $t$-statistics, $p$-values, Wald confidence intervals, and parameter correlation matrix.
+    - Information criteria: AIC, AICc, BIC, HQIC, and `ModelComparisonTable` with relative Akaike weights.
+    - Residual diagnostics: `compute_residual_diagnostics` (Ljung-Box autocorrelation test, Jarque-Bera normality test), `analyze_surface_residuals` (RMSE, MAE, butterfly and calendar arbitrage checks), `compute_profile_likelihood`, and `evaluate_pit_diagnostics` (uniformity and Berkowitz 2001 LR test).
+    - `CalibrationReport`: Institutional summary report generator exporting formatted ASCII text tables and GitHub-flavored Markdown tables.
+    - Visualization helpers: `plot_smile_overlay`, `plot_surface_error_heatmap`, and `plot_filtered_trajectory`.
+- `control/` — Continuous-time stochastic optimal control module (`spxa.control`):
+  - Base abstractions `ControlProblem` and `ControlledTrajectory` for stochastic optimal control, value functions, running/terminal costs, and Monte Carlo trajectory evaluation.
+  - `LinearQuadraticGaussian` (`LQG`, `LinearQuadraticRegulator`): Multi-dimensional LQG regulator with backward matrix differential Riccati ODE solver, Continuous Algebraic Riccati Equation (CARE) solver, optimal state-feedback gain $u^*(t, x) = -R^{-1}B^T P(t)x$, and analytical quadratic value function $V(t, x) = x^T P(t) x + s(t)$.
+  - `MertonPortfolioControl` (`MertonControl`, `MertonPortfolio`, `OptimalConsumptionInvestment`): Merton optimal lifetime asset allocation and consumption under CRRA utility, constant Merton fraction $\alpha^* = \frac{\mu - r}{\gamma \sigma^2}$, finite-horizon consumption propensity $\kappa(t)$, exact closed-form HJB verification, and positivity-preserving log-Euler simulation.
+  - `AlmgrenChrissExecution` (`AlmgrenChriss`, `AlmgrenChrissModel`, `OptimalExecution`): Optimal liquidation under permanent and temporary market impact, urgency parameter $\kappa = \sqrt{\lambda \sigma^2 / \eta}$, hyperbolic optimal inventory trajectory $q^*(t) = Q_0 \frac{\sinh(\kappa(T - t))}{\sinh(\kappa T)}$, analytical expected shortfall and variance, and Pareto efficient execution frontier.
+  - `AvellanedaStoikovMarketMaker` (`AvellanedaStoikov`, `OptimalMarketMaking`, `HighFrequencyMarketMaker`): High-frequency limit order book quoting with inventory risk penalty, reservation price $R(s, q, t) = s - q \gamma \sigma^2 (T - t)$, inventory-invariant total bid-ask spread $s^*(t) = \frac{2}{\gamma}\ln(1 + \gamma/k) + \gamma \sigma^2 (T - t)$, inventory-skewed quoting, and coupled jump-diffusion simulation.
+  - `FiniteDifferenceHJB` (`HJBSolver`, `HamiltonJacobiBellman`, `ViscosityHJBSolver`): Monotone upwind finite-difference viscosity solver for general 1D nonlinear Hamilton-Jacobi-Bellman PDEs with Barles-Souganidis convergence guarantee, vectorized policy optimization, and bivariate spline interpolation.
+- `zoo/beyond/cev_heston.py` — CEV-Heston local-stochastic volatility process (`CEVHestonProcess`, `CEVHeston`, `HestonCEV`, `SLVCEV`):
+  Combines Constant Elasticity of Variance (CEV) local volatility backbone $S_t^\gamma$ with CIR mean-reverting variance diffusion, exact Feller ratios, exact Heston affine characteristic function limit at $\gamma = 1$, European options via Fourier inversion, and full-truncation Euler simulation.
+- `zoo/beyond/cheyette.py` — Cheyette Quasi-Gaussian Markovian Heath-Jarrow-Morton process (`CheyetteProcess`, `Cheyette`, `CheyetteModel`, `QuasiGaussianHJM`):
+  Finite-dimensional Markovian realization of HJM with exponential volatility decay $\sigma e^{-\kappa(T - t)}$, exact deterministic auxiliary variance state $y(t) = \frac{\sigma^2}{2\kappa}(1 - e^{-2\kappa t})$, closed-form zero-coupon bond pricing $P(t, T)$, Jamshidian European bond option formulas, and bivariate simulation.
+- `zoo/beyond/duffie_singleton.py` — Duffie-Singleton hazard-rate default intensity credit model (`DuffieSingletonProcess`, `DuffieSingleton`, `DefaultIntensityDiffusion`, `HazardRateDiffusion`):
+  Square-root default intensity diffusion $\lambda_t$ under Recovery of Market Value (RMV), exact closed-form survival probability $S(0, T) = A(T)e^{-B(T)\lambda_0}$, defaultable discount bond pricing, analytical credit spreads, CDS par spread calculation, and exact non-central chi-square simulation with Poisson default times.
+- `zoo/beyond/telegraph.py` — Kac's Telegraph process / persistent random walk (`TelegraphProcess`, `Telegraph`, `KacTelegraph`, `PersistentRandomWalk`):
+  Stochastic motion with finite propagation speed $c$ and Poisson direction reversals $\lambda$, hyperbolic wave equation density, compact support $[X_0 - ct, X_0 + ct]$, exact variance transition from ballistic ($t^2$) to diffusive ($t$) regimes, analytical characteristic function, and event-driven simulation without discretization error.
+- `zoo/beyond/quadratic_rough_heston.py` — Quadratic Rough Heston model with Zumbach volatility feedback (`QuadraticRoughHestonProcess`, `QuadraticRoughHeston`, `QRHeston`, `RoughZumbach`):
+  Instantaneous variance as a quadratic polynomial of a rough Volterra process $V_t = a(Z_t - b)^2 + c$, generating the structural Zumbach effect and leverage skew, power-law ATM implied volatility skew blow-up $|\partial \sigma_{\mathrm{IV}} / \partial \ln K| \sim T^{H - 1/2}$, and fractional convolution simulation.
+- `zoo/beyond/two_factor_cir.py` — Two-Factor Cox-Ingersoll-Ross (CIR2++) short-rate process (`TwoFactorCIRProcess`, `TwoFactorCIR`, `CIR2PlusPlus`):
+  Two independent CIR state variables driving short rate $r(t) = x(t) + y(t) + \phi$, exact zero-coupon bond pricing $P(t, T) = A_x(\tau)A_y(\tau)e^{-B_x(\tau)x_t - B_y(\tau)y_t - \phi\tau}$, yield curve analytics, and exact non-central chi-square path simulation without discretization error.
+- `zoo/beyond/shifted_cir.py` — Shifted Cox-Ingersoll-Ross (CIR++) short-rate process (`ShiftedCIRProcess`, `ShiftedCIR`, `CIRPlusPlus`):
+  Deterministic yield curve shift extension $\phi(t)$ calibrating exactly to market zero-coupon curves, closed-form European bond option pricing via non-central chi-square distributions, and exact non-central chi-square path simulation.
+- `zoo/beyond/double_heston.py` — Double Heston two-factor stochastic volatility model (`DoubleHestonProcess`, `DoubleHeston`, `TwoFactorHeston`):
+  Superposition of fast and slow mean-reverting CIR variance factors, exact bivariate affine characteristic function factoring both continuous Riccati solutions, European call/put options via Gil-Pelaez Fourier inversion with exact put-call parity, and full-truncation Euler simulation.
+- `zoo/beyond/heston_nandi.py` — Heston-Nandi continuous-time GARCH diffusion limit (`HestonNandiProcess`, `HestonNandi`, `HNGARCH`):
+  Continuous limit of the discrete Heston-Nandi affine GARCH model with asymmetric leverage $\gamma$, exact affine log-price characteristic function, European option pricing via Fourier inversion, and Euler-Maruyama simulation.
+- `zoo/beyond/vgsa.py` — Variance Gamma with Stochastic Arrival (VGSA) model (`VGSAProcess`, `VGSA`, `VarianceGammaStochasticArrival`):
+  Subordinated Variance Gamma process with CIR integrated rate-of-time-change clock $Y(t) = \int_0^t y(s) ds$, exact closed-form characteristic function via CIR Laplace transform, exact conditional moments, and clock-subordinated path simulation.
+- `zoo/beyond/jump_ou.py` — Mean-reverting Ornstein-Uhlenbeck process with compound Poisson jumps (`JumpOUProcess`, `JumpOU`, `ExpOUJump`, `EnergyOU`):
+  Energy and commodity price model coupling Gaussian mean reversion with Poisson jumps, exact conditional mean and variance, long-run stationary moments, analytical characteristic function via Campbell's theorem, and exact spike simulation.
+- `zoo/beyond/multivariate_ou.py` — Multivariate Ornstein-Uhlenbeck vector Gaussian diffusion (`MultivariateOUProcess`, `MultivariateOU`, `VectorOU`):
+  $d$-dimensional mean-reverting vector process with positive-stable drift matrix $\mathbf{K}$, stationary covariance solving the continuous-time Lyapunov equation $\mathbf{K}\mathbf{V} + \mathbf{V}\mathbf{K}^T = \mathbf{\Sigma}\mathbf{\Sigma}^T$, exact conditional covariance matrix, and exact Gaussian vector step simulation.
+- `zoo/beyond/bessel_bridge.py` — Bessel and Squared Bessel Bridge process (`BesselBridge`, `BesselBridgeProcess`, `BESQBridge`):
+  $d$-dimensional squared Bessel diffusion pinned to start at $x_0$ and end at $x_T$ at terminal horizon $T$, exact conditional moments from the Pitman-Yor (1982) bridge decomposition, and pinned simulation.
+- `zoo/beyond/wright_fisher.py` — Wright-Fisher gene frequency diffusion process with mutation (`WrightFisherProcess`, `WrightFisher`, `GeneFrequencyDiffusion`):
+  Population genetics diffusion on $[0, 1]$ with two-way mutation drift and state-dependent volatility $\sigma\sqrt{X(1-X)}$, exact stationary $\text{Beta}(2\alpha/\sigma^2, 2\beta/\sigma^2)$ distribution, boundary non-attainability classification, and boundary-preserving Milstein simulation.
+- `zoo/beyond/logistic_diffusion.py` — Stochastic Logistic (Verhulst) population growth diffusion (`LogisticDiffusion`, `LogisticGrowthProcess`, `VerhulstDiffusion`):
+  Multiplicative environmental noise on logistic carrying capacity, persistence condition $r > \frac{1}{2}\sigma^2$, exact stationary Gamma distribution $\Gamma(\frac{2r}{\sigma^2}-1, \frac{2r}{\sigma^2 K})$, and strictly positive log-transformed Euler simulation.
+- `zoo/beyond/merton_firm_value.py` — Merton (1974) structural credit risk and firm value process (`MertonFirmValueProcess`, `MertonDefaultModel`, `StructuralCreditModel`):
+  Corporate asset value diffusion with debt threshold $D$, analytical distance to default (DD), physical and risk-neutral default probabilities, equity call option valuation, risky bond pricing, and exact credit spread term structure.
+- `zoo/beyond/brennan_schwartz.py` — Brennan-Schwartz (1985) two-factor commodity and convenience yield model (`BrennanSchwartzProcess`, `BrennanSchwartz`, `CommodityConvenienceModel`):
+  Spot commodity price coupled with proportional mean-reverting convenience yield $\delta(t)$, exact conditional convenience yield expectation, futures curve pricing $F(t, T)$, and bivariate correlated simulation.
+- `zoo/beyond/kesten.py` — Kesten multiplicative noise diffusion process (`KestenProcess`, `KestenDiffusion`, `MultiplicativeNoiseDiffusion`):
+  Continuous-time limit of Kesten recurrence with linear drift and multiplicative noise $\sigma X_t$, exact Inverse-Gamma stationary law with Pareto power-law tail exponent $\alpha = 2b/\sigma^2 + 1$, and positive-preserving log-Euler simulation.
+- `zoo/beyond/hyperbolic_diffusion.py` — Hyperbolic invariant diffusion process with exponential tails (`HyperbolicDiffusion`, `HyperbolicOU`, `HyperbolicInvariantDiffusion`):
+  Continuous diffusion with bounded nonlinear drift producing an exact Hyperbolic stationary distribution, normalization via modified Bessel $K_1(\delta\gamma)$, exact stationary mean and variance, and Milstein simulation.
+- `zoo/beyond/quadratic_diffusion.py` — Quadratic Pearson / Wong polynomial diffusion process (`QuadraticDiffusion`, `QuadraticPearsonDiffusion`, `WongDiffusion`):
+  Pearson diffusion family with affine drift and quadratic variance $c + d X + e X^2$, exact polynomial moment hierarchy via triangular eigenvalue recursion $\lambda_m = m b + \frac{1}{2}m(m-1)e$, exact stationary moments, and Milstein simulation.
+- `zoo/beyond/multivariate_hawkes.py` — Multivariate Hawkes mutually exciting point process (`MultivariateHawkesProcess`, `MultivariateHawkes`, `MHawkes`):
+  $M$-dimensional Hawkes intensity $\lambda_m(t)$, branching infectivity matrix $\mathbf{\Gamma}$, spectral radius stationarity condition $\rho(\mathbf{\Gamma}) < 1$, exact expected arrival intensity $\mathbf{\lambda}_\infty = (\mathbf{I} - \mathbf{\Gamma})^{-1} \mathbf{\mu}$, and Ogata thinning event simulation.
+- `zoo/levy/nts.py` — Normal Tempered Stable (NTS) Lévy process (`NormalTemperedStableProcess`, `NormalTemperedStable`, `NTSProcess`):
+  Subordinated Brownian motion $X_t = \theta T_t + \sigma W(T_t)$ with Tempered Stable subordinator, exact closed-form characteristic function, exact cumulant generating function, and subordination simulation.
+- `zoo/beyond/kou_sv.py` — Kou Stochastic Volatility Jump-Diffusion model (`KouSVProcess`, `KouSV`, `KouStochasticVolatility`):
+  Coupled Heston mean-reverting stochastic volatility with Kou asymmetric double-exponential jumps, affine characteristic function, Lewis Fourier inversion European call/put options, and full-truncation Euler simulation.
+- `zoo/beyond/diffusion_bridge.py` — General Diffusion Bridge via Doob's $h$-transform (`GeneralDiffusionBridge`, `DiffusionBridge`, `DoobBridge`):
+  Drift correction $\mu^*(x, t) = \mu(x) + \sigma^2(x) \partial_x \ln p(b, T \mid x, t)$ for Brownian, Ornstein–Uhlenbeck, and Geometric Brownian Motion bridges, exact moments, and pinned path simulation.
+- `zoo/beyond/rough_heston.py` — Rough Heston stochastic volatility model (`RoughHestonProcess`, `RoughHeston`, `RoughVolatility`):
+  Fractional Volterra stochastic volatility of order $\alpha = H + 1/2 \in (1/2, 1)$, singular kernel $K(t) = t^{\alpha - 1} / \Gamma(\alpha)$, Mittag-Leffler expected variance, power-law implied volatility skew $|\partial \sigma_{IV} / \partial k| \sim T^{H - 0.5}$, and fractional convolution simulation.
+- `zoo/beyond/g2pp.py` — Two-Factor Hull–White (G2++) short-rate diffusion model (`G2PlusPlusProcess`, `G2PlusPlus`, `TwoFactorHullWhite`):
+  Two coupled OU factors driving short rate $r(t) = x(t) + y(t) + \phi(t)$, closed-form zero-coupon bond pricing $P(t, T)$, Brigo–Mercurio European bond option formulas, and exact bivariate Gaussian factor simulation.
+- `zoo/beyond/three_halves.py` — 3/2 Stochastic Volatility diffusion model (`ThreeHalvesProcess`, `ThreeHalves`, `ThreeHalvesModel`):
+  Super-linear volatility-of-variance $dv_t = \kappa v_t (\theta - v_t) dt + \epsilon v_t^{3/2} dW_t$, exact reciprocal CIR transformation $y_t = 1/v_t$ with automatic Feller satisfaction, Inverse-Gamma stationary law, and exact non-central chi-square path simulation.
+- `zoo/beyond/schwartz_one_factor.py` — Schwartz One-Factor (1997) commodity diffusion model (`SchwartzOneFactor`, `ExponentialOU`, `Schwartz1F`):
+  Mean-reverting log-spot Ornstein–Uhlenbeck dynamics, exact lognormal transition law and moments, closed-form commodity futures price term structure $F(t, T)$, and Black-76 European options on futures.
+- `zoo/beyond/garch_diffusion.py` — Nelson (1990) continuous-time GARCH(1,1) diffusion limit (`GARCHDiffusion`, `ContinuousGARCH`, `GARCHDiffusionProcess`):
+  Linear diffusion coefficient $g(v) = \sigma v$, exact Inverse-Gamma stationary distribution, conditional moments from linear moment ODE system, and guaranteed-positive log-Euler simulation.
+- `zoo/beyond/bilinear.py` — Bilinear Diffusion process (`BilinearDiffusion`, `BilinearDiffusionProcess`, `AffineDiffusion`):
+  Affine drift and affine volatility $dX_t = (a + b X_t) dt + (c + d X_t) dW_t$, Pearson diffusion family moments, exact second-moment ODE solution, and high-order Milstein boundary simulation.
+- `vis/levy_inspector.py` — Lévy triplet diagnostic inspector and dual-panel density visualizer:
+  Decomposes $(b, \sigma^2, \nu)$, classifies finite activity ($\int \nu(dx) < \infty$) vs infinite activity ($\nu(\mathbb{R}) = \infty$),
+  finite vs infinite path variation, estimates Blumenthal-Getoor index $\beta \in [0, 2]$ and singularity order $s$,
+  and plots near-zero singularity zoom vs tail decay on semi-log scale.
+- `vis/surface.py` — 3D implied volatility surface and cross-model smile visualizer:
+  Computes and renders 3D $(K, T, \sigma_{\mathrm{IV}})$ surfaces with isoline contours, cross-model smile comparison curves
+  across diffusions, jumps, and stochastic volatility models, and volatility term structure plots.
+- `vis/story_dag.py` — Process composition DAG visualizer and multi-format exporter:
+  Walks `CompositionNode` trees and exports to ASCII / Unicode tree structures, Mermaid flowcharts for Markdown previews,
+  Graphviz DOT files, and publication-quality hierarchical NetworkX + Matplotlib diagrams.
+- `vis/__init__.py` — Unified visualization namespace exposing all diagnostic, surface, and DAG tools.
+- `examples/visualization_example.py` — End-to-end demonstration script generating sample plots and diagrams.
+- `tests/unit/test_vis.py` — Comprehensive unit test suite for all visualization submodules.
+- `sim/milstein.py` — High-order 1D and multivariate commutative Milstein simulation schemes:
+  Order 1.0 strong convergence with analytical or automatic centered finite-difference diffusion derivatives.
+- `sim/runge_kutta.py` — Derivative-free Stochastic Runge-Kutta schemes:
+  Strong order 1.0 Kloeden-Platen scheme (matching Milstein accuracy without diffusion derivatives) and weak order 2.0 scheme for expectation evaluation.
+- `sim/qmc.py` — Quasi-Monte Carlo simulation engine:
+  Sobol and Halton low-discrepancy sequences, Owen scrambling, and hierarchical Brownian bridge path construction.
+- `sim/variance_reduction.py` — Comprehensive variance reduction toolkit:
+  Optimal single/multivariate control variate regression estimator, antithetic Gaussian and Brownian paths, Girsanov importance sampling with Radon-Nikodym likelihood weights, and 1D stratified uniform sampling.
+- `sim/predictor_corrector.py` — Drift-implicit predictor-corrector schemes for stiff SDEs:
+  Unconditionally stable trapezoidal integration for stiff mean-reverting processes.
+- `sim/mlmc.py` — Giles (2008) Multilevel Monte Carlo (MLMC) framework:
+  Optimal $O(\epsilon^{-2})$ estimation complexity, adaptive level selection, and optimal variance allocation.
+- `examples/simulation_backends_example.py` — Comprehensive demonstration of all advanced simulation backends.
+- `zoo/beyond/cbi.py` — `CBISubordinator` (`CBIProcess`, `DawsonWatanabeProcess`, `ContinuousStateBranching`):
+  Dawson-Watanabe continuous-state branching process with continuous and jump immigration (Kawazu & Watanabe 1971; Dawson & Li 2012):
+  $dX_t = (a - b X_t) dt + \sqrt{c X_t} dW_t + dJ_t$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features exact closed-form Riccati solution $v(t, \lambda)$, affine Laplace transform $\mathbb{E}[e^{-\lambda X_t}]$,
+  exact conditional mean and variance with compound Poisson immigration, analytical extinction probability for pure CSBP,
+  and high-order Milstein simulation with non-negative reflection.
+  References: Kawazu & Watanabe (1971); Dawson & Li (2012); Li (2011); Grey (1974).
+- `sim/exact.py` — Vectorized `sample_cbi` Dawson-Watanabe Milstein sampler with jump immigration.
+- `zoo/beyond/chen.py` — `ChenModel` (`ChenThreeFactor`, `ChenShortRate`, `ChenProcess`):
+  Chen (1996) three-factor interest rate model with stochastic central tendency (mean) and stochastic variance:
+  $dr_t = k (\theta_t - r_t) dt + \sqrt{\zeta_t r_t} dW_{1,t}$,
+  $d\theta_t = \kappa (\bar{\theta} - \theta_t) dt + \alpha \sqrt{\theta_t} dW_{2,t}$,
+  $d\zeta_t = \lambda (\bar{\zeta} - \zeta_t) dt + \beta \sqrt{\zeta_t} dW_{3,t}$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features exact closed-form expectations, Feller condition analytics, exact 10-dimensional matrix exponential moment system
+  for second moments and conditional variance, term structure zero-coupon bond pricing and yield curve, and coupled 3-factor simulation.
+  References: Chen (1996).
+- `sim/exact.py` — Vectorized `sample_chen` coupled 3-factor path sampler.
+- `zoo/beyond/regime_switching_gbm.py` — `RegimeSwitchingGBM` (`RSGBM`, `RegimeSwitchingBlackScholes`, `MarkovSwitchingGBM`):
+  Continuous-time Markov-modulated Black-Scholes diffusion of Hamilton (1989), Naik (1993), and Guo (2001):
+  $dS_t = \mu(Y_t) S_t dt + \sigma(Y_t) S_t dW_t$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features exact CTMC transition probabilities $P(t) = \exp(Q t)$, stationary probability distribution $\boldsymbol{\pi}$,
+  arbitrary order exact matrix exponential moments $\mathbb{E}[S_t^n \mid S_0, Y_0]$, continuous characteristic function via
+  matrix exponentials, closed-form Gil-Pelaez European call and put option pricing with machine-precision put-call parity,
+  and coupled Markov-jump and diffusion path simulation.
+  References: Hamilton (1989); Naik (1993); Guo (2001); Elliott, Aggoun, & Moore (1994).
+- `sim/exact.py` — Vectorized `sample_regime_switching_gbm` coupled Markov chain and diffusion path sampler.
+- `zoo/beyond/jacobi.py` — `JacobiProcess` (`JacobiDiffusion`, `WrightFisherDiffusion`, `Jacobi`):
+  Jacobi bounded diffusion model on $[y_{\min}, y_{\max}]$ (canonical $[0, 1]$) of Ackerer, Filipović, & Turnes (2018):
+  $dY_t = \kappa (\theta - Y_t) dt + \sigma \sqrt{\frac{(Y_t - y_{\min})(y_{\max} - Y_t)}{y_{\max} - y_{\min}}} dW_t$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features exact Beta stationary law $\mathrm{Beta}(\alpha, \beta)$, exact polynomial moment propagation (mean, second moment,
+  and conditional variance), Feller boundary classifications at both lower and upper endpoints (entrance vs regular reflecting),
+  and high-order Milstein path simulation with strict boundary preservation.
+  References: Ackerer, Filipović, & Turnes (2018); Karlin & Taylor (1981); Filipović & Larsson (2016).
+- `sim/exact.py` — Vectorized `sample_jacobi` Milstein path simulator for bounded intervals.
+- `zoo/beyond/bns.py` — `BNSModel` (`BNSProcess`, `BarndorffNielsenShephard`, `BNS`):
+  Non-Gaussian Ornstein-Uhlenbeck stochastic volatility model of Ole E. Barndorff-Nielsen & Neil Shephard (2001):
+  $dX_t = (\mu + \beta \sigma_t^2) dt + \sigma_t dW_t + \rho dZ_{\lambda t}, \quad d\sigma_t^2 = -\lambda \sigma_t^2 dt + dZ_{\lambda t}$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features Gamma-OU variance driven by a compound Poisson BDLP $Z_t$ with rate $\alpha$ and exponential jump size $\beta_{bdlp}$,
+  exact stationary variance distribution $\Gamma(\alpha, \beta_{bdlp})$, exact conditional and integrated variance moments,
+  continuous Fourier characteristic function $\phi(u; t)$, European call/put option pricing via Gil-Pelaez inversion with exact
+  Put-Call parity, Black-Scholes implied volatility smile computation, and coupled vectorized simulation.
+  References: Barndorff-Nielsen & Shephard (2001); Nicolato & Venardos (2003); Schoutens (2003).
+- `sim/exact.py` — Vectorized `sample_bns` coupled asset price and stochastic variance simulator.
+- `zoo/beyond/schwartz_two_factor.py` — `SchwartzTwoFactor` (`Schwartz97`, `Schwartz2F`, `SchwartzTwoFactorModel`):
+  Canonical two-factor commodity pricing model of Eduardo Schwartz (1997) with mean-reverting convenience yield:
+  $dS_t = (r - \delta_t) S_t dt + \sigma_1 S_t dW_1^Q(t), \quad d\delta_t = \kappa (\hat{\alpha} - \delta_t) dt + \sigma_2 dW_2^Q(t)$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features exact closed-form futures pricing $F(S_t, \delta_t, \tau)$ via Schwartz (1997) Proposition 1 eq. (12),
+  exact conditional Gaussian moments for convenience yield $\delta_t$ and log-spot $X_t = \ln S_t$,
+  exact characteristic function $\phi(u; t)$, analytical Black-76 European call and put options with exact
+  Put-Call parity, and joint vectorized path simulation of spot prices and convenience yields.
+  References: Schwartz (1997); Bjerksund (1991).
+- `sim/exact.py` — Vectorized `sample_schwartz_two_factor` joint spot and convenience yield simulator.
+- `zoo/beyond/jcir.py` — `JCIRProcess` (`JCIR`, `JumpCIRProcess`, `JCIRModel`):
+  Jump-Extended Cox-Ingersoll-Ross short-rate model of Duffie & Garleanu (2001) and Maghsoodi (1996):
+  $dr_t = \kappa (\theta - r_t) dt + \sigma \sqrt{r_t} dW_t + dJ_t, \quad r_0 \ge 0$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features non-negative interest rates with compound Poisson exponential jump shocks ($Y_i \sim \mathrm{Exp}(\mu_J)$),
+  exact stationary mean $\theta_\infty = \theta + (\lambda_J \mu_J)/\kappa$ and stationary variance, exact conditional
+  moments at any horizon, closed-form exponential-affine zero-coupon bond pricing $P(t, T) = \exp(A(\tau) - B(\tau) r_t)$
+  with exact analytical Riccati integration, term structure yields, analytical instantaneous forward rates, exact
+  conditional characteristic function, and exact simulation combining non-central $\chi^2$ CIR transitions with compound
+  Poisson jump increments.
+  References: Duffie & Garleanu (2001); Maghsoodi (1996); Brigo & Mercurio (2006).
+- `sim/exact.py` — Vectorized `sample_jcir` exact non-central chi-squared + compound Poisson jump simulator.
+- `zoo/beyond/bessel.py` — `SquaredBesselProcess` (`BESQ`, `SquaredBessel`) and `BesselProcess` (`BES`, `Bessel`):
+  Canonical squared Bessel and Bessel diffusion processes of Feller (1951), Pitman & Yor (1982), and Revuz & Yor (1999):
+  $dX_t = \delta dt + 2\sqrt{X_t} dW_t, \quad R_t = \sqrt{X_t}, \quad dR_t = \frac{\delta - 1}{2 R_t} dt + dW_t$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features exact transition density and CDF via non-central $\chi^2$ distribution $\frac{X_t}{t} \sim \chi^2(\delta, \frac{x_0}{t})$,
+  exact closed-form cumulants $\kappa_1, \kappa_2, \kappa_3, \kappa_4$ to arbitrary order, exact Laplace transform
+  $\mathbb{E}[e^{-\lambda X_t}] = (1 + 2\lambda t)^{-\delta/2} \exp\left(-\frac{\lambda x_0}{1 + 2\lambda t}\right)$,
+  exact continuous characteristic function $\phi(u; t)$, Feller boundary classification at 0 (entrance for $\delta \ge 2$,
+  reflecting for $0 < \delta < 2$, absorbing for $\delta = 0$), exact Bessel process confluent hypergeometric moments
+  $\mathbb{E}[R_t]$, and exact path simulation with zero time discretization error.
+  References: Feller (1951); Pitman & Yor (1982); Revuz & Yor (1999).
+- `sim/exact.py` — Vectorized `sample_besq` and `sample_bessel` exact path simulators using scaled non-central chi-squared increments.
+- `zoo/beyond/schobel_zhu.py` — `SchobelZhuProcess` (`SchobelZhu`, `SchobelZhuModel`, `SZModel`):
+  Schöbel-Zhu (1999) stochastic volatility model:
+  $dS_t = (r - q) S_t dt + \sigma_t S_t dW_t^S, \quad d\sigma_t = \kappa (\theta - \sigma_t) dt + \tau dW_t^\sigma$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features Ornstein-Uhlenbeck Gaussian volatility dynamics with non-negative instantaneous variance
+  $v_t = \sigma_t^2$, exact continuous characteristic function, Gil-Pelaez European Call and Put pricing
+  satisfying exact Put-Call parity, Black-Scholes implied volatility smile inversion, and coupled
+  vectorized path simulation.
+  References: Schöbel & Zhu (1999); Lord & Kahl (2007).
+- `sim/exact.py` — Vectorized `sample_schobel_zhu` simulator supporting coupled asset and volatility paths.
+- `zoo/beyond/black_karasinski.py` — `BlackKarasinskiProcess` (`BlackKarasinski`, `BKProcess`, `BKModel`):
+  Black-Karasinski (1991) lognormal short-rate model:
+  $d(\ln r_t) = a(b - \ln r_t) dt + \sigma dW_t, \quad r_t = \exp(x_t) > 0$ under `MOMENT_PROPAGATION`
+  exactness level.
+  Guarantees strictly positive interest rates across all horizons. Features exact Ornstein-Uhlenbeck
+  Gaussian conditional moments for log-rate $x_t = \ln(r_t)$, exact short-rate lognormal conditional
+  and stationary moments, Monte Carlo zero-coupon bond pricing $P(0, T)$ and yield curve $y(0, T)$,
+  and exact path simulation without discretization error for $x_t$.
+  References: Black & Karasinski (1991); Brigo & Mercurio (2006).
+- `sim/exact.py` — Vectorized `sample_black_karasinski` simulator supporting exact log-rate transitions.
+- `zoo/levy/gh.py` — `GeneralizedHyperbolicProcess` (`GH`, `GHProcess`, `GeneralizedHyperbolic`):
+  Generalized Hyperbolic (GH) Lévy process of Barndorff-Nielsen (1977) and Eberlein & Prause (2002):
+  infinite-activity pure-jump Lévy process generated by the 5-parameter Generalized Hyperbolic
+  distribution $GH(\lambda, \alpha, \beta, \delta, \mu)$ under `EXACT` exactness level.
+  Features exact characteristic exponent $\psi(u)$ with modified Bessel $K_\lambda$ functions,
+  exact cumulants $\kappa_1, \dots, \kappa_4$ derived from underlying GIG subordinator moments,
+  Lévy triplet $(b, 0, \nu)$, Gil-Pelaez European Call and Put pricing with exact Put-Call parity,
+  implied volatility smile inversion, subfamily classification (NIG, Hyperbolic, Hyperbolic Cosine),
+  and vectorized simulation via exact Inverse Gaussian subordination and Gil-Pelaez CDF inversion.
+  References: Barndorff-Nielsen (1977); Barndorff-Nielsen & Halgreen (1977); Eberlein & Prause (2002).
+- `sim/exact.py` — Vectorized `sample_gh` simulator supporting exact NIG subordination and Gil-Pelaez inversion.
+- `zoo/beyond/sabr.py` — `SABRProcess` (`SABRModel`, `SABR`):
+  SABR (Stochastic Alpha, Beta, Rho) stochastic volatility model of Hagan et al. (2002):
+  $dF_t = \alpha_t F_t^\beta dW_t^F, \quad d\alpha_t = \nu \alpha_t dW_t^\alpha$ with
+  $\mathbb{E}[dW_t^F dW_t^\alpha] = \rho dt$ under `MOMENT_PROPAGATION` exactness level.
+  Features Hagan et al. (2002) asymptotic Black-76 implied volatility closed form with Obłój (2008)
+  corrections, at-the-money (ATM) volatility formula, Black-76 European Call and Put pricing
+  satisfying Put-Call parity, exact forward and log-normal volatility moments, smile backbone
+  classification, and coupled vectorized simulation via log-Euler and Euler schemes.
+  References: Hagan, Kumar, Lesniewski, & Woodward (2002); Obłój (2008).
+- `sim/exact.py` — Vectorized `sample_sabr` simulator supporting coupled forward price and stochastic volatility paths.
+- `zoo/beyond/hull_white.py` — `HullWhiteProcess` (`HullWhite`, `HW1F`, `ExtendedVasicek`):
+  Hull-White (1990) one-factor Gaussian short-rate model (extended Vasicek):
+  $dr_t = a(b - r_t) dt + \sigma dW_t$ with mean-reversion speed $a > 0$, volatility $\sigma > 0$,
+  and long-term target rate $b \in \mathbb{R}$ under `MOMENT_PROPAGATION` exactness level.
+  Features exact zero-coupon bond pricing $P(t, T) = A(t, T) \exp(-B(t, T) r_t)$, spot yield curve,
+  instantaneous forward rates, conditional short rate and integrated rate moments, autocovariance,
+  Jamshidian (1989) closed-form European bond Call and Put options with exact Put-Call parity,
+  caplets and floorlets, and exact path simulation without time discretization error.
+  References: Hull & White (1990, 1993); Jamshidian (1989); Vasicek (1977).
+- `sim/exact.py` — Vectorized `sample_hull_white` simulator with exact Gaussian transitions and Euler fallback.
+- `zoo/beyond/bates.py` — `BatesProcess` (`BatesModel`, `Bates96`, `SVJ`):
+  Bates (1996) stochastic volatility with jumps model coupling the Heston (1993) CIR variance diffusion
+  with Merton (1976) log-normal price jumps:
+  $dS_t = (\mu - q - \lambda \bar{k}) S_t dt + \sqrt{V_t} S_t dW_t^S + S_{t-} (e^Y - 1) dN_t$,
+  $dV_t = \kappa (\theta - V_t) dt + \sigma_v \sqrt{V_t} dW_t^V$ with $\mathbb{E}[dW^S dW^V] = \rho dt$
+  under `MOMENT_PROPAGATION` exactness level.
+  Features continuous Albrecher et al. (2007) characteristic function factored with compound Poisson jumps,
+  drift compensator $-\lambda \bar{k}$, high-precision cumulants $\kappa_1, \dots, \kappa_4$,
+  European Call and Put pricing via Gil–Pelaez Fourier inversion, exact Put-Call parity,
+  Black–Scholes implied volatility smile inversion, and vectorized path simulation via Lord et al. (2010)
+  full-truncation CIR scheme and Poisson jump shocks.
+  References: Bates (1996); Heston (1993); Albrecher et al. (2007); Lord et al. (2010).
+- `sim/exact.py` — Vectorized `sample_bates` path simulator supporting both log-return $X_t$ and instantaneous variance $V_t$.
+- `zoo/levy/kou.py` — `KouJumpDiffusion` (`KouProcess`, `Kou72`, `Kou02`):
+  Kou (2002) double exponential jump-diffusion process combining continuous Brownian motion with
+  asymmetric double exponential jump shocks: $X_t = \mu t + \sigma W_t + \sum_{i=1}^{N_t} Y_i$,
+  $f_Y(y) = p \eta_1 e^{-\eta_1 y}\mathbb{I}_{y \ge 0} + (1-p) \eta_2 e^{\eta_2 y}\mathbb{I}_{y < 0}$
+  under `EXACT` exactness level.
+  Features exact closed-form Lévy triplet $(b, \sigma^2, \nu)$ with analytical truncated drift integral,
+  characteristic exponent $\psi(u)$, analytical cumulants of all orders $n$,
+  European Call and Put option pricing via Gil–Pelaez / Carr–Madan Fourier inversion,
+  Put-Call parity, Black–Scholes implied volatility smile/skew inversion, and exact
+  simulation with zero time discretization error.
+  References: Kou (2002); Cont & Tankov (2004).
+- `sim/exact.py` — Vectorized `sample_kou` exact path simulator with zero discretization error.
+- `zoo/beyond/cev.py` — `CEVProcess` (`CEV`, `ConstantElasticityOfVariance`):
+  Constant Elasticity of Variance (CEV) local volatility diffusion process
+  $dS_t = \mu S_t dt + \sigma S_t^\gamma dW_t, S_0 = s_0 > 0$ under `MOMENT_PROPAGATION` exactness.
+  Features state-dependent local return volatility $\sigma_{\text{loc}}(S) = \sigma S^{\gamma - 1}$,
+  constant return variance elasticity $2(\gamma - 1)$, boundary classification with absorbing zero
+  (default / bankruptcy risk) for $\gamma < 1$, exact European option pricing via Schroder's (1989)
+  non-central chi-squared representation across equity leverage ($\gamma < 1$), geometric Brownian motion
+  ($\gamma = 1$), and commodity inverse leverage ($\gamma > 1$) regimes, exact Put-Call parity,
+  analytical absorption probability $P(S_T = 0) = 1 - F_{\chi^2}(x; 1/(1-\gamma))$, transition CDF,
+  analytical Greeks (Delta, Gamma, Vega), conditional moments (closed-form for $\gamma \in \{0.5, 1.0\}$ and
+  quadrature propagation for general $\gamma$), and vectorized path simulation.
+  References: Cox (1975); Schroder (1989); Emanuel & MacBeth (1982); Choi & Wu (2021).
+- `sim/exact.py` — Vectorized `sample_cev` simulation routine supporting second-order Milstein
+  and Euler–Maruyama schemes with absorbing boundary conditions at zero and exact geometric Brownian motion
+  for $\gamma = 1$.
+- `zoo/levy/merton.py` — `MertonJumpDiffusion` (`MertonProcess`, `Merton76`):
+  Merton (1976) jump-diffusion process combining continuous Brownian motion with
+  normally distributed compound Poisson jump shocks: $X_t = \mu t + \sigma W_t + \sum_{i=1}^{N_t} Y_i$,
+  $Y_i \sim \mathcal{N}(\mu_J, \sigma_J^2)$ under `EXACT` exactness level.
+  Features exact Lévy triplet $(b, \sigma^2, \nu)$ with analytical truncated Gaussian drift integral,
+  closed-form characteristic exponent, analytical cumulants of all orders $n$,
+  Merton (1976) analytical option pricing formula via Poisson mixture of Black–Scholes values,
+  Put-Call parity, Black-Scholes implied volatility smile/skew inversion, and exact
+  vectorized simulation with zero time discretization error.
+  References: Merton (1976); Cont & Tankov (2004).
+- `sim/exact.py` — Vectorized `sample_merton` exact path simulator with zero discretization error.
+- `zoo/beyond/heston.py` — `HestonProcess` (`Heston`):
+  Continuous-time affine stochastic volatility diffusion model
+  $dX_t = (\mu - \frac{1}{2}V_t)dt + \sqrt{V_t} dW_t^S$,
+  $dV_t = \kappa(\theta - V_t)dt + \sigma_v \sqrt{V_t} dW_t^V$ with
+  $d\langle W^S, W^V \rangle_t = \rho dt$ under `MOMENT_PROPAGATION` exactness.
+  Features exact characteristic functions via Albrecher et al. (2007) continuous formulation,
+  CIR instantaneous and integrated variance moments, Feller condition verification,
+  analytical cumulants, European Call and Put option pricing via Gil-Pelaez Fourier inversion,
+  Black-Scholes implied volatility smile/skew inversion via root-finding, and Full Truncation
+  simulation (Lord et al. 2010).
+  References: Heston (1993); Albrecher et al. (2007); Lord et al. (2010).
+- `sim/exact.py` — Vectorized `sample_heston` simulation routine supporting
+  Lord et al. (2010) Full Truncation scheme and truncated Euler scheme.
+- `zoo/beyond/ornstein_uhlenbeck.py` — `OrnsteinUhlenbeckProcess` (`OrnsteinUhlenbeck`, `Vasicek`):
+  Continuous-time Gaussian mean-reverting diffusion $dX_t = \theta(\mu - X_t)dt + \sigma dW_t$
+  with `MOMENT_PROPAGATION` exactness level. Features exact Gaussian transition density, exact
+  conditional moments and cumulants, stationary distribution $N(\mu, \sigma^2/(2\theta))$,
+  relaxation time $\tau = 1/\theta$, half-life $t_{1/2} = \ln(2)/\theta$, exponential autocovariance
+  and autocorrelation, two-time covariance, Lorentzian power spectral density $S(\omega) = \sigma^2/(\pi(\theta^2+\omega^2))$,
+  exact Laplace transform and characteristic function, Vasicek zero-coupon bond pricing $P(\tau) = A(\tau)e^{-B(\tau)r_0}$,
+  yield curves, and asymptotic long-term yield.
+  References: Uhlenbeck & Ornstein (1930); Vasicek (1977).
+- `sim/exact.py` — Vectorized `sample_ou` supporting exact Gaussian increments without
+  discretization bias (`method="exact"`) and Euler–Maruyama discretisation (`method="euler"`).
+- `zoo/beyond/cir.py` — `CIRProcess` (`CoxIngersollRoss`): Cox–Ingersoll–Ross square-root
+  diffusion process $dr_t = \kappa(\theta - r_t)dt + \sigma\sqrt{r_t}dW_t$ with `MOMENT_PROPAGATION`
+  exactness level. Features Feller condition evaluation ($2\kappa\theta \ge \sigma^2$), exact non-central
+  chi-squared transition density and exact simulation via `sample_cir`, exact conditional moments and
+  cumulants of all orders, stationary Gamma distribution properties, exponential autocovariance,
+  exact Laplace transform and characteristic function, zero-coupon bond pricing $P(\tau) = A(\tau)e^{-B(\tau)r_0}$
+  via the Riccati system, yield curves, and asymptotic long-term yield.
+  References: Cox, Ingersoll & Ross (1985); Feller (1951).
+- `sim/exact.py` — Vectorized `sample_cir` supporting exact non-central chi-squared transition
+  sampling (`method="exact"`), full-truncation Euler–Maruyama (`method="truncated_euler"`), and
+  reflected Euler–Maruyama (`method="reflected_euler"`).
+- `zoo/levy/compound_poisson.py` — `CompoundPoisson`: general compound Poisson process
+  with homogeneous Poisson arrival counter and parameterised jump distributions
+  (`NormalJump`, `ExponentialJump`, `DoubleExponentialJump`, `UniformJump`, `DiscreteJump`).
+  `EXACT` exactness level with closed-form Lévy triplet `(b=λ·E[Y·𝟙_{|Y|≤1}], σ²=0, ν=λ·F_Y)`,
+  exact characteristic function `φ(u;t) = exp(λt(φ_Y(u)-1))`, exact cumulants of all orders
+  `κ_n = λ·t·E[Yⁿ]`, and vectorized exact Poisson thinning simulation.
+  References: Kingman (1993); Cont & Tankov (2004) Sec. 3.4; Sato (1999) Ex. 8.4.
+- `sim/exact.py` — Vectorized `sample_compound_poisson` using `np.repeat` and `np.bincount`
+  with fallback for non-vectorized custom samplers.
+- `zoo/beyond/mmpp.py` — `MarkovModulatedPoissonProcess`: N-state MMPP (CTMC-modulated Poisson
+  counts). `MOMENT_PROPAGATION`; no Levy triplet (dependent increments). Exact event-driven
+  simulation, finite-horizon mean/variance and cumulants of any order via block matrix
+  exponentials (with a conditioning guard), stationary distribution and mean intensity.
+  Reference: Fischer & Meier-Hellstern (1993), Performance Evaluation 18, 149-171.
+
 ## [1.0.0] — 2026-09-19
 
 Initial public release. Establishes the algebraic core, the 13-process Lévy zoo, the beyond-Lévy

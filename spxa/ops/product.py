@@ -58,6 +58,7 @@ def cumulants_to_raw_moments(kappas: dict[int, float]) -> dict[int, float]:
     Vol. 1. Section 3.14.
     """
     from math import comb
+
     n_max = max(kappas.keys())
     moments: dict[int, float] = {0: 1.0}
     for n in range(1, n_max + 1):
@@ -90,6 +91,7 @@ def raw_moments_to_cumulants(moments: dict[int, float]) -> dict[int, float]:
     Stuart & Ord (1994), Section 3.14.
     """
     from math import comb
+
     n_max = max(moments.keys())
     mu = {0: 1.0, **moments}
     kappas: dict[int, float] = {}

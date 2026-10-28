@@ -15,6 +15,7 @@ from spxa.ops.subordination import bernstein_function
 
 # ── TemperedStable ────────────────────────────────────────────────────────────
 
+
 class TestTemperedStable:
     @pytest.mark.exactness
     def test_ts_invalid_alpha_raises(self) -> None:
@@ -49,6 +50,7 @@ class TestTemperedStable:
     def test_ts_cumulant_1(self) -> None:
         """κ₁ = C·Γ(1-α)/λ^{1-α}. Rosiński (2007), Proposition 2.1."""
         from scipy.special import gamma as gamma_fn
+
         alpha, C, lam = 0.5, 1.0, 2.0
         ts = TemperedStable(alpha=alpha, C=C, lam=lam)
         expected = C * float(gamma_fn(1 - alpha)) / lam ** (1 - alpha)
@@ -58,6 +60,7 @@ class TestTemperedStable:
     def test_ts_cumulant_2(self) -> None:
         """κ₂ = C·Γ(2-α)/λ^{2-α}. Rosiński (2007), Proposition 2.1."""
         from scipy.special import gamma as gamma_fn
+
         alpha, C, lam = 0.5, 1.0, 2.0
         ts = TemperedStable(alpha=alpha, C=C, lam=lam)
         expected = C * float(gamma_fn(2 - alpha)) / lam ** (2 - alpha)
@@ -67,6 +70,7 @@ class TestTemperedStable:
     def test_ts_cumulant_3(self) -> None:
         """κ₃ = C·Γ(3-α)/λ^{3-α}. Rosiński (2007), Proposition 2.1."""
         from scipy.special import gamma as gamma_fn
+
         alpha, C, lam = 0.5, 1.0, 2.0
         ts = TemperedStable(alpha=alpha, C=C, lam=lam)
         expected = C * float(gamma_fn(3 - alpha)) / lam ** (3 - alpha)
@@ -91,10 +95,11 @@ class TestTemperedStable:
     def test_ts_bernstein_exact_formula(self) -> None:
         """φ(s) = -C·Γ(-α)·((λ+s)^α - λ^α). Schilling et al. (2012), Example 3.8."""
         from scipy.special import gamma as gamma_fn
+
         alpha, C, lam = 0.5, 1.0, 2.0
         ts = TemperedStable(alpha=alpha, C=C, lam=lam)
         s = 1.0
-        expected = -C * float(gamma_fn(-alpha)) * ((lam + s)**alpha - lam**alpha)
+        expected = -C * float(gamma_fn(-alpha)) * ((lam + s) ** alpha - lam**alpha)
         assert float(ts.bernstein_function(s)) == pytest.approx(expected, rel=1e-10)
 
     @pytest.mark.exactness
@@ -165,6 +170,7 @@ class TestTemperedStable:
 
 
 # ── NegativeBinomialProcess ───────────────────────────────────────────────────
+
 
 class TestNegativeBinomialProcess:
     @pytest.mark.exactness
@@ -241,7 +247,7 @@ class TestNegativeBinomialProcess:
         """κ₃ = r·p·(1+p)/(1-p)³. Johnson et al. (2005), Table 5.2."""
         r, p = 2.0, 0.3
         nb = NegativeBinomialProcess(r=r, p=p)
-        expected = r * p * (1 + p) / (1 - p)**3
+        expected = r * p * (1 + p) / (1 - p) ** 3
         assert nb.cumulant_exact(3) == pytest.approx(expected, rel=1e-5)
 
     @pytest.mark.exactness
@@ -249,7 +255,7 @@ class TestNegativeBinomialProcess:
         """κ₄ = r·p·(1+4p+p²)/(1-p)⁴. Johnson et al. (2005), Table 5.2."""
         r, p = 2.0, 0.3
         nb = NegativeBinomialProcess(r=r, p=p)
-        expected = r * p * (1 + 4*p + p**2) / (1 - p)**4
+        expected = r * p * (1 + 4 * p + p**2) / (1 - p) ** 4
         assert nb.cumulant_exact(4) == pytest.approx(expected, rel=1e-4)
 
     @pytest.mark.exactness

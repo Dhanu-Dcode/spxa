@@ -54,14 +54,17 @@ def _ig_levy_measure(mu: float, lam: float) -> DensityLevyMeasure:
         out = np.zeros_like(x, dtype=float)
         pos = x > 0
         xp = x[pos]
-        out[pos] = prefactor * xp**(-1.5) * np.exp(-lam * (xp - mu)**2 / (2 * mu**2 * xp))
+        out[pos] = prefactor * xp ** (-1.5) * np.exp(-lam * (xp - mu) ** 2 / (2 * mu**2 * xp))
         return out
 
     def tail(xv: float) -> float:
         from scipy import integrate  # type: ignore[import-untyped]
+
         result, _ = integrate.quad(
-            lambda t: prefactor * t**(-1.5) * np.exp(-lam * (t - mu)**2 / (2 * mu**2 * t)),
-            xv, np.inf, limit=200
+            lambda t: prefactor * t ** (-1.5) * np.exp(-lam * (t - mu) ** 2 / (2 * mu**2 * t)),
+            xv,
+            np.inf,
+            limit=200,
         )
         return result
 
@@ -98,14 +101,15 @@ class InverseGaussianProcess(Process):
 
     Notes
     -----
-    Cumulants (Tweedie 1957, equation 2.5):
-      κ_n(X_t) = t · (2n-1)!! · μ^{2n-1} / λ^{n-1}
-    where (2n-1)!! = 1·3·5·...·(2n-1).
+    Cumulants (Tweedie 1957; Johnson, Kotz & Balakrishnan 1994):
+      κ_1(X_t) = t · μ
+      κ_n(X_t) = t · (2n-3)!! · μ^{2n-1} / λ^{n-1}  for n ≥ 2
+    where (2n-3)!! = 1·3·5·...·(2n-3).
     Explicitly:
       κ₁ = μ
-      κ₂ = 3μ³/λ
-      κ₃ = 15μ⁵/λ²
-      κ₄ = 105μ⁷/λ³
+      κ₂ = μ³/λ
+      κ₃ = 3μ⁵/λ²
+      κ₄ = 15μ⁷/λ³
 
     Bernstein function (Schilling et al. 2012):
       φ(s) = (λ/μ)(1 - sqrt(1 - 2μ²s/λ))
@@ -138,7 +142,7 @@ class InverseGaussianProcess(Process):
             math_note=(
                 f"Lévy density: sqrt(λ/2π)·x^{{-3/2}}·exp(-λ(x-μ)²/(2μ²x)); "
                 f"φ(s) = (λ/μ)(1-sqrt(1-2μ²s/λ)); "
-                f"κ₁={mu}, κ₂={mu**3/lam:.4f}"
+                f"κ₁={mu}, κ₂={mu**3 / lam:.4f}"
             ),
             reference="Tweedie (1957); Cont & Tankov (2004) Table 4.1; Schilling et al. (2012) Ex. 3.12",
         )
@@ -146,11 +150,18 @@ class InverseGaussianProcess(Process):
 
     def _triplet(self) -> LevyTriplet:
         from scipy import integrate  # type: ignore[import-untyped]
+
         nu = _ig_levy_measure(self.mu, self.lam)
         prefactor = np.sqrt(self.lam / (2 * np.pi))
         b_drift, _ = integrate.quad(
-            lambda x: prefactor * x**(-0.5) * np.exp(-self.lam * (x - self.mu)**2 / (2 * self.mu**2 * x)),
-            0.0, 1.0, limit=200,
+            lambda x: (
+                prefactor
+                * x ** (-0.5)
+                * np.exp(-self.lam * (x - self.mu) ** 2 / (2 * self.mu**2 * x))
+            ),
+            0.0,
+            1.0,
+            limit=200,
         )
         return LevyTriplet(b=b_drift, sigma_sq=0.0, nu=nu)
 
@@ -182,14 +193,26 @@ class InverseGaussianProcess(Process):
         """
         Exact closed-form cumulant.
 
-        κ_n(X_t) = t · (2n-1)!! · μ^{2n-1} / λ^{n-1}
-        where (2n-1)!! = 1·3·5·...·(2n-1).
+        κ_1(X_t) = t · μ
+        κ_n(X_t) = t · (2n-3)!! · μ^{2n-1} / λ^{n-1}  for n >= 2
+        where (2n-3)!! = 1·3·5·...·(2n-3).
 
-        Tweedie (1957), equation (2.5).
+        Explicitly:
+          κ_1 = μ
+          κ_2 = μ³/λ
+          κ_3 = 3μ⁵/λ²
+          κ_4 = 15μ⁷/λ³
+
+        References: Tweedie (1957); Johnson, Kotz & Balakrishnan (1994).
         """
+        if n < 1:
+            raise ValueError(f"order n must be >= 1, got {n}")
+        if n == 1:
+            return t * self.mu
         from math import prod
-        double_factorial = prod(range(1, 2 * n, 2))
-        return t * double_factorial * self.mu**(2 * n - 1) / self.lam**(n - 1)
+
+        double_factorial = prod(range(1, 2 * n - 2, 2))
+        return t * double_factorial * (self.mu ** (2 * n - 1)) / (self.lam ** (n - 1))
 
     def cumulants(self, order: int) -> dict[int, float]:
         return {n: self.cumulant_exact(n) for n in range(1, order + 1)}

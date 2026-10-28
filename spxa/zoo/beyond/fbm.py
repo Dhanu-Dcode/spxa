@@ -142,7 +142,11 @@ class FractionalBrownianMotion(Process):
 
         Mandelbrot & Van Ness (1968), equation (1.2).
         """
-        return 0.5 * self.sigma**2 * (s ** (2 * self.H) + t ** (2 * self.H) - abs(s - t) ** (2 * self.H))
+        return (
+            0.5
+            * self.sigma**2
+            * (s ** (2 * self.H) + t ** (2 * self.H) - abs(s - t) ** (2 * self.H))
+        )
 
     def simulate(
         self,
@@ -184,9 +188,12 @@ class FractionalBrownianMotion(Process):
 
         def acf(k: int) -> float:
             if k == 0:
-                return self.sigma**2 * dt**(2 * self.H)
-            return 0.5 * self.sigma**2 * dt**(2 * self.H) * (
-                (k + 1)**(2 * self.H) - 2 * k**(2 * self.H) + (k - 1)**(2 * self.H)
+                return self.sigma**2 * dt ** (2 * self.H)
+            return (
+                0.5
+                * self.sigma**2
+                * dt ** (2 * self.H)
+                * ((k + 1) ** (2 * self.H) - 2 * k ** (2 * self.H) + (k - 1) ** (2 * self.H))
             )
 
         gamma = np.array([acf(k) for k in range(n)])
@@ -195,7 +202,7 @@ class FractionalBrownianMotion(Process):
         row[:n] = gamma
         row[n] = 0.0
         if n > 1:
-            row[n + 1:] = gamma[n - 1:0:-1]
+            row[n + 1 :] = gamma[n - 1 : 0 : -1]
 
         eigenvalues = np.fft.fft(row).real
         if np.any(eigenvalues < 0):
