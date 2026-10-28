@@ -129,6 +129,37 @@ the running library. All signatures are exact.
    - [Lévy Inspector](#levy-inspector-spxavislevy_inspector)
    - [Volatility Surfaces & Smiles](#volatility-surfaces-smiles-spxavissurface)
    - [Story Composition DAG Visualizer](#story-composition-dag-visualizer-spxavisstory_dag)
+12. [Stochastic Optimal Control (`spxa.control`)](#stochastic-optimal-control-spxacontrol)
+   - [Merton Portfolio Problem](#merton-portfolio-problem)
+   - [Optimal Liquidation](#optimal-liquidation)
+   - [Market Making](#market-making)
+   - [Finite Difference HJB Solvers](#finite-difference-hjb-solvers)
+13. [Model Calibration & Estimation Suite (`spxa.calibration`)](#model-calibration--estimation-suite-spxacalibration)
+   - [Volatility Surface Calibrators](#volatility-surface-calibrators)
+   - [Maximum Likelihood & GMM](#time-series-econometric-estimation-spxacalibrationmle)
+   - [State-Space Filtering](#latent-state-filtering-spxacalibrationfilter)
+   - [Inference & Diagnostics](#diagnostics-standard-errors--reporting-spxacalibrationdiagnostics)
+14. [Computational Graph Engine (`spxa.graph`)](#computational-graph-engine-spxagraph)
+   - [ComputationalGraph, Compiler & Backends](#computationalgraph-compiler--backends)
+   - [Reverse-Mode Autodiff Tape & Greeks](#reverse-mode-autodiff-tape--greeks)
+   - [Universal Zoo & Submodule Adapters](#universal-zoo--submodule-adapters)
+   - [Deep Stochastic Operators & Semimartingale Wires](#deep-stochastic-operators--semimartingale-wires)
+   - [Four-Facet Representation Duality Engine](#four-facet-representation-duality-engine)
+   - [Algebraic Process Surgery Operators](#algebraic-process-surgery-operators)
+15. [Statistical Information Geometry (`spxa.geom`, `spxa.graph.geom`)](#statistical-information-geometry-spxageom-spxagraphgeom)
+   - [Fisher Information Metric (FIM)](#fisher-information-metric-fim)
+   - [Connections & Christoffel Symbols](#connections--christoffel-symbols)
+   - [Riemannian Geodesic Shooting & Rao Distance](#riemannian-geodesic-shooting--rao-distance)
+   - [Natural Gradient Manifold Calibration](#natural-gradient-manifold-calibration)
+16. [Rough Paths & Tensor Signatures (`spxa.signature`, `spxa.graph.signature`)](#rough-paths--tensor-signatures-spxasignature-spxagraphsignature)
+   - [Truncated Path Signature & Chen Identity](#truncated-path-signature--chen-identity)
+   - [Shuffle Algebra & Log-Signature Compression](#shuffle-algebra--log-signature-compression)
+   - [Signature Kernel via 2D Hyperbolic Goursat PDE](#signature-kernel-via-2d-hyperbolic-goursat-pde)
+   - [Universal Linear Pricing on Signatures](#universal-linear-pricing-on-signatures)
+17. [Rough Volatility & Volterra Calculus (`spxa.rough`, `spxa.graph.rough`)](#rough-volatility--volterra-calculus-spxarough-spxagraphrough)
+   - [Fractional Kernels & Hybrid Convolution](#fractional-kernels--hybrid-convolution)
+   - [Rough Bergomi (rBergomi) Model & Short-Time Skew](#rough-bergomi-rbergomi-model--short-time-skew)
+   - [Fractional Adams-Bashforth-Moulton Riccati Solver](#fractional-adams-bashforth-moulton-riccati-solver)
 
 ---
 
@@ -4488,5 +4519,286 @@ The `spxa.calibration` package provides institutional-grade cross-sectional impl
 - `evaluate_pit_diagnostics`: Probability Integral Transform (PIT) uniformity test and Berkowitz (2001) joint likelihood ratio test.
 - `CalibrationReport`: Institutional summary report generator exporting formatted ASCII text tables and GitHub-flavored Markdown tables.
 - Visualization helpers: `plot_smile_overlay`, `plot_surface_error_heatmap`, `plot_filtered_trajectory`.
+
+---
+
+## Computational Graph Engine (`spxa.graph`)
+
+A unified Directed Acyclic Graph (DAG) representation of stochastic models supporting analytical evaluation, numerical quadrature, vectorized batch acceleration, Monte Carlo simulation, and exact reverse-mode automatic differentiation.
+
+### ComputationalGraph, Compiler & Backends
+
+```python
+from spxa.graph import (
+    ComputationalGraph,
+    GraphCompiler,
+    AnalyticalBackend,
+    NumericalBackend,
+    SimulationBackend,
+    AcceleratedBackend,
+    get_backend,
+    ExecutionRouter,
+)
+```
+
+- `ComputationalGraph(name="StochasticGraph")`: Container for stochastic nodes, parameters, constants, operators, and output ports.
+  - `add_node(node)`: Registers a node.
+  - `add_output(node, name)`: Declares a terminal output port.
+  - `topological_sort()`: Computes linear execution order via Kahn's algorithm with cycle detection.
+  - `evaluate(feed_dict=None, backend=None)`: Executes DAG in topological order.
+  - `prune(targets)`: Removes dead code and nodes not in the dependency path of `targets`.
+- `GraphCompiler(graph)`: Optimization passes for graph simplification:
+  - `constant_folding()`: Evaluates subgraphs of purely constant nodes at compile time.
+  - `common_subexpression_elimination()`: Merges identical operator nodes with identical inputs.
+  - `algebraic_simplification()`: Simplifies identities ($x + 0 = x$, $x \times 1 = x$, $x \times 0 = 0$).
+  - `optimize()`: Runs full pipeline and returns an optimized DAG.
+- Backends:
+  - `AnalyticalBackend`: Closed-form formulas and moments.
+  - `NumericalBackend`: Carr-Madan, Lewis, and Cosine Fourier quadrature solvers.
+  - `SimulationBackend`: Vectorized pathwise Monte Carlo sampling.
+  - `AcceleratedBackend`: Vectorized batch evaluation across strike and maturity grids.
+
+---
+
+### Reverse-Mode Autodiff Tape & Greeks
+
+```python
+from spxa.graph import (
+    GradientTape,
+    compute_graph_greeks,
+    compute_graph_hessian,
+    SmoothIndicatorNode,
+    SoftplusNode,
+)
+```
+
+- `GradientTape`: Context manager recording DAG execution and computing reverse-mode vector-Jacobian products (VJPs):
+  - `tape.gradient(target_output, sources=None)`: Computes exact gradients $\nabla_x y$ via reverse-mode accumulation.
+  - `tape.jacobian(targets, sources)`: Computes full Jacobian matrix $J_{ij} = \partial y_i / \partial x_j$.
+- `compute_graph_greeks(pricing_graph, spot_node, vol_node, rate_node=None, mat_node=None)`: Computes exact Greeks (Delta, Gamma, Vega, Rho, Theta) in a single tape pass without finite-difference truncation error.
+- `compute_graph_hessian(graph, target_node, param_nodes)`: Evaluates full second-order Hessian matrix including cross-sensitivities (Vanna, Volga).
+- Smoothers:
+  - `SmoothIndicatorNode(input_node, threshold, beta=20.0)`: Differentiable sigmoid mollifier $\sigma(\beta(x - K))$ for discontinuous payoffs (digitals, barriers).
+  - `SoftplusNode(input_node, k=10.0)`: Smooth approximation to $\max(x, 0) = \frac{1}{k}\ln(1 + e^{kx})$.
+
+---
+
+### Universal Zoo & Submodule Adapters
+
+```python
+from spxa.graph import (
+    GraphAdapterRegistry,
+    to_graph,
+    as_graph_node,
+    UniversalProcessNode,
+    DifferentiableSDEAdapter,
+    RiskInstrumentAdapter,
+    adapt_portfolio,
+    CalculusGeneratorAdapter,
+    CopulaAdapter,
+)
+```
+
+- `to_graph(obj)`: Universally converts any `spxa.zoo` process (all 198+ processes and algebraic compositions), `spxa.risk` instrument, `spxa.diff` SDE, `spxa.copula` copula, or `spxa.calculus` generator into native computational graph nodes.
+- `UniversalProcessNode`: Reflects any process parameters, char-func methods, and simulation samplers into mutable `ParameterNode` handles synchronized with the underlying process.
+- `adapt_portfolio(portfolio, paths_node)`: Adapts multi-asset portfolios into an aggregated net present value (NPV) and sensitivity aggregation DAG.
+
+---
+
+### Deep Stochastic Operators & Semimartingale Wires
+
+```python
+from spxa.graph import (
+    ItoTransformNode,
+    GirsanovTransformNode,
+    EsscherTransformNode,
+    BochnerSubordinationNode,
+    AutomatedCumulantNode,
+    InfinitesimalGeneratorNode,
+    MartingaleVerificationNode,
+    ScaleDensityNode,
+    SpeedDensityNode,
+    FellerBoundaryClassifierNode,
+    MalliavinBismutDeltaNode,
+    SemimartingaleWire,
+    SemimartingaleComponents,
+    QuadraticCovariationNode,
+    StochasticProductNode,
+    StochasticIntegralNode,
+)
+```
+
+- `SemimartingaleWire(x0, drift_fn, diffusion_fn, jump_intensity)`: Typed graph edge carrying semimartingale decomposition $X_t = X_0 + A_t + M_t^c + J_t$.
+- `QuadraticCovariationNode(wire_X, wire_Y)`: Computes pathwise bracket $[X, Y]_t$ and predictable covariation rate $\langle X^c, Y^c \rangle_t$.
+- `StochasticProductNode(wire_X, wire_Y)`: Evaluates stochastic integration by parts $d(XY) = X dY + Y dX + d[X, Y]$ with machine-precision balance ($\sim 10^{-15}$).
+- `StochasticIntegralNode(integrand_fn, integrator_wire)`: Evaluates predictable Itô integrals $(H \cdot X)_t = \int_0^t H_s dX_s$ satisfying Itô isometry.
+- `ItoTransformNode`: Automatically derives SDE dynamics for $Y_t = f(t, X_t)$ via graph autodiff.
+- `GirsanovTransformNode` & `EsscherTransformNode`: Algebraic risk-neutral measure shifts.
+- `BochnerSubordinationNode` & `AutomatedCumulantNode`: Laplace-exponent subordination and central-difference cumulant extraction.
+- `InfinitesimalGeneratorNode` & `MartingaleVerificationNode`: Dynkin generator evaluation $\mathcal{A}f(x)$ and martingale defect proof ($\mathcal{A}f \equiv 0$).
+- `ScaleDensityNode`, `SpeedDensityNode`, `FellerBoundaryClassifierNode`: 1D ergodic diffusions and Feller boundary classification (Regular, Exit, Entrance, Natural).
+- `MalliavinBismutDeltaNode`: Bismut pathwise Greek weights for discontinuous payoffs without payoff differentiation.
+
+---
+
+### Four-Facet Representation Duality Engine
+
+```python
+from spxa.graph import (
+    ProcessDualityCore,
+    SDEFacet,
+    GeneratorFacet,
+    FourierFacet,
+    DensityFacet,
+    compile_levy_khintchine,
+    triplet_to_fourier_facet,
+)
+```
+
+- `ProcessDualityCore(sde=None, generator=None, fourier=None, density=None)`: Container uniting the 4 dual representations of a stochastic process with bi-directional cross-facet synthesis (SDE $\leftrightarrow$ Generator $\leftrightarrow$ Speed/Scale density).
+- `compile_levy_khintchine(b, sigma_sq, jump_measure_fn)`: Compiles an arbitrary triplet $(b, \sigma^2, \nu)$ into an executable characteristic exponent $\Psi(u)$.
+
+---
+
+### Algebraic Process Surgery Operators
+
+```python
+from spxa.graph import (
+    DoleansExponentialNode,
+    StochasticLogarithmNode,
+    TanakaDecompositionNode,
+    DoobHTransformNode,
+    StratonovichToItoNode,
+    ItoToStratonovichNode,
+)
+```
+
+- `DoleansExponentialNode`: Stochastic exponential martingale $\mathcal{E}(X)_t = \exp(X_t - \frac{1}{2}\langle X^c \rangle_t) \prod(1+\Delta X_s)e^{-\Delta X_s}$.
+- `StochasticLogarithmNode`: Continuous-time stochastic logarithm $\mathcal{L}(Z)_t = \int \frac{dZ_s}{Z_{s-}}$.
+- `TanakaDecompositionNode`: Decomposes $(X_t - a)^+ = (X_0 - a)^+ + \int \mathbf{1}_{X>a} dX + \frac{1}{2}L_t^a(X)$, isolating pathwise continuous local time $L_t^a(X) \ge 0$.
+- `DoobHTransformNode`: Excessive harmonic function conditioning: $\mu^h = \mu + \sigma^2 \frac{h'}{h}$ (derives 3D Bessel process drift $1/x$).
+- `StratonovichToItoNode` & `ItoToStratonovichNode`: Conversions with midpoint Itô correction $\pm \frac{1}{2}\sigma \sigma'$.
+
+---
+
+## Statistical Information Geometry (`spxa.geom`, `spxa.graph.geom`)
+
+Riemannian differential geometry of parameter manifolds equipped with the Fisher Information Metric.
+
+```python
+from spxa.geom import (
+    FisherInformationMetric,
+    AffineConnection,
+    GeodesicFlow,
+)
+from spxa.graph.geom import (
+    FisherInformationMetricNode,
+    NaturalGradientCalibratorNode,
+)
+```
+
+### Fisher Information Metric (FIM)
+- `FisherInformationMetric.gaussian_fisher(mu, sigma)`: Exact $2 \times 2$ FIM for univariate Gaussians $g = \text{diag}(1/\sigma^2, 2/\sigma^2)$.
+- `FisherInformationMetric.ou_transition_fisher(x0, dt, theta, mu, sigma)`: Exact 3D transition FIM for Ornstein-Uhlenbeck diffusions.
+- `FisherInformationMetric.empirical_fisher(scores)`: Empirical score outer product covariance matrix $\frac{1}{N}\sum s_k s_k^\top$.
+- `FisherInformationMetric.numerical_hessian_fisher(neg_log_lik_fn, theta)`: Negative log-likelihood Hessian estimator.
+
+### Connections & Christoffel Symbols
+- `AffineConnection(metric_fn, dim)`:
+  - `christoffel_symbols(theta)`: Levi-Civita Riemannian connection $\Gamma^k_{ij}(\theta) = \frac{1}{2} g^{kl} (\partial_i g_{jl} + \partial_j g_{il} - \partial_l g_{ij})$.
+  - `amari_alpha_connection(theta, alpha, skewness_tensor)`: Amari $\alpha$-connection $\Gamma^{(\alpha), k}_{ij} = \Gamma^k_{ij} - \frac{\alpha}{2} g^{kl} T_{ijl}$.
+  - `riemann_curvature_tensor(theta)`: Riemann curvature tensor $R^l_{ijk}$.
+  - `ricci_scalar(theta)`: Ricci scalar curvature $R = g^{ik} R_{ik}$.
+
+### Riemannian Geodesic Shooting & Rao Distance
+- `GeodesicFlow(connection)`:
+  - `exponential_map(theta_0, v_0)`: Integrates geodesic ODE $\ddot{\theta}^k + \Gamma^k_{ij} \dot{\theta}^i \dot{\theta}^j = 0$.
+  - `geodesic_shooting(theta_0, theta_1)`: Solves two-point boundary value problem.
+  - `rao_distance(theta_0, theta_1)`: Riemannian distance $d_R = \int_0^1 \sqrt{g_{ij}\dot{\theta}^i \dot{\theta}^j} dt$.
+  - `gaussian_exact_rao_distance(p1, p2)`: Closed-form hyperbolic distance $2\sqrt{2}\operatorname{arctanh}(\delta)$.
+
+### Natural Gradient Manifold Calibration
+- `NaturalGradientCalibratorNode(parameters, loss_fn, metric_fn, learning_rate)`: Riemannian natural gradient optimizer:
+  $$\theta_{t+1} = \theta_t - \eta g^{-1}(\theta_t) \nabla_\theta \mathcal{L}(\theta_t)$$
+  eliminating ill-conditioned parameter ravines.
+
+---
+
+## Rough Paths & Tensor Signatures (`spxa.signature`, `spxa.graph.signature`)
+
+Pathwise, non-parametric representation of continuous and jump paths using Chen's iterated integrals and hyperbolic PDE kernels.
+
+```python
+from spxa.signature import (
+    PathSignature,
+    SignatureAlgebra,
+    SignatureKernel,
+)
+from spxa.graph.signature import (
+    PathSignatureNode,
+    SignatureKernelNode,
+    ExpectedSignatureNode,
+    SignatureLinearPricerNode,
+)
+```
+
+### Truncated Path Signature & Chen Identity
+- `PathSignature(depth=3)`:
+  - `signature(path)`: Computes truncated signature $S(X)_{0,T}^{(M)} = \bigoplus_{k=0}^M \int dX^{\otimes k}$ via piecewise-linear step integration.
+  - `flatten_signature(sig)`: Concatenates signature levels into a 1D feature vector of dimension $\frac{d^{M+1}-1}{d-1}$.
+  - `verify_chen_identity(path, split_idx)`: Verifies Chen's multiplicative identity $S(X)_{0,T} = S(X)_{0,t} \otimes S(X)_{t,T}$.
+
+### Shuffle Algebra & Log-Signature Compression
+- `SignatureAlgebra.shuffles(u, v)`: Generates shuffle permutations $u \sqcup v$ satisfying $S^u \cdot S^v = \sum_{w \in u \sqcup v} S^w$.
+- `SignatureAlgebra.log_signature_2d(sig, depth)`: Projects signatures onto the free Lie algebra $\mathfrak{g}^{(M)}(\mathbb{R}^d)$ extracting the antisymmetric Lévy area $A^{12} = \frac{1}{2}(S^{12} - S^{21})$ and Hall commutators.
+- `SignatureAlgebra.log_signature_dimension(d, depth)`: Computes minimal Lie algebra dimension via Witt's formula $L_d(k) = \frac{1}{k}\sum_{m|k}\mu(m) d^{k/m}$ (e.g. 66.7% dimension compression for 2D paths at depth 3).
+
+### Signature Kernel via 2D Hyperbolic Goursat PDE
+- `SignatureKernel.solve_goursat_pde(path_x, path_y)`: Solves the 2D hyperbolic Goursat PDE $\frac{\partial^2 K}{\partial s \partial t} = K(s, t) \langle \dot{X}_s, \dot{Y}_t \rangle$ with boundary conditions $K(s, 0) = 1, K(0, t) = 1$.
+- `SignatureKernel.evaluate(path_x, path_y)`: Computes infinite-order inner product $\langle S(X), S(Y) \rangle$ in $O(N_X \cdot N_Y)$ time without tensor truncation.
+- `SignatureKernel.compute_gram_matrix(paths)`: Computes symmetric Gram matrix for path collections.
+- `SignatureKernel.normalized_distance(path_x, path_y)`: Evaluates Hilbert space distance $\|S(X) - S(Y)\|$.
+
+### Universal Linear Pricing on Signatures
+- `SignatureLinearPricerNode(depth=3)`: Prices arbitrary path-dependent payoffs by linear regression on expected signatures:
+  $$\text{Price} \approx \langle \mathbf{w}, \mathbb{E}[S(X)_{0,T}] \rangle$$
+
+---
+
+## Rough Volatility & Volterra Calculus (`spxa.rough`, `spxa.graph.rough`)
+
+Non-Markovian, sub-diffusive stochastic volatility models driven by fractional Brownian motion with Hurst exponent $H < 1/2$.
+
+```python
+from spxa.rough import (
+    FractionalKernel,
+    RoughBergomi,
+    FractionalRiccatiSolver,
+)
+from spxa.graph.rough import (
+    RoughKernelNode,
+    RoughBergomiNode,
+    FractionalRiccatiNode,
+)
+```
+
+### Fractional Kernels & Hybrid Convolution
+- `FractionalKernel(hurst=0.1)`:
+  - `kernel_value(t)`: Riemann-Liouville power kernel $K_H(t) = \frac{\sqrt{2H}}{\Gamma(H + 1/2)} t^{H - 1/2}$.
+  - `sample_fbm_cholesky(t_mat, n_steps, n_paths)`: Exact fractional Brownian motion simulation via Cholesky decomposition of covariance $R_H(t, s) = \frac{1}{2}(t^{2H} + s^{2H} - |t - s|^{2H})$.
+  - `hybrid_convolution(dw, dt, b_cutoff=3)`: Bennedsen-Lunde-Pakkanen (2017) hybrid convolution scheme combining local analytical integration for $s \approx t$ with FFT-accelerated regular tail convolution.
+
+### Rough Bergomi (rBergomi) Model & Short-Time Skew
+- `RoughBergomi(hurst=0.1, eta=1.9, rho=-0.7, xi0=0.04, s0=100.0)`:
+  - `simulate_paths(t_mat, n_steps, n_paths)`: Simulates joint paths of spot $S_t$ and instantaneous variance $v_t = \xi_0 \exp(\eta\sqrt{2H} \tilde{W}_t^H - \frac{1}{2}\eta^2 t^{2H})$.
+  - `theoretical_short_time_skew(tau)`: Evaluates leading-order ATM implied volatility skew blow-up:
+    $$\left| \frac{\partial \sigma_{BS}}{\partial k} \right|_{k=0} \approx \frac{|\rho|\eta}{2} \frac{\sqrt{2H}}{H + 1/2} \tau^{H - 1/2}$$
+
+### Fractional Adams-Bashforth-Moulton Riccati Solver
+- `FractionalRiccatiSolver(hurst=0.1, lambda_param=1.0, rho=-0.7, nu=0.3)`:
+  - `solve(u, t_mat, n_steps)`: Fractional Adams-Bashforth-Moulton (ABM) predictor-corrector solver for the non-local Volterra integral Riccati equation:
+    $$h(t) = \int_0^t \frac{(t-s)^{H-1/2}}{\Gamma(H + 1/2)} F(u, h(s)) ds$$
+  - `rough_heston_char_func(u, t_mat, v0, theta)`: Evaluates Rough Heston characteristic function $\mathbb{E}[e^{i u X_T}]$ using fractional and standard integration of $h(t)$.
+
 
 
