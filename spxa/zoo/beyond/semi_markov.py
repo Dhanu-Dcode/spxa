@@ -191,17 +191,14 @@ class SemiMarkovProcess(Process):
                     raise ValueError(
                         f"transition {edge} spec must be (distribution_name, parameter_dict)"
                     )
-                transition_specs[(i, j)] = validate_spec(
-                    spec[0], spec[1], f"transition {edge}"
-                )
+                transition_specs[(i, j)] = validate_spec(spec[0], spec[1], f"transition {edge}")
             required_edges = {
                 (i, j) for i in range(n_states) for j in range(n_states) if p[i, j] > 0
             }
             missing_edges = required_edges - transition_specs.keys()
             if missing_edges:
                 raise ValueError(
-                    "missing holding-time specs for possible transitions: "
-                    f"{sorted(missing_edges)}"
+                    f"missing holding-time specs for possible transitions: {sorted(missing_edges)}"
                 )
             self.transition_holding_time_distributions = transition_specs
             distributions, parameters = [], []
@@ -237,8 +234,7 @@ class SemiMarkovProcess(Process):
                 "holding times with next states sampled from a row-stochastic matrix"
             ),
             reference=(
-                "Pyke (1961), Markov Renewal Processes: "
-                "Definitions and Preliminary Properties"
+                "Pyke (1961), Markov Renewal Processes: Definitions and Preliminary Properties"
             ),
         )
         super().__init__(exactness=ExactnessLevel.SIMULATION_ONLY, _node=node)
@@ -255,12 +251,14 @@ class SemiMarkovProcess(Process):
         )
 
     def _properties(self) -> ProcessProperties:
+        is_constant = self.transition_matrix.shape[0] == 1
+
         return ProcessProperties(
-            has_stationary_increments=False,
-            has_independent_increments=False,
-            is_martingale=False,
-            has_finite_variance=False,
-            has_finite_mean=False,
+            has_stationary_increments=is_constant,
+            has_independent_increments=is_constant,
+            is_martingale=is_constant,
+            has_finite_variance=True,
+            has_finite_mean=True,
             self_similarity_index=None,
             tail_index=None,
             is_subordinator=False,
@@ -269,7 +267,8 @@ class SemiMarkovProcess(Process):
                 "Finite-state semi-Markov process with state- or "
                 "transition-dependent holding times.",
                 "Holding times are not restricted to the exponential family.",
-                "No analytical moments or Lévy triplet are provided by this implementation.",
+                "Finite mean and variance follow from the finite state space.",
+                "Analytical moments and a Levy triplet are not provided.",
             ],
         )
 
@@ -278,9 +277,7 @@ class SemiMarkovProcess(Process):
     ) -> float:
         if self.transition_holding_time_distributions is not None:
             if next_state is None:
-                raise ValueError(
-                    "next_state is required for transition-dependent holding times"
-                )
+                raise ValueError("next_state is required for transition-dependent holding times")
             name, params = self.transition_holding_time_distributions[(state, next_state)]
         else:
             name = self.holding_time_distributions[state]
@@ -411,7 +408,4 @@ class SemiMarkovProcess(Process):
             if self.transition_holding_time_distributions is not None
             else "state-dependent"
         )
-        return (
-            f"SemiMarkovProcess(n_states={self.transition_matrix.shape[0]}, "
-            f"mode={mode!r})"
-        )
+        return f"SemiMarkovProcess(n_states={self.transition_matrix.shape[0]}, mode={mode!r})"
