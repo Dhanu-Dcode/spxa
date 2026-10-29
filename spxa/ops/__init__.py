@@ -19,6 +19,7 @@ from spxa.ops.integral import (
     stochastic_convolution_char_func,
     StochasticIntegral,
 )
+from spxa.ops.morph import morph
 
 __all__ = [
     "add",
@@ -40,4 +41,5 @@ __all__ = [
     "ito_isometry_variance",
     "stochastic_convolution_char_func",
     "StochasticIntegral",
+    "morph",
 ]

@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -345,6 +345,41 @@ class Process(ABC):
             props=new_props,
             node=node,
         )
+
+    def morph(
+        self,
+        other: Process,
+        alpha: float = 0.5,
+        method: str = "triplet",
+        coupling: str = "independent",
+        **kwargs: Any,
+    ) -> Any:
+        r"""
+        Morph this process into ``other`` via homotopy parameter :math:`\alpha \in [0, 1]`.
+
+        .. math::
+            P_\alpha = \text{Morph}(P_0, P_1; \alpha)
+
+        Parameters
+        ----------
+        other :
+            Target process corresponding to :math:`\alpha = 1`.
+        alpha :
+            Homotopy parameter in :math:`[0, 1]`. Default 0.5.
+        method :
+            Morphing scheme: ``"triplet"``, ``"generator"``, ``"geodesic"``,
+            ``"wasserstein"``, or ``"convex_combination"``.
+        coupling :
+            Simulation coupling: ``"independent"`` or ``"common"``.
+
+        Returns
+        -------
+        MorphedProcess
+            A new MorphedProcess instance.
+        """
+        from spxa.ops.morph import morph
+
+        return morph(self, other, alpha=alpha, method=method, coupling=coupling, **kwargs)
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(exactness={self._exactness.name})"

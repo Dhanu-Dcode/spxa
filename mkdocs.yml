@@ -61,6 +61,7 @@ nav:
       - Lévy–Khintchine: theory/levy_khintchine.md
       - Triplet arithmetic: theory/triplet_arithmetic.md
       - Beyond Lévy: theory/beyond_levy.md
+      - Model Morphing: theory/model_morphing.md
   - Tutorials:
       - First composition: tutorials/01_first_composition.ipynb
       - Finance models: tutorials/02_finance_models.ipynb

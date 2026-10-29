@@ -23,6 +23,12 @@ from spxa.vis.levy_inspector import (
     plot_levy_comparison,
     plot_levy_density,
 )
+from spxa.vis.morph import (
+    plot_geodesic_phase_portrait,
+    plot_morph_density_evolution,
+    plot_morph_paths,
+    plot_morph_surface,
+)
 from spxa.vis.story_dag import (
     dag_to_ascii,
     dag_to_dot,
@@ -53,4 +59,9 @@ __all__ = [
     "dag_to_mermaid",
     "dag_to_dot",
     "plot_dag",
+    # Model Morphing Visualizers
+    "plot_morph_density_evolution",
+    "plot_morph_paths",
+    "plot_morph_surface",
+    "plot_geodesic_phase_portrait",
 ]

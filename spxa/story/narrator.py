@@ -18,6 +18,7 @@ class NodeKind(Enum):
     SCALING = auto()
     SUBORDINATION = auto()
     MOMENT_APPROX = auto()
+    MORPH = auto()
 
 
 @dataclass
@@ -111,6 +112,22 @@ def narrate(node: CompositionNode, depth: int = 0) -> str:
         for child in node.children:
             lines.append(narrate(child, depth + 2))
 
+    elif node.kind == NodeKind.MORPH:
+        lines.append(f"{indent}[Model Morphing] {node.name}")
+        if node.math_note:
+            lines.append(f"{indent}  Homotopy: {node.math_note}")
+        if node.reference:
+            lines.append(f"{indent}  Ref: {node.reference}")
+        if len(node.children) >= 2:
+            lines.append(f"{indent}  Base model (α=0):")
+            lines.append(narrate(node.children[0], depth + 2))
+            lines.append(f"{indent}  Target model (α=1):")
+            lines.append(narrate(node.children[1], depth + 2))
+        else:
+            for i, child in enumerate(node.children):
+                lines.append(f"{indent}  Component {i}:")
+                lines.append(narrate(child, depth + 2))
+
     return "\n".join(lines)
 
 
@@ -185,6 +202,21 @@ def narrate_latex(node: CompositionNode, depth: int = 0) -> str:
             lines.append(rf"{indent}\quad \text{{{note_tex}}}")
         for child in node.children:
             lines.append(narrate_latex(child, depth + 1))
+
+    elif node.kind == NodeKind.MORPH:
+        name_tex = node.name.replace("_", r"\_")
+        lines.append(rf"{indent}\textbf{{[Model Morphing]}}\ \texttt{{{name_tex}}}")
+        if node.math_note:
+            note_tex = node.math_note.replace("_", r"\_")
+            lines.append(rf"{indent}\quad \text{{Homotopy: }} {note_tex}")
+        if len(node.children) >= 2:
+            lines.append(rf"{indent}\text{{Base model:}}")
+            lines.append(narrate_latex(node.children[0], depth + 1))
+            lines.append(rf"{indent}\text{{Target model:}}")
+            lines.append(narrate_latex(node.children[1], depth + 1))
+        else:
+            for child in node.children:
+                lines.append(narrate_latex(child, depth + 1))
 
     return "\n".join(lines)
 
