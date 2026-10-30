@@ -465,6 +465,7 @@ __all__ = [
     "Vasicek",
     "VasicekProcess",
     "MarkovModulatedPoissonProcess",
+    "SemiMarkovProcess",
     "FourTwoProcess",
     "FourTwoModel",
     "Grasselli42",
