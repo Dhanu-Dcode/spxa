@@ -2094,7 +2094,7 @@ process.simulate(
 - Events occurring exactly at the simulation horizon are included.
 - `max_transitions` limits simulation work and may raise `RuntimeError` if another transition is required within the requested horizon after the limit is reached.
 
-**Properties:** Simulation-only process. Does not provide analytical moments or a Lévy triplet and is not a Lévy process or subordinator.
+**Properties:** Simulation-only process. Does not provide analytical moments or a Lévy triplet. It is generally not a Lévy process or subordinator; an absorbing process starting at zero is a constant-zero subordinator.
 
 **Reference:** Pyke (1961), “Markov Renewal Processes: Definitions and Preliminary Properties,” *The Annals of Mathematical Statistics*, 32(4), 1231–1242.
 ---

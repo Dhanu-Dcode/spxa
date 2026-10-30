@@ -81,6 +81,33 @@ def test_zero_horizon_and_absorbing_state():
     np.testing.assert_array_equal(paths, np.zeros((1, 11), dtype=int))
 
 
+def test_properties_for_absorbing_initial_state():
+    process = SemiMarkovProcess(
+        transition_matrix=np.eye(2),
+        holding_time_distributions=["exponential", "gamma"],
+        holding_time_parameters=[
+            {"rate": 1.0},
+            {"shape": 2.0, "scale": 1.0},
+        ],
+        initial_state=0,
+    )
+
+    properties = process.properties
+
+    assert properties.has_stationary_increments
+    assert properties.has_independent_increments
+    assert properties.is_martingale
+    assert properties.is_subordinator
+
+    paths = process.simulate(
+        n_steps=10,
+        n_paths=3,
+        T=5,
+        rng=np.random.default_rng(42),
+    )
+    np.testing.assert_array_equal(paths, np.zeros((3, 11), dtype=int))
+
+
 def test_validation_and_triplet():
     process = make_process()
     with pytest.raises(ValueError, match="n_steps"):

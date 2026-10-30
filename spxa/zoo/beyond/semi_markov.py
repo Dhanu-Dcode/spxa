@@ -251,7 +251,19 @@ class SemiMarkovProcess(Process):
         )
 
     def _properties(self) -> ProcessProperties:
-        is_constant = self.transition_matrix.shape[0] == 1
+        # Find states reachable from the initial state.
+        reachable = {self.initial_state}
+        pending = [self.initial_state]
+
+        while pending:
+            state = pending.pop()
+            for next_state in np.flatnonzero(self.transition_matrix[state] > 0):
+                next_state = int(next_state)
+                if next_state not in reachable:
+                    reachable.add(next_state)
+                    pending.append(next_state)
+
+        is_constant = len(reachable) == 1
 
         return ProcessProperties(
             has_stationary_increments=is_constant,
@@ -261,13 +273,14 @@ class SemiMarkovProcess(Process):
             has_finite_mean=True,
             self_similarity_index=None,
             tail_index=None,
-            is_subordinator=False,
+            is_subordinator=is_constant and self.initial_state == 0,
             hurst_index=None,
             notes=[
                 "Finite-state semi-Markov process with state- or "
                 "transition-dependent holding times.",
                 "Holding times are not restricted to the exponential family.",
                 "Finite mean and variance follow from the finite state space.",
+                "Process properties are derived from states reachable from the initial state.",
                 "Analytical moments and a Levy triplet are not provided.",
             ],
         )
