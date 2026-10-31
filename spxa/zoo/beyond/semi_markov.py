@@ -1,12 +1,12 @@
 """Finite-state semi-Markov process with state- or transition-dependent holding times.
 
-At each visit to state i, the process draws a holding time from the
-state-specific distribution, then chooses its next state from row i of the
-transition-probability matrix. Holding times are independent across visits
-conditional on the visited states and are independent of the next-state draw.
+In state-dependent mode, each visit draws a holding time from the current
+state's distribution independently of the next-state choice. In
+transition-dependent mode, the next state is chosen first, then the holding
+time is drawn from the distribution associated with that transition.
 
-This is a generalization of a discrete-time Markov chain in continuous time:
-holding times need not be exponential, so the process is generally not a
+This generalizes a discrete-time Markov chain in continuous time: holding
+times need not be exponential, so the process is generally not a
 continuous-time Markov chain and has no Lévy–Khintchine triplet.
 """
 
